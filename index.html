@@ -624,7 +624,16 @@
             State.activeCols = Object.keys(State.colMeta).filter(col => {
                 let m = State.colMeta[col];
                 if (!m.isData) return false;
-                if (State.filters.produit !== 'ALL' && m.product !== State.filters.produit) return false;
+                
+                if (State.filters.produit !== 'ALL') {
+                    if (State.filters.produit === 'CPA') {
+                        // Le CPA est défini comme la combinaison de Superpro et Superbric
+                        if (m.product !== 'SUPERPRO' && m.product !== 'SUPERBRIC' && m.product !== 'CPA') return false;
+                    } else {
+                        if (m.product !== State.filters.produit) return false;
+                    }
+                }
+                
                 if (State.filters.segment !== 'ALL' && m.segment !== State.filters.segment) return false;
                 if (State.filters.cond !== 'ALL' && m.cond !== State.filters.cond) return false;
                 if (State.filters.transport !== 'ALL' && m.transport !== State.filters.transport) return false;
