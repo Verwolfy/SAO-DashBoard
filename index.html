@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive FP&A Dashboard | Commercial Finance</title>
+    
+    <!-- Librairies (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Configuration Tailwind Dark Mode Corporate -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#0f172a',
+                        darker: '#0b0f19',
+                        card: '#1e293b',
+                        brand: '#3b82f6',
+                        brand_light: '#60a5fa',
+                        accent: '#10b981',
+                        danger: '#ef4444'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            transition: background-color 0.3s ease, color 0.3s ease; 
+        }
+        
+        /* Glass Panel Adaptatif (Light / Dark) */
+        .glass-panel { 
+            backdrop-filter: blur(10px); 
+            transition: background-color 0.3s ease, border-color 0.3s ease; 
+        }
+        .dark .glass-panel { 
+            background: rgba(30, 41, 59, 0.7); 
+            border: 1px solid rgba(255,255,255,0.05); 
+        }
+        html:not(.dark) .glass-panel { 
+            background: rgba(255, 255, 255, 0.85); 
+            border: 1px solid rgba(0,0,0,0.1); 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(128,128,128,0.1); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 10px; }
+        
+        /* Drag and Drop Zone */
+        .drop-zone { border: 2px dashed #3b82f6; transition: all 0.3s ease; }
+        .drop-zone.dragover { background-color: rgba(59, 130, 246, 0.1); border-color: #60a5fa; scale: 1.02; }
+        
+        /* Gemini AI Styles */
+        .ai-text { background: -webkit-linear-gradient(45deg, #a855f7, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .ai-border { border: 1px solid rgba(168, 85, 247, 0.4); box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.05); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col custom-scrollbar bg-gray-50 dark:bg-[#0b0f19] text-gray-900 dark:text-[#f8fafc]">
+
+    <!-- Header & Ingestion Zone -->
+    <header class="glass-panel sticky top-0 z-50 p-4 shadow-xl border-b border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
+                    <div>
+                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">FP&A Executive</h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Analyse Multi-Dimensionnelle</p>
+                    </div>
+                </div>
+                <!-- Theme Toggle Button -->
+                <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition shadow-sm border border-gray-300 dark:border-gray-700">
+                    <i id="themeIcon" class="fa-solid fa-sun text-yellow-500 dark:text-gray-300 text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="flex-1 w-full max-w-2xl flex flex-col sm:flex-row gap-4">
+                <div id="dropZone" class="drop-zone flex-1 flex items-center justify-center p-3 rounded-lg cursor-pointer bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-transparent shadow-sm">
+                    <input type="file" id="fileInput" class="hidden" accept=".csv">
+                    <div class="text-center pointer-events-none">
+                        <i class="fa-solid fa-cloud-arrow-up text-brand mb-1 text-xl"></i>
+                        <p class="text-xs text-gray-500 dark:text-gray-300 font-medium">Glisser un CSV ou cliquer</p>
+                    </div>
+                </div>
+                
+                <div class="flex-1 flex flex-col justify-center">
+                    <div class="flex rounded-md shadow-sm">
+                        <input type="text" id="gsheetUrl" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md bg-white dark:bg-card border border-gray-300 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-brand focus:border-brand" placeholder="Lien Google Sheets (Mode Partagé)...">
+                        <button id="btnLoadUrl" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-brand hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand focus:ring-offset-dark">
+                            <i class="fa-solid fa-link mr-2"></i> Charger
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content (Hidden until data loads) -->
+    <main id="dashboardContent" class="hidden flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 space-y-6">
+        
+        <!-- Interactive Filters -->
+        <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Année</label>
+                <select id="filterAnnee" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Toutes</option></select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mois</label>
+                <select id="filterMois" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Tous</option></select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Semaine</label>
+                <select id="filterSemaine" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Toutes</option></select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Segment Principal</label>
+                <select id="filterSegment" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                    <option value="ALL">Global</option>
+                    <option value="RETAIL">Retail</option>
+                    <option value="INDUSTRIAL">Industriel</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Produit</label>
+                <select id="filterProduit" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                    <option value="ALL">Tous</option>
+                    <option value="FANGAH">Fangah</option>
+                    <option value="EXTRA">Extra</option>
+                    <option value="SUPERPRO">Superpro</option>
+                    <option value="SUPERBRIC">Superbric</option>
+                    <option value="BLANC">Blanc</option>
+                    <option value="ZEBDA">Zebda</option>
+                    <option value="CHF">CHF</option>
+                    <option value="CPA">CPA</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Conditionnement</label>
+                <select id="filterCond" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                    <option value="ALL">Tous</option>
+                    <option value="SAC">Sacs</option>
+                    <option value="VRAC">Vrac</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Transport</label>
+                <select id="filterTransport" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                    <option value="ALL">Tous</option>
+                    <option value="DDP">DDP</option>
+                    <option value="EXW">EXW</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Région</label>
+                <select id="filterRegion" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                    <option value="ALL">Toutes</option>
+                    <option value="ABIDJAN">Abidjan</option>
+                    <option value="BOUAKE">Bouaké</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Cible Annuelle (T)</label>
+                <input type="number" id="inputCibleAnnuelle" value="1340000" step="10000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+            </div>
+            <div class="col-span-2 md:col-span-1 lg:col-span-1">
+                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Vol. Min/Jour : <span id="volVal" class="text-brand">0</span></label>
+                <input type="range" id="filterVolume" min="0" max="10000" value="0" class="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer">
+            </div>
+            <div class="col-span-2 md:col-span-3 lg:col-span-1 flex items-end gap-2">
+                <div class="flex-1">
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Marge Min.</label>
+                    <select id="filterMargin" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                        <option value="0">Toutes</option>
+                        <option value="90">> 90%</option>
+                        <option value="95">> 95%</option>
+                    </select>
+                </div>
+                <button id="resetFilters" class="px-4 py-1.5 h-[34px] bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-gray-800 dark:text-white text-sm transition font-medium">Reset</button>
+            </div>
+        </section>
+
+        <!-- Top KPIs -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="glass-panel rounded-xl p-5 border-l-4 border-brand relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 text-brand opacity-10 text-7xl"><i class="fa-solid fa-coins"></i></div>
+                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Ventes Filtrées</h3>
+                <div class="flex items-end gap-3">
+                    <span id="kpiVentes" class="text-3xl font-bold text-gray-900 dark:text-white">0</span>
+                    <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">T</span>
+                </div>
+                <div class="text-xs mt-2 text-gray-500 dark:text-gray-400">Total strict de la sélection</div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-5 border-l-4 border-accent relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 text-accent opacity-10 text-7xl"><i class="fa-solid fa-bullseye"></i></div>
+                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Taux de Réalisation</h3>
+                <div class="flex items-end gap-3">
+                    <span id="kpiRealisation" class="text-3xl font-bold text-gray-900 dark:text-white">0%</span>
+                </div>
+                <div class="text-xs mt-2 text-gray-500 dark:text-gray-400">Obj Global vs Ventes Sélectionnées</div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+                    <div id="kpiProgress" class="bg-accent h-1.5 rounded-full" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-5 border-l-4 border-purple-500 relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 text-purple-500 opacity-10 text-7xl"><i class="fa-solid fa-chart-pie"></i></div>
+                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Mix Retail & Industrial</h3>
+                <div class="flex flex-col gap-2 mt-2">
+                    <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-1">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Retail</span>
+                        <div>
+                            <span id="kpiVolRetail" class="text-lg font-bold text-gray-900 dark:text-white">0</span>
+                            <span id="kpiRatioRetail" class="text-xs font-bold text-purple-500 dark:text-purple-400 ml-1">(0%)</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Industrial</span>
+                        <div>
+                            <span id="kpiVolIndus" class="text-lg font-bold text-gray-900 dark:text-white">0</span>
+                            <span id="kpiRatioIndus" class="text-xs font-bold text-brand ml-1">(0%)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-5 border-l-4 border-yellow-500 relative overflow-hidden">
+                <div class="absolute -right-4 -top-4 text-yellow-500 opacity-10 text-7xl"><i class="fa-solid fa-truck"></i></div>
+                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Ratios Opérationnels</h3>
+                <div class="flex flex-col gap-2 mt-2">
+                    <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-1">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Ratio CPA (Moy)</span>
+                        <span id="kpiRatioCPA" class="text-xl font-bold text-gray-900 dark:text-white">0%</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <span class="text-sm text-gray-500 dark:text-gray-400">Ratio DDP (Moy)</span>
+                        <span id="kpiRatioDDP" class="text-xl font-bold text-gray-900 dark:text-white">0%</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts Grid -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse de Tendance : Volumes Strictement Filtrés</h3>
+                    <button onclick="renderChartTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+                <div id="chartTrend" class="w-full h-[300px]"></div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution Journalière : Ratios CPA & DDP</h3>
+                    <button onclick="renderChartRatios()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+                <div id="chartRatios" class="w-full h-[300px]"></div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 id="titleForecast" class="text-lg font-semibold text-gray-800 dark:text-white">Prévisions (Objectif 1,34M) : Retail vs Industrial (Année en cours)</h3>
+                    <button onclick="renderChartForecast()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+                <div id="chartForecast" class="w-full h-[300px]"></div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Décomposition de la Performance (Waterfall)</h3>
+                    <button onclick="renderChartWaterfall()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+                <div id="chartWaterfall" class="w-full h-[350px]"></div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse de Pareto : Top Produits (Actifs)</h3>
+                    <button onclick="renderChartPareto()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+                <div id="chartPareto" class="w-full h-[350px]"></div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Mix Conditionnement : VRAC vs SAC</h3>
+                    <button onclick="renderChartVracSac()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+                <div id="chartVracSac" class="w-full h-[350px]"></div>
+            </div>
+
+            <div class="glass-panel rounded-xl p-4">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Mix Segment : Retail vs Industrial</h3>
+                    <button onclick="renderChartRetInd()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                        <i class="fa-solid fa-rotate-right"></i>
+                    </button>
+                </div>
+                <div id="chartRetInd" class="w-full h-[350px]"></div>
+            </div>
+        </section>
+
+        <!-- Executive Summary -->
+        <section class="glass-panel rounded-xl p-6 border-t-4 border-brand_light mt-4 relative">
+            <div class="flex items-center justify-between gap-2 mb-4">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-brain text-brand_light text-xl"></i>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Executive Summary & Insights Dynamiques</h2>
+                </div>
+                <!-- Bouton IA Gemini -->
+                <button id="btnAiInsights" class="hidden px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-md text-sm font-bold text-white transition shadow-lg flex items-center gap-2">
+                    ✨ Générer Analyse IA
+                </button>
+            </div>
+            
+            <div id="executiveSummary" class="text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 text-sm"></div>
+
+            <!-- Bloc IA caché par défaut -->
+            <div id="aiInsightsContainer" class="hidden mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="fa-solid fa-robot text-purple-500 dark:text-purple-400 text-xl"></i>
+                    <h3 class="text-lg font-bold ai-text">CFO Copilot (Gemini AI) ✨</h3>
+                </div>
+                
+                <div id="aiLoading" class="hidden flex items-center gap-3 text-purple-500 dark:text-purple-400 text-sm italic mb-4">
+                    <div class="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-purple-500 dark:border-purple-400"></div>
+                    Analyse stratégique en cours de génération...
+                </div>
+                
+                <div id="aiContent" class="text-gray-800 dark:text-gray-200 text-sm leading-relaxed space-y-4 bg-gray-100 dark:bg-gray-800/60 p-5 rounded-lg ai-border"></div>
+            </div>
+        </section>
+        
+        <div class="h-10"></div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/90 dark:bg-darker/90 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand mb-4"></div>
+        <p class="text-gray-900 dark:text-white text-lg font-medium">Analyse Multi-Dimensionnelle...</p>
+    </div>
+
+    <!-- Scripts Core Logic -->
+    <script>
+        const apiKey = ""; // API Key fournie dynamiquement par l'environnement
+        
+        // --- GESTION DU THEME SOMBRE/CLAIR ---
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const htmlEl = document.documentElement;
+
+        if (localStorage.getItem('theme') === 'light') {
+            htmlEl.classList.remove('dark');
+            themeIcon.classList.replace('fa-sun', 'fa-moon');
+            themeIcon.classList.replace('text-yellow-500', 'text-gray-600');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            htmlEl.classList.toggle('dark');
+            const isDark = htmlEl.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            
+            if (isDark) {
+                themeIcon.classList.replace('fa-moon', 'fa-sun');
+                themeIcon.classList.replace('text-gray-600', 'text-yellow-500');
+            } else {
+                themeIcon.classList.replace('fa-sun', 'fa-moon');
+                themeIcon.classList.replace('text-yellow-500', 'text-gray-600');
+            }
+            
+            if (State.filtered && State.filtered.length > 0) {
+                updateDashboard();
+            }
+        });
+
+        const isDarkMode = () => htmlEl.classList.contains('dark');
+
+        const State = {
+            raw: [],
+            filtered: [],
+            columns: [],
+            colMeta: {},
+            activeCols: [],
+            targetLanding: 1340000,
+            filters: {
+                annee: 'ALL', mois: 'ALL', semaine: 'ALL',
+                segment: 'ALL', produit: 'ALL', cond: 'ALL',
+                transport: 'ALL', region: 'ALL',
+                minVolume: 0, minMargin: 0
+            }
+        };
+
+        const UI = {
+            dropZone: document.getElementById('dropZone'),
+            fileInput: document.getElementById('fileInput'),
+            btnLoadUrl: document.getElementById('btnLoadUrl'),
+            gsheetUrl: document.getElementById('gsheetUrl'),
+            dashboardContent: document.getElementById('dashboardContent'),
+            loadingOverlay: document.getElementById('loadingOverlay'),
+            volValDisplay: document.getElementById('volVal'),
+            btnAiInsights: document.getElementById('btnAiInsights'),
+            aiInsightsContainer: document.getElementById('aiInsightsContainer'),
+            aiLoading: document.getElementById('aiLoading'),
+            aiContent: document.getElementById('aiContent')
+        };
+
+        const getPlotlyLayoutBase = () => ({
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: isDarkMode() ? '#94a3b8' : '#475569', family: 'Inter, sans-serif' },
+            margin: { t: 20, r: 20, l: 50, b: 40 },
+            xaxis: { 
+                gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', 
+                zerolinecolor: isDarkMode() ? '#334155' : '#e2e8f0' 
+            },
+            yaxis: { 
+                gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', 
+                zerolinecolor: isDarkMode() ? '#334155' : '#e2e8f0' 
+            }
+        });
+
+        // --- OUTILS DE NETTOYAGE ROBUSTES ---
+        function cleanNumber(val) {
+            if (val === null || val === undefined || val === '') return 0;
+            if (typeof val === 'number') return val;
+            let str = String(val).replace(/\s+/g, '').replace(/€|\$|T|%/g, '');
+            if (str.includes(',') && !str.includes('.')) str = str.replace(',', '.');
+            else if (str.includes(',') && str.includes('.')) str = str.replace(/,/g, '');
+            let num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function formatVal(num, suffix = '') {
+            return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(num) + suffix;
+        }
+
+        function parseDateToTimestamp(dateStr) {
+            if (!dateStr) return 0;
+            let s = String(dateStr).trim();
+            let parts = s.split(/[\/\-]/);
+            if (parts.length === 3) {
+                let p0 = parts[0], p1 = parts[1], p2 = parts[2];
+                if (p0.length === 4) {
+                    return new Date(parseInt(p0), parseInt(p1)-1, parseInt(p2)).getTime();
+                } else {
+                    let y = parseInt(p2, 10);
+                    if (y < 100) y += 2000;
+                    let m = parseInt(p1, 10) - 1;
+                    let d = parseInt(p0, 10);
+                    return new Date(y, m, d).getTime();
+                }
+            }
+            let dObj = new Date(s);
+            return isNaN(dObj.getTime()) ? 0 : dObj.getTime();
+        }
+
+        function getPlotlyDate(r) {
+            if (r._DATE_SORT > 0) {
+                let d = new Date(r._DATE_SORT);
+                let year = d.getFullYear();
+                let month = String(d.getMonth() + 1).padStart(2, '0');
+                let day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`; 
+            }
+            return r['DATE'] || r['Mois'] || 'Inconnu';
+        }
+
+        // Fichiers et Ingéstion
+        function handleFile(file) {
+            showLoading(true);
+            Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => processData(res.data, res.meta.fields) });
+        }
+        function handleUrl() {
+            let url = UI.gsheetUrl.value.trim();
+            if (!url) return;
+            if (url.includes('/edit')) url = url.replace(/\/edit.*$/, '/export?format=csv');
+            showLoading(true);
+            Papa.parse(url, { download: true, header: true, skipEmptyLines: true, complete: res => processData(res.data, res.meta.fields) });
+        }
+
+        UI.dropZone.addEventListener('click', () => UI.fileInput.click());
+        UI.dropZone.addEventListener('dragover', (e) => { e.preventDefault(); UI.dropZone.classList.add('dragover'); });
+        UI.dropZone.addEventListener('dragleave', () => UI.dropZone.classList.remove('dragover'));
+        UI.dropZone.addEventListener('drop', (e) => { e.preventDefault(); UI.dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+        UI.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
+        UI.btnLoadUrl.addEventListener('click', handleUrl);
+
+        // -- DATA PROCESSING & OLAP MAPPING --
+        function processData(data, fields) {
+            State.columns = fields;
+            State.colMeta = {};
+            
+            const PRODUCTS = ['FANGAH', 'EXTRA', 'SUPERPRO', 'SUPERBRIC', 'BLANC', 'ZEBDA', 'CHF', 'CPA'];
+            const SEGMENTS = ['RETAIL', 'INDUSTRIAL', 'MINIER'];
+            const CONDS = ['SAC', 'VRAC'];
+            const TRANSPORTS = ['DDP', 'EXW'];
+            const metaCols = ['Année', 'Mois', 'Semaine', 'DATE', 'Objectif fixé', 'RETOUR PRODUIT', 'RATIO CPA', 'RATIO DDP'];
+            
+            fields.forEach(col => {
+                let upperCol = col.toUpperCase();
+                if (metaCols.some(m => m.toUpperCase() === upperCol)) {
+                    State.colMeta[col] = { isData: false };
+                    return;
+                }
+                let meta = { isData: true, product: null, segment: null, cond: null, transport: null, region: null };
+                PRODUCTS.forEach(p => { if (upperCol.includes(p)) meta.product = p; });
+                SEGMENTS.forEach(s => { if (upperCol.includes(s)) meta.segment = s; });
+                CONDS.forEach(c => { if (upperCol.includes(c)) meta.cond = c; });
+                TRANSPORTS.forEach(t => { if (upperCol.includes(t)) meta.transport = t; });
+                if (upperCol.includes('ABIDJAN')) meta.region = 'ABIDJAN';
+                if (upperCol.includes('BOUAKE') || upperCol.includes('BKE')) meta.region = 'BOUAKE';
+                State.colMeta[col] = meta;
+            });
+
+            State.raw = data.map(row => {
+                let cleanRow = {};
+                for (let key in row) {
+                    let meta = State.colMeta[key];
+                    if (!meta) continue;
+                    if (!meta.isData && ['DATE', 'Mois', 'Année', 'Semaine'].includes(key)) {
+                        cleanRow[key] = row[key];
+                    } else {
+                        cleanRow[key] = cleanNumber(row[key]);
+                    }
+                }
+                
+                cleanRow['_DATE_SORT'] = parseDateToTimestamp(cleanRow['DATE']);
+                
+                // FALLBACK ULTIME : Si la DATE est vide ou invalide, on force la génération via Année + Mois
+                if (cleanRow['_DATE_SORT'] === 0 && cleanRow['Année'] && cleanRow['Mois']) {
+                    let y = parseInt(cleanRow['Année']);
+                    let moisStr = String(cleanRow['Mois']).toLowerCase().trim();
+                    let mNum = 1;
+                    
+                    let parsedM = parseInt(moisStr);
+                    if (!isNaN(parsedM) && parsedM >= 1 && parsedM <= 12) {
+                        mNum = parsedM;
+                    } else {
+                        const moisMap = { 'jan':1, 'fév':2, 'fev':2, 'mar':3, 'avr':4, 'mai':5, 'juin':6, 'juil':7, 'aoû':8, 'aou':8, 'sep':9, 'oct':10, 'nov':11, 'déc':12, 'dec':12 };
+                        for (let k in moisMap) {
+                            if (moisStr.includes(k)) { mNum = moisMap[k]; break; }
+                        }
+                    }
+                    
+                    if (!isNaN(y) && y > 2000) {
+                        // Positionnement de la donnée au 28 du mois pour respecter l'accumulation YTD chronologique
+                        cleanRow['_DATE_SORT'] = new Date(y, mNum - 1, 28).getTime(); 
+                    }
+                }
+                
+                return cleanRow;
+            });
+
+            setupFilters();
+            applyFilters();
+            showLoading(false);
+            UI.dashboardContent.classList.remove('hidden');
+        }
+
+        function showLoading(show) {
+            if (show) UI.loadingOverlay.classList.remove('hidden');
+            else setTimeout(() => UI.loadingOverlay.classList.add('hidden'), 500);
+        }
+
+        function setupFilters() {
+            const populateDropdown = (id, colName, allLabel) => {
+                const values = [...new Set(State.raw.map(d => d[colName]).filter(Boolean))];
+                const select = document.getElementById(id);
+                select.innerHTML = `<option value="ALL">${allLabel}</option>`;
+                values.sort().forEach(v => {
+                    let opt = document.createElement('option');
+                    opt.value = v; opt.textContent = v;
+                    select.appendChild(opt);
+                });
+            };
+            populateDropdown('filterAnnee', 'Année', 'Toutes (Années)');
+            populateDropdown('filterMois', 'Mois', 'Tous (Mois)');
+            populateDropdown('filterSemaine', 'Semaine', 'Toutes (Semaines)');
+
+            let maxVol = 0;
+            State.raw.forEach(r => {
+                let sum = 0;
+                Object.keys(State.colMeta).forEach(c => { if(State.colMeta[c].isData) sum += (r[c]||0); });
+                if(sum > maxVol) maxVol = sum;
+            });
+            const volFilter = document.getElementById('filterVolume');
+            volFilter.max = Math.ceil(maxVol); volFilter.value = 0; UI.volValDisplay.innerText = 0;
+        }
+
+        // --- CŒUR DE L'OLAP : Moteur d'Agrégation Dynamique ---
+        function applyFilters() {
+            State.activeCols = Object.keys(State.colMeta).filter(col => {
+                let m = State.colMeta[col];
+                if (!m.isData) return false;
+                if (State.filters.produit !== 'ALL' && m.product !== State.filters.produit) return false;
+                if (State.filters.segment !== 'ALL' && m.segment !== State.filters.segment) return false;
+                if (State.filters.cond !== 'ALL' && m.cond !== State.filters.cond) return false;
+                if (State.filters.transport !== 'ALL' && m.transport !== State.filters.transport) return false;
+                if (State.filters.region !== 'ALL' && m.region !== State.filters.region) return false;
+                return true;
+            });
+
+            State.filtered = State.raw.map(row => {
+                if (State.filters.annee !== 'ALL' && String(row['Année']) !== State.filters.annee) return null;
+                if (State.filters.mois !== 'ALL' && String(row['Mois']) !== State.filters.mois) return null;
+                if (State.filters.semaine !== 'ALL' && String(row['Semaine']) !== State.filters.semaine) return null;
+
+                let dynVentes = 0, dynRetail = 0, dynIndus = 0;
+                State.activeCols.forEach(col => {
+                    let val = row[col] || 0;
+                    dynVentes += val;
+                    if (State.colMeta[col].segment === 'RETAIL') dynRetail += val;
+                    if (State.colMeta[col].segment === 'INDUSTRIAL') dynIndus += val;
+                });
+
+                let obj = row['Objectif fixé'] || 0;
+                let retours = row['RETOUR PRODUIT'] || 0;
+
+                if (dynVentes === 0 && obj === 0 && retours === 0) return null;
+
+                if (dynVentes < State.filters.minVolume) return null;
+                
+                let netRatio = dynVentes > 0 ? ((dynVentes - retours) / dynVentes) * 100 : 0;
+                if (netRatio < State.filters.minMargin) return null;
+
+                return {
+                    ...row,
+                    _DYN_VENTES: dynVentes,
+                    _DYN_RETAIL: dynRetail,
+                    _DYN_INDUS: dynIndus,
+                    _DYN_NET_RATIO: netRatio
+                };
+            }).filter(Boolean);
+
+            updateDashboard();
+        }
+
+        ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => {
+            document.getElementById(id).addEventListener('change', (e) => {
+                State.filters[id.replace('filter', '').toLowerCase()] = e.target.value;
+                applyFilters();
+            });
+        });
+        document.getElementById('inputCibleAnnuelle').addEventListener('change', (e) => {
+            State.targetLanding = parseFloat(e.target.value) || 0;
+            renderChartForecast();
+        });
+        document.getElementById('filterMargin').addEventListener('change', (e) => { State.filters.minMargin = parseFloat(e.target.value); applyFilters(); });
+        document.getElementById('filterVolume').addEventListener('input', (e) => { 
+            State.filters.minVolume = parseFloat(e.target.value); UI.volValDisplay.innerText = formatVal(State.filters.minVolume);
+        });
+        document.getElementById('filterVolume').addEventListener('change', () => applyFilters());
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => {
+                document.getElementById(id).value = 'ALL';
+            });
+            document.getElementById('filterMargin').value = '0';
+            document.getElementById('filterVolume').value = 0; UI.volValDisplay.innerText = "0";
+            State.filters = { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0 };
+            applyFilters();
+        });
+
+        // --- DASHBOARD RENDERER ---
+        function updateDashboard() {
+            updateKPIs();
+            renderChartTrend();
+            renderChartRatios();
+            renderChartForecast();
+            renderChartWaterfall();
+            renderChartPareto();
+            renderChartVracSac();
+            renderChartRetInd();
+            generateExecutiveSummary();
+            
+            UI.aiInsightsContainer.classList.add('hidden');
+            UI.aiContent.innerHTML = '';
+            if (State.filtered.length > 0) {
+                UI.btnAiInsights.classList.remove('hidden');
+            } else {
+                UI.btnAiInsights.classList.add('hidden');
+            }
+        }
+
+        function updateKPIs() {
+            let totalVentes = 0, totalObj = 0, totalRetours = 0;
+            let totalRetail = 0, totalIndus = 0;
+            let totalCPA = 0, totalDDP = 0; // Ajout des compteurs dynamiques pour les ratios
+            
+            State.filtered.forEach(r => {
+                totalVentes += r._DYN_VENTES;
+                totalObj += (r['Objectif fixé'] || 0);
+                totalRetours += (r['RETOUR PRODUIT'] || 0);
+                totalRetail += r._DYN_RETAIL || 0;
+                totalIndus += r._DYN_INDUS || 0;
+
+                // Calcul dynamique basé sur les colonnes actives
+                State.activeCols.forEach(col => {
+                    let meta = State.colMeta[col];
+                    let val = r[col] || 0;
+                    if (meta.transport === 'DDP') totalDDP += val;
+                    if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') totalCPA += val;
+                });
+            });
+
+            document.getElementById('kpiVentes').innerText = formatVal(totalVentes);
+            
+            let reaRatio = totalObj > 0 ? (totalVentes / totalObj) * 100 : 0;
+            let reaEl = document.getElementById('kpiRealisation');
+            reaEl.innerText = reaRatio.toFixed(1) + '%';
+            document.getElementById('kpiProgress').style.width = Math.min(reaRatio, 100) + '%';
+            reaEl.className = `text-3xl font-bold ${reaRatio >= 100 ? 'text-accent' : (reaRatio > 80 ? 'text-brand_light' : 'text-danger')}`;
+
+            let ratioRetail = totalVentes > 0 ? (totalRetail / totalVentes) * 100 : 0;
+            let ratioIndus = totalVentes > 0 ? (totalIndus / totalVentes) * 100 : 0;
+            
+            document.getElementById('kpiVolRetail').innerText = formatVal(totalRetail, ' T');
+            document.getElementById('kpiRatioRetail').innerText = `(${ratioRetail.toFixed(1)}%)`;
+            
+            document.getElementById('kpiVolIndus').innerText = formatVal(totalIndus, ' T');
+            document.getElementById('kpiRatioIndus').innerText = `(${ratioIndus.toFixed(1)}%)`;
+
+            // Nouveaux ratios globaux dynamiques
+            let avgCPA = totalVentes > 0 ? (totalCPA / totalVentes) * 100 : 0;
+            let avgDDP = totalVentes > 0 ? (totalDDP / totalVentes) * 100 : 0;
+            document.getElementById('kpiRatioCPA').innerText = avgCPA.toFixed(1) + '%';
+            document.getElementById('kpiRatioDDP').innerText = avgDDP.toFixed(1) + '%';
+        }
+
+        function renderChartTrend() {
+            let data = [...State.filtered].sort((a, b) => a._DATE_SORT - b._DATE_SORT);
+            let trace1 = { x: data.map(d => getPlotlyDate(d)), y: data.map(d => d._DYN_VENTES), type: 'scatter', mode: 'lines+markers', name: 'Ventes (Filtre)', line: {color: '#3b82f6', width: 3}, fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)' };
+            let trace2 = { x: data.map(d => getPlotlyDate(d)), y: data.map(d => d['Objectif fixé']), type: 'scatter', mode: 'lines', name: 'Objectif Global', line: {color: '#ef4444', width: 2, dash: 'dot'} };
+            Plotly.newPlot('chartTrend', [trace1, trace2], {...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }}, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartRatios() {
+            let dailyData = {};
+            State.filtered.forEach(r => {
+                let dStr = getPlotlyDate(r);
+                if (!dStr || dStr === 'Inconnu') return;
+                
+                if (!dailyData[dStr]) dailyData[dStr] = { sort: r._DATE_SORT, totalVol: 0, ddpVol: 0, cpaVol: 0 };
+                
+                let dVol = 0, cVol = 0, tVol = r._DYN_VENTES;
+
+                // On somme les volumes correspondant aux critères dynamiques pour ce jour
+                State.activeCols.forEach(col => {
+                    let meta = State.colMeta[col];
+                    let val = r[col] || 0;
+                    if (meta.transport === 'DDP') dVol += val;
+                    if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') cVol += val;
+                });
+
+                dailyData[dStr].totalVol += tVol;
+                dailyData[dStr].ddpVol += dVol;
+                dailyData[dStr].cpaVol += cVol;
+            });
+
+            let sortedDates = Object.keys(dailyData).sort((a,b) => dailyData[a].sort - dailyData[b].sort);
+            if(sortedDates.length === 0) {
+                Plotly.purge('chartRatios');
+                return;
+            }
+
+            let xVals = [];
+            let cpaVals = [];
+            let ddpVals = [];
+
+            sortedDates.forEach(d => {
+                xVals.push(d);
+                let day = dailyData[d];
+                // Le ratio se calcule par rapport au volume total strict de cette journée
+                cpaVals.push(day.totalVol > 0 ? (day.cpaVol / day.totalVol) * 100 : null);
+                ddpVals.push(day.totalVol > 0 ? (day.ddpVol / day.totalVol) * 100 : null);
+            });
+
+            let trace1 = { x: xVals, y: cpaVals, type: 'scatter', mode: 'lines+markers', name: 'Ratio CPA', line: {color: '#8b5cf6', width: 2}, connectgaps: true };
+            let trace2 = { x: xVals, y: ddpVals, type: 'scatter', mode: 'lines+markers', name: 'Ratio DDP', line: {color: '#f59e0b', width: 2}, connectgaps: true };
+
+            let layout = { 
+                ...getPlotlyLayoutBase(), 
+                hovermode: 'x unified', 
+                legend: { orientation: 'h', y: 1.1 },
+                yaxis: { title: 'Ratio Moyen (%)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', ticksuffix: '%' }
+            };
+            Plotly.newPlot('chartRatios', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartForecast() {
+            let dailyData = {};
+            State.raw.forEach(r => {
+                let dStr = getPlotlyDate(r);
+                if (!dStr || dStr === 'Inconnu') return;
+                if (!dailyData[dStr]) dailyData[dStr] = { sort: r._DATE_SORT, retail: 0, indus: 0 };
+                
+                Object.keys(State.colMeta).forEach(col => {
+                    let meta = State.colMeta[col];
+                    if (meta && meta.isData) {
+                        let val = r[col] || 0;
+                        if (meta.segment === 'RETAIL') dailyData[dStr].retail += val;
+                        if (meta.segment === 'INDUSTRIAL') dailyData[dStr].indus += val;
+                    }
+                });
+            });
+
+            let sortedDates = Object.keys(dailyData).sort((a,b) => dailyData[a].sort - dailyData[b].sort);
+            if (sortedDates.length < 2) {
+                Plotly.purge('chartForecast');
+                return;
+            }
+
+            // 1. Détecter l'année en cours pour cibler uniquement le YTD de l'année actuelle
+            let lastDataTs = dailyData[sortedDates[sortedDates.length-1]].sort;
+            let targetYear = new Date(lastDataTs).getFullYear();
+            
+            sortedDates = sortedDates.filter(d => new Date(dailyData[d].sort).getFullYear() === targetYear);
+            
+            if (sortedDates.length === 0) {
+                Plotly.purge('chartForecast');
+                return;
+            }
+
+            let histX = [];
+            let cumRet = [], cumInd = [];
+            let totalRet = 0, totalInd = 0;
+            let monthlyActuals = {}; 
+
+            // Accumulation YTD exacte sur l'année en cours
+            sortedDates.forEach(d => {
+                let dObj = new Date(dailyData[d].sort);
+                let mKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
+
+                if (!monthlyActuals[mKey]) monthlyActuals[mKey] = { ret: 0, ind: 0 };
+                monthlyActuals[mKey].ret += dailyData[d].retail;
+                monthlyActuals[mKey].ind += dailyData[d].indus;
+
+                totalRet += dailyData[d].retail;
+                totalInd += dailyData[d].indus;
+                
+                histX.push(d);
+                cumRet.push(totalRet);
+                cumInd.push(totalInd);
+            });
+
+            let lastTs = dailyData[sortedDates[sortedDates.length-1]].sort;
+            let endOfYear = new Date(targetYear, 11, 31).getTime();
+            
+            // --- CIBLE ATTERRISSAGE DYNAMIQUE ---
+            let targetTotalLanding = State.targetLanding;
+            
+            // Mise à jour dynamique du titre du graphique
+            let targetFormatted = (targetTotalLanding / 1000000).toFixed(2).replace('.', ',');
+            document.getElementById('titleForecast').innerText = `Prévisions (Objectif ${targetFormatted}M) : Retail vs Industrial (Année en cours)`;
+
+            let currentTotal = totalRet + totalInd;
+            let requiredRemainingVol = Math.max(0, targetTotalLanding - currentTotal);
+            
+            // Répartition de l'effort restant selon le mix actuel
+            let mixRet = currentTotal > 0 ? totalRet / currentTotal : 0.5;
+            let mixInd = currentTotal > 0 ? totalInd / currentTotal : 0.5;
+
+            // --- GESTION DE LA SAISONNALITÉ ET DES JOURS FÉRIÉS ---
+            const holidaysList = [
+                '01-01', '03-16', '03-20', '04-06', '05-01', '05-14', 
+                '05-25', '05-27', '07-27', '08-07', '08-15', '11-01', 
+                '11-15', '12-25'
+            ];
+            
+            const getDayWeight = (dObj) => {
+                let m = dObj.getMonth() + 1;
+                let d = dObj.getDate();
+                let md = `${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                
+                if (holidaysList.includes(md)) return 0.1;
+                if ((m === 5 && d >= 15) || m === 6 || (m === 7 && d <= 15)) return 0.6;
+                if (m === 10 || m === 11) return 0.8;
+                return 1.0;
+            };
+
+            let futureX = [], futRet = [], futInd = [];
+            let yearForEvents = targetYear;
+            
+            let landingRet = totalRet;
+            let landingInd = totalInd;
+            
+            let monthlyTargets = {}; 
+            const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+
+            let tempTs = lastTs + 86400000;
+            let totalWeight = 0;
+            let futureDays = [];
+            
+            // Calculer le poids total des jours restants
+            while (tempTs <= endOfYear) {
+                let dObj = new Date(tempTs);
+                let w = getDayWeight(dObj);
+                totalWeight += w;
+                futureDays.push({ ts: tempTs, weight: w });
+                tempTs += 86400000;
+            }
+
+            let currentCumRet = totalRet;
+            let currentCumInd = totalInd;
+
+            // Distribuer le volume sur les jours futurs
+            futureDays.forEach(day => {
+                let dObj = new Date(day.ts);
+                futureX.push(dObj.toISOString().split('T')[0]);
+                
+                let dayVol = totalWeight > 0 ? (requiredRemainingVol * (day.weight / totalWeight)) : 0;
+                let dVolRet = dayVol * mixRet;
+                let dVolInd = dayVol * mixInd;
+                
+                let mKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
+                
+                // Initialiser l'objectif du mois en incluant les ventes "Month-To-Date" déjà réalisées
+                if (!monthlyTargets[mKey]) {
+                    monthlyTargets[mKey] = {
+                        label: monthNames[dObj.getMonth()],
+                        midDate: new Date(dObj.getFullYear(), dObj.getMonth(), 15).toISOString().split('T')[0], 
+                        ret: monthlyActuals[mKey] ? monthlyActuals[mKey].ret : 0,
+                        ind: monthlyActuals[mKey] ? monthlyActuals[mKey].ind : 0
+                    };
+                }
+                
+                // On ajoute l'effort quotidien futur pour compléter le mois
+                monthlyTargets[mKey].ret += dVolRet;
+                monthlyTargets[mKey].ind += dVolInd;
+                
+                currentCumRet += dVolRet;
+                currentCumInd += dVolInd;
+                
+                futRet.push(currentCumRet);
+                futInd.push(currentCumInd);
+                
+                landingRet = currentCumRet;
+                landingInd = currentCumInd;
+            });
+
+            if (futureX.length > 0) {
+                futureX.unshift(histX[histX.length-1]);
+                futRet.unshift(cumRet[cumRet.length-1]);
+                futInd.unshift(cumInd[cumInd.length-1]);
+            }
+
+            let shapes = [];
+            let annotations = [];
+
+            shapes.push({ type: 'rect', xref: 'x', yref: 'paper', x0: `${yearForEvents}-05-15`, y0: 0, x1: `${yearForEvents}-07-15`, y1: 1, fillcolor: 'rgba(59, 130, 246, 0.1)', line: { width: 0 }, layer: 'below' });
+            annotations.push({ x: `${yearForEvents}-06-15`, y: 1.05, xref: 'x', yref: 'paper', text: '🌧️ Gdes Pluies', showarrow: false, font: {color: '#60a5fa', size: 10} });
+
+            shapes.push({ type: 'rect', xref: 'x', yref: 'paper', x0: `${yearForEvents}-10-01`, y0: 0, x1: `${yearForEvents}-11-30`, y1: 1, fillcolor: 'rgba(59, 130, 246, 0.08)', line: { width: 0 }, layer: 'below' });
+            annotations.push({ x: `${yearForEvents}-11-01`, y: 1.05, xref: 'x', yref: 'paper', text: '🌦️ Ptes Pluies', showarrow: false, font: {color: '#60a5fa', size: 10} });
+
+            const holidaysNames = {
+                '01-01': "Jour de l'An", '03-16': "Nuit du Destin", '03-20': "Fin du Ramadan",
+                '04-06': "Lundi de Pâques", '05-01': "Fête du Travail", '05-14': "Ascension",
+                '05-25': "Lundi de Pentecôte", '05-27': "Tabaski", '07-27': "Maouloud",
+                '08-07': "Indépendance", '08-15': "Assomption", '11-01': "Toussaint", 
+                '11-15': "Jour de la Paix", '12-25': "Noël"
+            };
+
+            holidaysList.forEach(dateStr => {
+                let hDate = `${yearForEvents}-${dateStr}`;
+                shapes.push({ type: 'line', xref: 'x', yref: 'paper', x0: hDate, y0: 0, x1: hDate, y1: 1, line: { color: 'rgba(239, 68, 68, 0.4)', width: 1, dash: 'dash' } });
+                annotations.push({ x: hDate, y: 0.95, xref: 'x', yref: 'paper', text: holidaysNames[dateStr], showarrow: false, textangle: -90, xanchor: 'right', font: {color: 'rgba(239, 68, 68, 0.7)', size: 9} });
+            });
+
+            if(futureX.length > 1) {
+                let lastDateStr = futureX[futureX.length-1];
+                annotations.push({ x: lastDateStr, y: landingRet, xref: 'x', yref: 'y', text: `🎯 ${formatVal(landingRet, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#a855f7', size: 11} });
+                annotations.push({ x: lastDateStr, y: landingInd, xref: 'x', yref: 'y', text: `🎯 ${formatVal(landingInd, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#10b981', size: 11} });
+            }
+
+            Object.values(monthlyTargets).forEach(mt => {
+                if (mt.ret + mt.ind > 10) { 
+                    annotations.push({
+                        x: mt.midDate,
+                        y: 0.05, 
+                        xref: 'x',
+                        yref: 'paper',
+                        text: `<b>Obj. ${mt.label}</b><br><span style="color:#a855f7">R: ${(mt.ret/1000).toFixed(1)}k</span><br><span style="color:#10b981">I: ${(mt.ind/1000).toFixed(1)}k</span>`,
+                        showarrow: false,
+                        bgcolor: isDarkMode() ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+                        bordercolor: isDarkMode() ? '#475569' : '#cbd5e1',
+                        borderwidth: 1,
+                        font: { size: 10, color: isDarkMode() ? '#e2e8f0' : '#334155' },
+                        align: 'left',
+                        borderpad: 4
+                    });
+                }
+            });
+
+            let traces = [
+                { x: histX, y: cumRet, type: 'scatter', mode: 'lines', name: 'Retail (YTD)', line: {color: '#a855f7', width: 3} },
+                { x: histX, y: cumInd, type: 'scatter', mode: 'lines', name: 'Industrial (YTD)', line: {color: '#10b981', width: 3} },
+                { x: futureX, y: futRet, type: 'scatter', mode: 'lines', name: 'Retail (Atterrissage)', line: {color: '#a855f7', width: 2, dash: 'dot'} },
+                { x: futureX, y: futInd, type: 'scatter', mode: 'lines', name: 'Industrial (Atterrissage)', line: {color: '#10b981', width: 2, dash: 'dot'} }
+            ];
+
+            let layout = { 
+                ...getPlotlyLayoutBase(), margin: { t: 40, r: 80, l: 50, b: 40 }, hovermode: 'x unified', legend: { orientation: 'h', y: 1.15 },
+                shapes: shapes, annotations: annotations, yaxis: { title: 'Volume Cumulé (Tonnes)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' }
+            };
+            Plotly.newPlot('chartForecast', traces, layout, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartWaterfall() {
+            let totals = { obj: 0, ret: 0, indus: 0, retours: 0, brutes: 0 };
+            State.filtered.forEach(r => {
+                totals.obj += r['Objectif fixé'] || 0;
+                totals.ret += r._DYN_RETAIL || 0;
+                totals.indus += r._DYN_INDUS || 0;
+                totals.retours += r['RETOUR PRODUIT'] || 0;
+                totals.brutes += r._DYN_VENTES || 0;
+            });
+
+            let autres = Math.max(0, totals.brutes - (totals.ret + totals.indus));
+
+            let data = [{
+                type: "waterfall", orientation: "v", measure: ["relative", "relative", "relative", "total", "relative", "total"],
+                x: ["Retail", "Industriel", "Autres Seg.", "Ventes Brutes", "Retours", "Ventes Nettes"], textposition: "outside",
+                y: [totals.ret, totals.indus, autres, totals.brutes, -totals.retours, totals.brutes - totals.retours],
+                connector: { line: { color: isDarkMode() ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)" } },
+                decreasing: { marker: { color: "#ef4444" } }, increasing: { marker: { color: "#3b82f6" } }, totals: { marker: { color: "#10b981" } }
+            }];
+            Plotly.newPlot('chartWaterfall', data, getPlotlyLayoutBase(), {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartPareto() {
+            let sumsMap = {};
+            State.activeCols.forEach(col => {
+                let prodName = State.colMeta[col].product || 'Divers';
+                if (!sumsMap[prodName]) sumsMap[prodName] = 0;
+                State.filtered.forEach(r => sumsMap[prodName] += (r[col] || 0));
+            });
+
+            let sums = Object.keys(sumsMap).map(k => ({name: k, val: sumsMap[k]})).filter(s => s.val > 0).sort((a, b) => b.val - a.val);
+            if(sums.length === 0) { Plotly.purge('chartPareto'); return; }
+
+            let total = sums.reduce((acc, s) => acc + s.val, 0);
+            let cumSum = 0;
+            let cumPerc = sums.map(s => { cumSum += s.val; return (cumSum / total) * 100; });
+
+            let traceBar = { x: sums.map(s=>s.name), y: sums.map(s=>s.val), type: 'bar', name: 'Volume', marker: { color: '#60a5fa' }};
+            let traceLine = { x: sums.map(s=>s.name), y: cumPerc, type: 'scatter', mode: 'lines+markers', name: '% Cumulé', yaxis: 'y2', line: { color: '#f59e0b', width: 3 }};
+
+            let layout = { ...getPlotlyLayoutBase(), yaxis2: { title: '% Cumul', overlaying: 'y', side: 'right', range: [0, 105], gridcolor: 'transparent' }, showlegend: false };
+            Plotly.newPlot('chartPareto', [traceBar, traceLine], layout, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartVracSac() {
+            let data = [...State.filtered].sort((a, b) => a._DATE_SORT - b._DATE_SORT);
+            let dates = data.map(d => getPlotlyDate(d));
+            let volsSac = [], volsVrac = [];
+
+            data.forEach(row => {
+                let s = 0, v = 0;
+                State.activeCols.forEach(col => {
+                    let meta = State.colMeta[col];
+                    if (meta.cond === 'SAC') s += (row[col] || 0);
+                    if (meta.cond === 'VRAC') v += (row[col] || 0);
+                });
+                volsSac.push(s); volsVrac.push(v);
+            });
+
+            let trace1 = { x: dates, y: volsSac, type: 'scatter', mode: 'lines', name: 'SAC', line: {color: '#3b82f6', width: 1}, fillcolor: 'rgba(59, 130, 246, 0.7)', stackgroup: 'one' };
+            let trace2 = { x: dates, y: volsVrac, type: 'scatter', mode: 'lines', name: 'VRAC', line: {color: '#f59e0b', width: 1}, fillcolor: 'rgba(245, 158, 11, 0.7)', stackgroup: 'one' };
+            Plotly.newPlot('chartVracSac', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 } }, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartRetInd() {
+            let data = [...State.filtered].sort((a, b) => a._DATE_SORT - b._DATE_SORT);
+            let dates = data.map(d => getPlotlyDate(d));
+            let volsRet = [], volsInd = [];
+
+            data.forEach(row => {
+                let r = 0, i = 0;
+                State.activeCols.forEach(col => {
+                    let meta = State.colMeta[col];
+                    if (meta.segment === 'RETAIL') r += (row[col] || 0);
+                    if (meta.segment === 'INDUSTRIAL') i += (row[col] || 0);
+                });
+                volsRet.push(r); volsInd.push(i);
+            });
+
+            let trace1 = { x: dates, y: volsRet, type: 'scatter', mode: 'lines', name: 'Retail', line: {color: '#a855f7', width: 1}, fillcolor: 'rgba(168, 85, 247, 0.7)', stackgroup: 'one' };
+            let trace2 = { x: dates, y: volsInd, type: 'scatter', mode: 'lines', name: 'Industrial', line: {color: '#10b981', width: 1}, fillcolor: 'rgba(16, 185, 129, 0.7)', stackgroup: 'one' };
+            Plotly.newPlot('chartRetInd', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 } }, {responsive: true, displayModeBar: false});
+        }
+
+        function generateExecutiveSummary() {
+            if (State.filtered.length === 0) { document.getElementById('executiveSummary').innerHTML = "<p>Aucune donnée correspondante.</p>"; return; }
+
+            let tVentes = 0, tObj = 0, tRetours = 0, segRetail = 0, segIndus = 0;
+            let worstDay = { date: '', diff: 0 };
+            
+            State.filtered.forEach(r => {
+                tVentes += r._DYN_VENTES; tObj += (r['Objectif fixé'] || 0); tRetours += (r['RETOUR PRODUIT'] || 0);
+                segRetail += r._DYN_RETAIL; segIndus += r._DYN_INDUS;
+                let diff = r._DYN_VENTES - (r['Objectif fixé'] || 0);
+                if (diff < worstDay.diff) { worstDay.diff = diff; worstDay.date = getPlotlyDate(r); }
+            });
+
+            let perf = tObj > 0 ? (tVentes / tObj * 100) : 0;
+            let leadSegment = Object.entries({Retail: segRetail, Indus: segIndus}).sort((a,b)=>b[1]-a[1])[0];
+            let netRatio = tVentes > 0 ? ((tVentes - tRetours) / tVentes * 100) : 0;
+
+            let html = `<ul class="list-disc pl-5 space-y-2">
+                <li><strong class="text-gray-900 dark:text-white">Performance Filtrée :</strong> Votre sélection représente un volume de <strong>${formatVal(tVentes)}</strong>, soit <strong>${perf.toFixed(1)}%</strong> de l'objectif global assigné.</li>
+                <li><strong class="text-gray-900 dark:text-white">Top Segment :</strong> Le segment moteur de cette sélection est <strong>${leadSegment[0]}</strong> (${formatVal(leadSegment[1])}).</li>
+                <li><strong class="text-gray-900 dark:text-white">Efficacité Opérationnelle :</strong> Avec ${formatVal(tRetours)} de retours globaux, le proxy de marge s'établit à <strong>${netRatio.toFixed(2)}%</strong>.</li>`;
+            
+            if (worstDay.diff < 0 && worstDay.date) html += `<li><strong class="text-gray-900 dark:text-white">Alerte :</strong> Chute sévère de performance enregistrée le <strong>${worstDay.date}</strong> (Écart: ${formatVal(worstDay.diff)}).</li>`;
+            html += `</ul>`;
+            document.getElementById('executiveSummary').innerHTML = html;
+        }
+
+        // --- GEMINI API INTEGRATION ✨ ---
+        async function fetchWithRetry(url, options, maxRetries = 5) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    return await response.json();
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    await new Promise(resolve => setTimeout(resolve, delays[i]));
+                }
+            }
+        }
+
+        UI.btnAiInsights.addEventListener('click', async () => {
+            UI.aiInsightsContainer.classList.remove('hidden');
+            UI.aiLoading.classList.remove('hidden');
+            UI.aiContent.innerHTML = '';
+            UI.btnAiInsights.disabled = true;
+            UI.btnAiInsights.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const sumText = document.getElementById('executiveSummary').innerText;
+            let topProducts = "Divers";
+            try {
+                const paretoData = document.getElementById('chartPareto').data;
+                if(paretoData && paretoData[0] && paretoData[0].x) {
+                    topProducts = paretoData[0].x.slice(0, 3).join(", ");
+                }
+            } catch(e) {}
+            
+            const prompt = `Agis en tant que Directeur Financier (CFO) et Analyste FP&A expérimenté travaillant dans le secteur industriel (cimenterie/BTP) en Côte d'Ivoire.
+            Voici le résumé brut de la performance des ventes filtrées actuellement sur mon tableau de bord :
+            
+            ${sumText}
+            
+            Les produits majeurs influençant cette sélection sont : ${topProducts}.
+            
+            Tâche :
+            Rédige un bref commentaire managérial (2 à 3 petits paragraphes maximum) destiné au comité de direction. 
+            Ton analyse doit :
+            1. Interpréter ces chiffres avec un ton "Corporate Finance" et stratégique.
+            2. Proposer 2 recommandations d'actions correctives ou d'optimisation (logistique, pricing, focus commercial ou recouvrement).
+            Formate impérativement ta réponse en HTML basique et propre (utilise <p>, <strong>, <ul>, <li>, <br>) pour une belle intégration. N'inclut pas de balises markdown comme \`\`\`html.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: "Tu es un expert financier analytique, précis et orienté solutions business." }] }
+            };
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+
+            try {
+                const result = await fetchWithRetry(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const aiResponseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (aiResponseText) {
+                    UI.aiContent.innerHTML = aiResponseText.replace(/```html|```/g, ''); 
+                } else {
+                    UI.aiContent.innerHTML = "<p class='text-red-500'>Erreur: Impossible de générer l'analyse.</p>";
+                }
+            } catch (error) {
+                console.error("Gemini API Error:", error);
+                UI.aiContent.innerHTML = `<p class='text-red-500'>Échec de la connexion à Gemini IA. Veuillez vérifier votre réseau ou réessayer plus tard.</p>`;
+            } finally {
+                UI.aiLoading.classList.add('hidden');
+                UI.btnAiInsights.disabled = false;
+                UI.btnAiInsights.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+    </script>
+</body>
+</html>
