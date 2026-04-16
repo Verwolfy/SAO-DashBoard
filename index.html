@@ -97,7 +97,7 @@
                 
                 <div class="flex-1 flex flex-col justify-center">
                     <div class="flex rounded-md shadow-sm">
-                        <input type="text" id="gsheetUrl" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md bg-white dark:bg-card border border-gray-300 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-brand focus:border-brand" placeholder="Lien Google Sheets (Mode Partagé)...">
+                        <input type="text" id="gsheetUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDsQROMcZt_7eGEnB8dGt6nJpeK3av3QTFW7_tSdrWJQa37mVEySknIhZfwGu7c8JiM2lCloANAMga/pub?output=csv" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md bg-white dark:bg-card border border-gray-300 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-brand focus:border-brand" placeholder="Lien Google Sheets (Mode Partagé)...">
                         <button id="btnLoadUrl" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-brand hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand focus:ring-offset-dark">
                             <i class="fa-solid fa-link mr-2"></i> Charger
                         </button>
@@ -509,6 +509,13 @@
         UI.dropZone.addEventListener('drop', (e) => { e.preventDefault(); UI.dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
         UI.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
         UI.btnLoadUrl.addEventListener('click', handleUrl);
+
+        // Chargement automatique au démarrage de l'application
+        window.addEventListener('DOMContentLoaded', () => {
+            if (UI.gsheetUrl.value.trim() !== '') {
+                handleUrl();
+            }
+        });
 
         // -- DATA PROCESSING & OLAP MAPPING --
         function processData(data, fields) {
