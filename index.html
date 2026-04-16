@@ -111,7 +111,16 @@
     <main id="dashboardContent" class="hidden flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 space-y-6">
         
         <!-- Interactive Filters -->
-        <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
+        <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 items-end">
+            <div>
+                <label class="block text-xs font-bold text-brand mb-1">Vue Graphiques</label>
+                <select id="filterTimeView" class="w-full bg-blue-50/50 dark:bg-blue-900/20 border border-brand text-brand dark:text-brand_light rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none shadow-sm font-medium">
+                    <option value="day">Par Jour</option>
+                    <option value="week">Par Semaine</option>
+                    <option value="month">Par Mois</option>
+                    <option value="quarter">Par Trimestre</option>
+                </select>
+            </div>
             <div>
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Année</label>
                 <select id="filterAnnee" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Toutes</option></select>
@@ -174,11 +183,11 @@
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Cible Annuelle (T)</label>
                 <input type="number" id="inputCibleAnnuelle" value="1340000" step="10000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
             </div>
-            <div class="col-span-2 md:col-span-1 lg:col-span-1">
+            <div class="col-span-2 md:col-span-2 lg:col-span-2">
                 <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Vol. Min/Jour : <span id="volVal" class="text-brand">0</span></label>
-                <input type="range" id="filterVolume" min="0" max="10000" value="0" class="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                <input type="range" id="filterVolume" min="0" max="10000" value="0" class="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer mt-2">
             </div>
-            <div class="col-span-2 md:col-span-3 lg:col-span-1 flex items-end gap-2">
+            <div class="col-span-2 md:col-span-2 lg:col-span-2 flex items-end gap-2">
                 <div class="flex-1">
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Marge Min.</label>
                     <select id="filterMargin" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
@@ -266,7 +275,7 @@
 
             <div class="glass-panel rounded-xl p-4 lg:col-span-2">
                 <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution Journalière : Ratios CPA & DDP</h3>
+                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution : Ratios CPA & DDP</h3>
                     <button onclick="renderChartRatios()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
                         <i class="fa-solid fa-rotate-right"></i>
                     </button>
@@ -461,7 +470,7 @@
 
         function parseDateToTimestamp(dateStr) {
             if (!dateStr) return 0;
-            let s = String(dateStr).trim();
+            let s = String(dateStr).trim().split(' ')[0]; // Retirer l'heure si présente
             let parts = s.split(/[\/\-]/);
             if (parts.length === 3) {
                 let p0 = parts[0], p1 = parts[1], p2 = parts[2];
@@ -472,6 +481,11 @@
                     if (y < 100) y += 2000;
                     let m = parseInt(p1, 10) - 1;
                     let d = parseInt(p0, 10);
+                    // Inversion si format US détecté (MM/DD/YYYY)
+                    if (m > 11) {
+                        m = parseInt(p0, 10) - 1;
+                        d = parseInt(p1, 10);
+                    }
                     return new Date(y, m, d).getTime();
                 }
             }
@@ -488,6 +502,33 @@
                 return `${year}-${month}-${day}`; 
             }
             return r['DATE'] || r['Mois'] || 'Inconnu';
+        }
+
+        // --- NOUVEAU : Fonction d'agrégation temporelle ---
+        function getBucketDate(dateStr, granularity) {
+            if (!dateStr || dateStr === 'Inconnu') return 'Inconnu';
+            let parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            
+            let y = parseInt(parts[0], 10);
+            let m = parseInt(parts[1], 10) - 1;
+            let d = parseInt(parts[2], 10);
+            let dateObj = new Date(y, m, d);
+
+            if (granularity === 'month') {
+                return `${y}-${String(m + 1).padStart(2, '0')}-01`;
+            } else if (granularity === 'quarter') {
+                let qM = Math.floor(m / 3) * 3 + 1;
+                return `${y}-${String(qM).padStart(2, '0')}-01`;
+            } else if (granularity === 'week') {
+                let day = dateObj.getDay() || 7; 
+                dateObj.setDate(dateObj.getDate() - day + 1); // Retourner au Lundi
+                let wY = dateObj.getFullYear();
+                let wM = String(dateObj.getMonth() + 1).padStart(2, '0');
+                let wD = String(dateObj.getDate()).padStart(2, '0');
+                return `${wY}-${wM}-${wD}`;
+            }
+            return dateStr; // Par défaut : Jour
         }
 
         // Fichiers et Ingéstion
@@ -510,7 +551,6 @@
         UI.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
         UI.btnLoadUrl.addEventListener('click', handleUrl);
 
-        // Chargement automatique au démarrage de l'application
         window.addEventListener('DOMContentLoaded', () => {
             if (UI.gsheetUrl.value.trim() !== '') {
                 handleUrl();
@@ -558,7 +598,6 @@
                 
                 cleanRow['_DATE_SORT'] = parseDateToTimestamp(cleanRow['DATE']);
                 
-                // FALLBACK ULTIME : Si la DATE est vide ou invalide, on force la génération via Année + Mois
                 if (cleanRow['_DATE_SORT'] === 0 && cleanRow['Année'] && cleanRow['Mois']) {
                     let y = parseInt(cleanRow['Année']);
                     let moisStr = String(cleanRow['Mois']).toLowerCase().trim();
@@ -575,7 +614,6 @@
                     }
                     
                     if (!isNaN(y) && y > 2000) {
-                        // Positionnement de la donnée au 28 du mois pour respecter l'accumulation YTD chronologique
                         cleanRow['_DATE_SORT'] = new Date(y, mNum - 1, 28).getTime(); 
                     }
                 }
@@ -627,7 +665,6 @@
                 
                 if (State.filters.produit !== 'ALL') {
                     if (State.filters.produit === 'CPA') {
-                        // Le CPA est défini comme la combinaison de Superpro et Superbric
                         if (m.product !== 'SUPERPRO' && m.product !== 'SUPERBRIC' && m.product !== 'CPA') return false;
                     } else {
                         if (m.product !== State.filters.produit) return false;
@@ -676,6 +713,9 @@
             updateDashboard();
         }
 
+        // Ecouteur sur la vue temporelle pour rafraichir seulement les graphiques
+        document.getElementById('filterTimeView').addEventListener('change', () => { updateDashboard(); });
+
         ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => {
             document.getElementById(id).addEventListener('change', (e) => {
                 State.filters[id.replace('filter', '').toLowerCase()] = e.target.value;
@@ -695,6 +735,7 @@
             ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => {
                 document.getElementById(id).value = 'ALL';
             });
+            document.getElementById('filterTimeView').value = 'day';
             document.getElementById('filterMargin').value = '0';
             document.getElementById('filterVolume').value = 0; UI.volValDisplay.innerText = "0";
             State.filters = { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0 };
@@ -725,7 +766,7 @@
         function updateKPIs() {
             let totalVentes = 0, totalObj = 0, totalRetours = 0;
             let totalRetail = 0, totalIndus = 0;
-            let totalCPA = 0, totalDDP = 0; // Ajout des compteurs dynamiques pour les ratios
+            let totalCPA = 0, totalDDP = 0; 
             
             State.filtered.forEach(r => {
                 totalVentes += r._DYN_VENTES;
@@ -734,7 +775,6 @@
                 totalRetail += r._DYN_RETAIL || 0;
                 totalIndus += r._DYN_INDUS || 0;
 
-                // Calcul dynamique basé sur les colonnes actives
                 State.activeCols.forEach(col => {
                     let meta = State.colMeta[col];
                     let val = r[col] || 0;
@@ -760,7 +800,6 @@
             document.getElementById('kpiVolIndus').innerText = formatVal(totalIndus, ' T');
             document.getElementById('kpiRatioIndus').innerText = `(${ratioIndus.toFixed(1)}%)`;
 
-            // Nouveaux ratios globaux dynamiques
             let avgCPA = totalVentes > 0 ? (totalCPA / totalVentes) * 100 : 0;
             let avgDDP = totalVentes > 0 ? (totalDDP / totalVentes) * 100 : 0;
             document.getElementById('kpiRatioCPA').innerText = avgCPA.toFixed(1) + '%';
@@ -768,23 +807,45 @@
         }
 
         function renderChartTrend() {
-            let data = [...State.filtered].sort((a, b) => a._DATE_SORT - b._DATE_SORT);
-            let trace1 = { x: data.map(d => getPlotlyDate(d)), y: data.map(d => d._DYN_VENTES), type: 'scatter', mode: 'lines+markers', name: 'Ventes (Filtre)', line: {color: '#3b82f6', width: 3}, fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)' };
-            let trace2 = { x: data.map(d => getPlotlyDate(d)), y: data.map(d => d['Objectif fixé']), type: 'scatter', mode: 'lines', name: 'Objectif Global', line: {color: '#ef4444', width: 2, dash: 'dot'} };
-            Plotly.newPlot('chartTrend', [trace1, trace2], {...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }}, {responsive: true, displayModeBar: false});
+            let timeView = document.getElementById('filterTimeView').value;
+            let bucketData = {};
+            
+            State.filtered.forEach(r => {
+                let exactDate = getPlotlyDate(r);
+                if (!exactDate || exactDate === 'Inconnu') return;
+                
+                let bucket = getBucketDate(exactDate, timeView);
+                if (!bucketData[bucket]) {
+                    bucketData[bucket] = { sort: new Date(bucket).getTime(), ventes: 0, obj: 0 };
+                }
+                bucketData[bucket].ventes += r._DYN_VENTES;
+                bucketData[bucket].obj += (r['Objectif fixé'] || 0);
+            });
+
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) {
+                Plotly.purge('chartTrend');
+                return;
+            }
+
+            let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].ventes), type: timeView==='day'?'scatter':'bar', mode: 'lines+markers', name: 'Ventes', marker: {color: '#3b82f6'}, line: {color: '#3b82f6', width: 3}, fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)' };
+            let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].obj), type: 'scatter', mode: 'lines+markers', name: 'Objectif', marker: {color: '#ef4444'}, line: {color: '#ef4444', width: 2, dash: 'dot'} };
+            Plotly.newPlot('chartTrend', [trace1, trace2], {...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'group'}, {responsive: true, displayModeBar: false});
         }
 
         function renderChartRatios() {
-            let dailyData = {};
+            let timeView = document.getElementById('filterTimeView').value;
+            let bucketData = {};
+            
             State.filtered.forEach(r => {
-                let dStr = getPlotlyDate(r);
-                if (!dStr || dStr === 'Inconnu') return;
+                let exactDate = getPlotlyDate(r);
+                if (!exactDate || exactDate === 'Inconnu') return;
                 
-                if (!dailyData[dStr]) dailyData[dStr] = { sort: r._DATE_SORT, totalVol: 0, ddpVol: 0, cpaVol: 0 };
+                let bucket = getBucketDate(exactDate, timeView);
+                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), totalVol: 0, ddpVol: 0, cpaVol: 0 };
                 
                 let dVol = 0, cVol = 0, tVol = r._DYN_VENTES;
 
-                // On somme les volumes correspondant aux critères dynamiques pour ce jour
                 State.activeCols.forEach(col => {
                     let meta = State.colMeta[col];
                     let val = r[col] || 0;
@@ -792,25 +853,21 @@
                     if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') cVol += val;
                 });
 
-                dailyData[dStr].totalVol += tVol;
-                dailyData[dStr].ddpVol += dVol;
-                dailyData[dStr].cpaVol += cVol;
+                bucketData[bucket].totalVol += tVol;
+                bucketData[bucket].ddpVol += dVol;
+                bucketData[bucket].cpaVol += cVol;
             });
 
-            let sortedDates = Object.keys(dailyData).sort((a,b) => dailyData[a].sort - dailyData[b].sort);
+            let sortedDates = Object.keys(bucketData).sort((a,b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) {
                 Plotly.purge('chartRatios');
                 return;
             }
 
-            let xVals = [];
-            let cpaVals = [];
-            let ddpVals = [];
-
+            let xVals = [], cpaVals = [], ddpVals = [];
             sortedDates.forEach(d => {
                 xVals.push(d);
-                let day = dailyData[d];
-                // Le ratio se calcule par rapport au volume total strict de cette journée
+                let day = bucketData[d];
                 cpaVals.push(day.totalVol > 0 ? (day.cpaVol / day.totalVol) * 100 : null);
                 ddpVals.push(day.totalVol > 0 ? (day.ddpVol / day.totalVol) * 100 : null);
             });
@@ -819,9 +876,7 @@
             let trace2 = { x: xVals, y: ddpVals, type: 'scatter', mode: 'lines+markers', name: 'Ratio DDP', line: {color: '#f59e0b', width: 2}, connectgaps: true };
 
             let layout = { 
-                ...getPlotlyLayoutBase(), 
-                hovermode: 'x unified', 
-                legend: { orientation: 'h', y: 1.1 },
+                ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 },
                 yaxis: { title: 'Ratio Moyen (%)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', ticksuffix: '%' }
             };
             Plotly.newPlot('chartRatios', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
@@ -850,23 +905,19 @@
                 return;
             }
 
-            // 1. Détecter l'année en cours pour cibler uniquement le YTD de l'année actuelle
             let lastDataTs = dailyData[sortedDates[sortedDates.length-1]].sort;
             let targetYear = new Date(lastDataTs).getFullYear();
             
             sortedDates = sortedDates.filter(d => new Date(dailyData[d].sort).getFullYear() === targetYear);
-            
             if (sortedDates.length === 0) {
                 Plotly.purge('chartForecast');
                 return;
             }
 
-            let histX = [];
-            let cumRet = [], cumInd = [];
+            let histX = [], cumRet = [], cumInd = [];
             let totalRet = 0, totalInd = 0;
             let monthlyActuals = {}; 
 
-            // Accumulation YTD exacte sur l'année en cours
             sortedDates.forEach(d => {
                 let dObj = new Date(dailyData[d].sort);
                 let mKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
@@ -886,21 +937,15 @@
             let lastTs = dailyData[sortedDates[sortedDates.length-1]].sort;
             let endOfYear = new Date(targetYear, 11, 31).getTime();
             
-            // --- CIBLE ATTERRISSAGE DYNAMIQUE ---
             let targetTotalLanding = State.targetLanding;
-            
-            // Mise à jour dynamique du titre du graphique
             let targetFormatted = (targetTotalLanding / 1000000).toFixed(2).replace('.', ',');
             document.getElementById('titleForecast').innerText = `Prévisions (Objectif ${targetFormatted}M) : Retail vs Industrial (Année en cours)`;
 
             let currentTotal = totalRet + totalInd;
             let requiredRemainingVol = Math.max(0, targetTotalLanding - currentTotal);
-            
-            // Répartition de l'effort restant selon le mix actuel
             let mixRet = currentTotal > 0 ? totalRet / currentTotal : 0.5;
             let mixInd = currentTotal > 0 ? totalInd / currentTotal : 0.5;
 
-            // --- GESTION DE LA SAISONNALITÉ ET DES JOURS FÉRIÉS ---
             const holidaysList = [
                 '01-01', '03-16', '03-20', '04-06', '05-01', '05-14', 
                 '05-25', '05-27', '07-27', '08-07', '08-15', '11-01', 
@@ -919,11 +964,6 @@
             };
 
             let futureX = [], futRet = [], futInd = [];
-            let yearForEvents = targetYear;
-            
-            let landingRet = totalRet;
-            let landingInd = totalInd;
-            
             let monthlyTargets = {}; 
             const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
 
@@ -931,7 +971,6 @@
             let totalWeight = 0;
             let futureDays = [];
             
-            // Calculer le poids total des jours restants
             while (tempTs <= endOfYear) {
                 let dObj = new Date(tempTs);
                 let w = getDayWeight(dObj);
@@ -942,8 +981,9 @@
 
             let currentCumRet = totalRet;
             let currentCumInd = totalInd;
+            let landingRet = totalRet;
+            let landingInd = totalInd;
 
-            // Distribuer le volume sur les jours futurs
             futureDays.forEach(day => {
                 let dObj = new Date(day.ts);
                 futureX.push(dObj.toISOString().split('T')[0]);
@@ -954,7 +994,6 @@
                 
                 let mKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
                 
-                // Initialiser l'objectif du mois en incluant les ventes "Month-To-Date" déjà réalisées
                 if (!monthlyTargets[mKey]) {
                     monthlyTargets[mKey] = {
                         label: monthNames[dObj.getMonth()],
@@ -964,7 +1003,6 @@
                     };
                 }
                 
-                // On ajoute l'effort quotidien futur pour compléter le mois
                 monthlyTargets[mKey].ret += dVolRet;
                 monthlyTargets[mKey].ind += dVolInd;
                 
@@ -984,8 +1022,34 @@
                 futInd.unshift(cumInd[cumInd.length-1]);
             }
 
+            // --- Agrégation des courbes cumulatives selon la vue temporelle ---
+            let timeView = document.getElementById('filterTimeView').value;
+            
+            function aggregateCumSeries(xArr, yRet, yInd, granularity) {
+                if (granularity === 'day' || xArr.length === 0) return {x: xArr, r: yRet, i: yInd};
+                let buckets = {};
+                for (let i = 0; i < xArr.length; i++) {
+                    let bucket = getBucketDate(xArr[i], granularity);
+                    // Remplacement itératif : on conserve toujours la dernière valeur cumulée de la période
+                    buckets[bucket] = { r: yRet[i], i: yInd[i] };
+                }
+                let sortedKeys = Object.keys(buckets).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+                return { x: sortedKeys, r: sortedKeys.map(k => buckets[k].r), i: sortedKeys.map(k => buckets[k].i) };
+            }
+
+            let histAgg = aggregateCumSeries(histX, cumRet, cumInd, timeView);
+            let futAgg = aggregateCumSeries(futureX, futRet, futInd, timeView);
+
+            let traces = [
+                { x: histAgg.x, y: histAgg.r, type: 'scatter', mode: 'lines+markers', name: 'Retail (YTD)', line: {color: '#a855f7', width: 3} },
+                { x: histAgg.x, y: histAgg.i, type: 'scatter', mode: 'lines+markers', name: 'Industrial (YTD)', line: {color: '#10b981', width: 3} },
+                { x: futAgg.x, y: futAgg.r, type: 'scatter', mode: 'lines+markers', name: 'Retail (Atterrissage)', line: {color: '#a855f7', width: 2, dash: 'dot'} },
+                { x: futAgg.x, y: futAgg.i, type: 'scatter', mode: 'lines+markers', name: 'Industrial (Atterrissage)', line: {color: '#10b981', width: 2, dash: 'dot'} }
+            ];
+
             let shapes = [];
             let annotations = [];
+            let yearForEvents = targetYear;
 
             shapes.push({ type: 'rect', xref: 'x', yref: 'paper', x0: `${yearForEvents}-05-15`, y0: 0, x1: `${yearForEvents}-07-15`, y1: 1, fillcolor: 'rgba(59, 130, 246, 0.1)', line: { width: 0 }, layer: 'below' });
             annotations.push({ x: `${yearForEvents}-06-15`, y: 1.05, xref: 'x', yref: 'paper', text: '🌧️ Gdes Pluies', showarrow: false, font: {color: '#60a5fa', size: 10} });
@@ -1007,8 +1071,8 @@
                 annotations.push({ x: hDate, y: 0.95, xref: 'x', yref: 'paper', text: holidaysNames[dateStr], showarrow: false, textangle: -90, xanchor: 'right', font: {color: 'rgba(239, 68, 68, 0.7)', size: 9} });
             });
 
-            if(futureX.length > 1) {
-                let lastDateStr = futureX[futureX.length-1];
+            if(futAgg.x.length > 0) {
+                let lastDateStr = futAgg.x[futAgg.x.length-1];
                 annotations.push({ x: lastDateStr, y: landingRet, xref: 'x', yref: 'y', text: `🎯 ${formatVal(landingRet, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#a855f7', size: 11} });
                 annotations.push({ x: lastDateStr, y: landingInd, xref: 'x', yref: 'y', text: `🎯 ${formatVal(landingInd, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#10b981', size: 11} });
             }
@@ -1031,13 +1095,6 @@
                     });
                 }
             });
-
-            let traces = [
-                { x: histX, y: cumRet, type: 'scatter', mode: 'lines', name: 'Retail (YTD)', line: {color: '#a855f7', width: 3} },
-                { x: histX, y: cumInd, type: 'scatter', mode: 'lines', name: 'Industrial (YTD)', line: {color: '#10b981', width: 3} },
-                { x: futureX, y: futRet, type: 'scatter', mode: 'lines', name: 'Retail (Atterrissage)', line: {color: '#a855f7', width: 2, dash: 'dot'} },
-                { x: futureX, y: futInd, type: 'scatter', mode: 'lines', name: 'Industrial (Atterrissage)', line: {color: '#10b981', width: 2, dash: 'dot'} }
-            ];
 
             let layout = { 
                 ...getPlotlyLayoutBase(), margin: { t: 40, r: 80, l: 50, b: 40 }, hovermode: 'x unified', legend: { orientation: 'h', y: 1.15 },
@@ -1091,43 +1148,61 @@
         }
 
         function renderChartVracSac() {
-            let data = [...State.filtered].sort((a, b) => a._DATE_SORT - b._DATE_SORT);
-            let dates = data.map(d => getPlotlyDate(d));
-            let volsSac = [], volsVrac = [];
-
-            data.forEach(row => {
-                let s = 0, v = 0;
+            let timeView = document.getElementById('filterTimeView').value;
+            let bucketData = {};
+            
+            State.filtered.forEach(row => {
+                let exactDate = getPlotlyDate(row);
+                if (!exactDate || exactDate === 'Inconnu') return;
+                
+                let bucket = getBucketDate(exactDate, timeView);
+                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), s: 0, v: 0 };
+                
                 State.activeCols.forEach(col => {
                     let meta = State.colMeta[col];
-                    if (meta.cond === 'SAC') s += (row[col] || 0);
-                    if (meta.cond === 'VRAC') v += (row[col] || 0);
+                    if (meta.cond === 'SAC') bucketData[bucket].s += (row[col] || 0);
+                    if (meta.cond === 'VRAC') bucketData[bucket].v += (row[col] || 0);
                 });
-                volsSac.push(s); volsVrac.push(v);
             });
 
-            let trace1 = { x: dates, y: volsSac, type: 'scatter', mode: 'lines', name: 'SAC', line: {color: '#3b82f6', width: 1}, fillcolor: 'rgba(59, 130, 246, 0.7)', stackgroup: 'one' };
-            let trace2 = { x: dates, y: volsVrac, type: 'scatter', mode: 'lines', name: 'VRAC', line: {color: '#f59e0b', width: 1}, fillcolor: 'rgba(245, 158, 11, 0.7)', stackgroup: 'one' };
-            Plotly.newPlot('chartVracSac', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 } }, {responsive: true, displayModeBar: false});
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) {
+                Plotly.purge('chartVracSac');
+                return;
+            }
+
+            let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].s), type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'SAC', marker: {color: '#3b82f6'}, line: {color: '#3b82f6', width: 1}, fillcolor: 'rgba(59, 130, 246, 0.7)', stackgroup: 'one' };
+            let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].v), type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'VRAC', marker: {color: '#f59e0b'}, line: {color: '#f59e0b', width: 1}, fillcolor: 'rgba(245, 158, 11, 0.7)', stackgroup: 'one' };
+            Plotly.newPlot('chartVracSac', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' }, {responsive: true, displayModeBar: false});
         }
 
         function renderChartRetInd() {
-            let data = [...State.filtered].sort((a, b) => a._DATE_SORT - b._DATE_SORT);
-            let dates = data.map(d => getPlotlyDate(d));
-            let volsRet = [], volsInd = [];
+            let timeView = document.getElementById('filterTimeView').value;
+            let bucketData = {};
+            
+            State.filtered.forEach(row => {
+                let exactDate = getPlotlyDate(row);
+                if (!exactDate || exactDate === 'Inconnu') return;
+                
+                let bucket = getBucketDate(exactDate, timeView);
+                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), r: 0, i: 0 };
 
-            data.forEach(row => {
-                let r = 0, i = 0;
                 State.activeCols.forEach(col => {
                     let meta = State.colMeta[col];
-                    if (meta.segment === 'RETAIL') r += (row[col] || 0);
-                    if (meta.segment === 'INDUSTRIAL') i += (row[col] || 0);
+                    if (meta.segment === 'RETAIL') bucketData[bucket].r += (row[col] || 0);
+                    if (meta.segment === 'INDUSTRIAL') bucketData[bucket].i += (row[col] || 0);
                 });
-                volsRet.push(r); volsInd.push(i);
             });
 
-            let trace1 = { x: dates, y: volsRet, type: 'scatter', mode: 'lines', name: 'Retail', line: {color: '#a855f7', width: 1}, fillcolor: 'rgba(168, 85, 247, 0.7)', stackgroup: 'one' };
-            let trace2 = { x: dates, y: volsInd, type: 'scatter', mode: 'lines', name: 'Industrial', line: {color: '#10b981', width: 1}, fillcolor: 'rgba(16, 185, 129, 0.7)', stackgroup: 'one' };
-            Plotly.newPlot('chartRetInd', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 } }, {responsive: true, displayModeBar: false});
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) {
+                Plotly.purge('chartRetInd');
+                return;
+            }
+
+            let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].r), type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'Retail', marker: {color: '#a855f7'}, line: {color: '#a855f7', width: 1}, fillcolor: 'rgba(168, 85, 247, 0.7)', stackgroup: 'one' };
+            let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].i), type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'Industrial', marker: {color: '#10b981'}, line: {color: '#10b981', width: 1}, fillcolor: 'rgba(16, 185, 129, 0.7)', stackgroup: 'one' };
+            Plotly.newPlot('chartRetInd', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' }, {responsive: true, displayModeBar: false});
         }
 
         function generateExecutiveSummary() {
