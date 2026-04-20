@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Business Dev. | S. AIT OUAKLI</title>
+    <title>Executive FP&A Dashboard | Commercial & Production</title>
     
     <!-- Librairies (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -24,7 +24,8 @@
                         brand: '#3b82f6',
                         brand_light: '#60a5fa',
                         accent: '#10b981',
-                        danger: '#ef4444'
+                        danger: '#ef4444',
+                        prod: '#f59e0b'
                     },
                     fontFamily: {
                         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -39,7 +40,6 @@
             transition: background-color 0.3s ease, color 0.3s ease; 
         }
         
-        /* Glass Panel Adaptatif (Light / Dark) */
         .glass-panel { 
             backdrop-filter: blur(10px); 
             transition: background-color 0.3s ease, border-color 0.3s ease; 
@@ -58,13 +58,13 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: rgba(128,128,128,0.1); }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.3); border-radius: 10px; }
         
-        /* Drag and Drop Zone */
         .drop-zone { border: 2px dashed #3b82f6; transition: all 0.3s ease; }
         .drop-zone.dragover { background-color: rgba(59, 130, 246, 0.1); border-color: #60a5fa; scale: 1.02; }
         
-        /* Gemini AI Styles */
         .ai-text { background: -webkit-linear-gradient(45deg, #a855f7, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .ai-border { border: 1px solid rgba(168, 85, 247, 0.4); box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.05); }
+
+        .tab-btn { transition: all 0.3s ease; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col custom-scrollbar bg-gray-50 dark:bg-[#0b0f19] text-gray-900 dark:text-[#f8fafc]">
@@ -76,30 +76,38 @@
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
                     <div>
-                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev.</h1>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Analyse Multi-Dimensionnelle</p>
+                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">FP&A Executive</h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Finance & Operations</p>
                     </div>
                 </div>
-                <!-- Theme Toggle Button -->
                 <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition shadow-sm border border-gray-300 dark:border-gray-700">
                     <i id="themeIcon" class="fa-solid fa-sun text-yellow-500 dark:text-gray-300 text-lg"></i>
                 </button>
             </div>
             
-            <div class="flex-1 w-full max-w-2xl flex flex-col sm:flex-row gap-4">
-                <div id="dropZone" class="drop-zone flex-1 flex items-center justify-center p-3 rounded-lg cursor-pointer bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-transparent shadow-sm">
+            <!-- ONGLETS DE NAVIGATION -->
+            <div class="flex bg-gray-200 dark:bg-gray-800 rounded-lg p-1 shadow-inner overflow-hidden mx-auto md:mx-0">
+                <button onclick="switchTab('VENTES')" id="tabVentes" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-brand text-white flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie"></i> Ventes & Marges
+                </button>
+                <button onclick="switchTab('PROD')" id="tabProd" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-industry"></i> Production & Coûts
+                </button>
+            </div>
+
+            <div class="flex-1 w-full max-w-xl flex flex-col sm:flex-row gap-4 hidden lg:flex">
+                <div id="dropZone" class="drop-zone flex-1 flex items-center justify-center p-2 rounded-lg cursor-pointer bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-transparent shadow-sm">
                     <input type="file" id="fileInput" class="hidden" accept=".csv">
                     <div class="text-center pointer-events-none">
-                        <i class="fa-solid fa-cloud-arrow-up text-brand mb-1 text-xl"></i>
-                        <p class="text-xs text-gray-500 dark:text-gray-300 font-medium">Glisser un CSV ou cliquer</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-300 font-medium"><i class="fa-solid fa-cloud-arrow-up text-brand"></i> Glisser un CSV</p>
                     </div>
                 </div>
                 
                 <div class="flex-1 flex flex-col justify-center">
                     <div class="flex rounded-md shadow-sm">
-                        <input type="text" id="gsheetUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDsQROMcZt_7eGEnB8dGt6nJpeK3av3QTFW7_tSdrWJQa37mVEySknIhZfwGu7c8JiM2lCloANAMga/pub?output=csv" class="flex-1 min-w-0 block w-full px-3 py-2 rounded-none rounded-l-md bg-white dark:bg-card border border-gray-300 dark:border-gray-700 text-sm text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:ring-brand focus:border-brand" placeholder="Lien Google Sheets (Mode Partagé)...">
-                        <button id="btnLoadUrl" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md text-white bg-brand hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand focus:ring-offset-dark">
-                            <i class="fa-solid fa-link mr-2"></i> Charger
+                        <input type="text" id="gsheetUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDsQROMcZt_7eGEnB8dGt6nJpeK3av3QTFW7_tSdrWJQa37mVEySknIhZfwGu7c8JiM2lCloANAMga/pub?output=csv" class="flex-1 min-w-0 block w-full px-2 py-1.5 rounded-none rounded-l-md bg-white dark:bg-card border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:ring-brand focus:border-brand" placeholder="Lien GSheets...">
+                        <button id="btnLoadUrl" class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-r-md text-white bg-brand hover:bg-blue-600 focus:outline-none">
+                            <i class="fa-solid fa-link"></i>
                         </button>
                     </div>
                 </div>
@@ -107,277 +115,449 @@
         </div>
     </header>
 
-    <!-- Main Content (Hidden until data loads) -->
-    <main id="dashboardContent" class="hidden flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 space-y-6">
-        
-        <!-- Interactive Filters -->
-        <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 items-end">
-            <div>
-                <label class="block text-xs font-bold text-brand mb-1">Vue Graphiques</label>
-                <select id="filterTimeView" class="w-full bg-blue-50/50 dark:bg-blue-900/20 border border-brand text-brand dark:text-brand_light rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none shadow-sm font-medium">
-                    <option value="day">Par Jour</option>
-                    <option value="week">Par Semaine</option>
-                    <option value="month">Par Mois</option>
-                    <option value="quarter">Par Trimestre</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Année</label>
-                <select id="filterAnnee" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Toutes</option></select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mois</label>
-                <select id="filterMois" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Tous</option></select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Semaine</label>
-                <select id="filterSemaine" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Toutes</option></select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Segment Principal</label>
-                <select id="filterSegment" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
-                    <option value="ALL">Global</option>
-                    <option value="RETAIL">Retail</option>
-                    <option value="INDUSTRIAL">Industriel</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Produit</label>
-                <select id="filterProduit" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
-                    <option value="ALL">Tous</option>
-                    <option value="FANGAH">Fangah</option>
-                    <option value="EXTRA">Extra</option>
-                    <option value="SUPERPRO">Superpro</option>
-                    <option value="SUPERBRIC">Superbric</option>
-                    <option value="BLANC">Blanc</option>
-                    <option value="ZEBDA">Zebda</option>
-                    <option value="CHF">CHF</option>
-                    <option value="CPA">CPA</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Conditionnement</label>
-                <select id="filterCond" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
-                    <option value="ALL">Tous</option>
-                    <option value="SAC">Sacs</option>
-                    <option value="VRAC">Vrac</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Transport</label>
-                <select id="filterTransport" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
-                    <option value="ALL">Tous</option>
-                    <option value="DDP">DDP</option>
-                    <option value="EXW">EXW</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Région</label>
-                <select id="filterRegion" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
-                    <option value="ALL">Toutes</option>
-                    <option value="ABIDJAN">Abidjan</option>
-                    <option value="BOUAKE">Bouaké</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Cible Annuelle (T)</label>
-                <input type="number" id="inputCibleAnnuelle" value="1340000" step="10000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
-            </div>
-            <div class="col-span-2 md:col-span-2 lg:col-span-2">
-                <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Vol. Min/Jour : <span id="volVal" class="text-brand">0</span></label>
-                <input type="range" id="filterVolume" min="0" max="10000" value="0" class="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer mt-2">
-            </div>
-            <div class="col-span-2 md:col-span-2 lg:col-span-2 flex items-end gap-2">
-                <div class="flex-1">
-                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Marge Min.</label>
-                    <select id="filterMargin" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
-                        <option value="0">Toutes</option>
-                        <option value="90">> 90%</option>
-                        <option value="95">> 95%</option>
-                    </select>
-                </div>
-                <button id="resetFilters" class="px-4 py-1.5 h-[34px] bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-gray-800 dark:text-white text-sm transition font-medium">Reset</button>
-            </div>
-        </section>
-
-        <!-- Top KPIs -->
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="glass-panel rounded-xl p-5 border-l-4 border-brand relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 text-brand opacity-10 text-7xl"><i class="fa-solid fa-coins"></i></div>
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Ventes Filtrées</h3>
-                <div class="flex items-end gap-3">
-                    <span id="kpiVentes" class="text-3xl font-bold text-gray-900 dark:text-white">0</span>
-                    <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">T</span>
-                </div>
-                <div class="text-xs mt-2 text-gray-500 dark:text-gray-400">Total strict de la sélection</div>
-            </div>
-
-            <div class="glass-panel rounded-xl p-5 border-l-4 border-accent relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 text-accent opacity-10 text-7xl"><i class="fa-solid fa-bullseye"></i></div>
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Taux de Réalisation</h3>
-                <div class="flex items-end gap-3">
-                    <span id="kpiRealisation" class="text-3xl font-bold text-gray-900 dark:text-white">0%</span>
-                </div>
-                <div class="text-xs mt-2 text-gray-500 dark:text-gray-400">Obj Global vs Ventes Sélectionnées</div>
-                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
-                    <div id="kpiProgress" class="bg-accent h-1.5 rounded-full" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <div class="glass-panel rounded-xl p-5 border-l-4 border-purple-500 relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 text-purple-500 opacity-10 text-7xl"><i class="fa-solid fa-chart-pie"></i></div>
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Mix Retail & Industrial</h3>
-                <div class="flex flex-col gap-2 mt-2">
-                    <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-1">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">Retail</span>
-                        <div>
-                            <span id="kpiVolRetail" class="text-lg font-bold text-gray-900 dark:text-white">0</span>
-                            <span id="kpiRatioRetail" class="text-xs font-bold text-purple-500 dark:text-purple-400 ml-1">(0%)</span>
-                        </div>
-                    </div>
-                    <div class="flex justify-between items-center pt-1">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">Industrial</span>
-                        <div>
-                            <span id="kpiVolIndus" class="text-lg font-bold text-gray-900 dark:text-white">0</span>
-                            <span id="kpiRatioIndus" class="text-xs font-bold text-brand ml-1">(0%)</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="glass-panel rounded-xl p-5 border-l-4 border-yellow-500 relative overflow-hidden">
-                <div class="absolute -right-4 -top-4 text-yellow-500 opacity-10 text-7xl"><i class="fa-solid fa-truck"></i></div>
-                <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Ratios Opérationnels</h3>
-                <div class="flex flex-col gap-2 mt-2">
-                    <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-1">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">Ratio CPA (Moy)</span>
-                        <span id="kpiRatioCPA" class="text-xl font-bold text-gray-900 dark:text-white">0%</span>
-                    </div>
-                    <div class="flex justify-between items-center pt-1">
-                        <span class="text-sm text-gray-500 dark:text-gray-400">Ratio DDP (Moy)</span>
-                        <span id="kpiRatioDDP" class="text-xl font-bold text-gray-900 dark:text-white">0%</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Charts Grid -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse de Tendance : Volumes Strictement Filtrés</h3>
-                    <button onclick="renderChartTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                </div>
-                <div id="chartTrend" class="w-full h-[300px]"></div>
-            </div>
-
-            <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution : Ratios CPA & DDP</h3>
-                    <button onclick="renderChartRatios()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                </div>
-                <div id="chartRatios" class="w-full h-[300px]"></div>
-            </div>
-
-            <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 id="titleForecast" class="text-lg font-semibold text-gray-800 dark:text-white">Prévisions (Objectif 1,34M) : Retail vs Industrial (Année en cours)</h3>
-                    <button onclick="renderChartForecast()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                </div>
-                <div id="chartForecast" class="w-full h-[300px]"></div>
-            </div>
-
-            <div class="glass-panel rounded-xl p-4">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Décomposition de la Performance (Waterfall)</h3>
-                    <button onclick="renderChartWaterfall()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                </div>
-                <div id="chartWaterfall" class="w-full h-[350px]"></div>
-            </div>
-
-            <div class="glass-panel rounded-xl p-4">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse de Pareto : Top Produits (Actifs)</h3>
-                    <button onclick="renderChartPareto()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                </div>
-                <div id="chartPareto" class="w-full h-[350px]"></div>
-            </div>
-
-            <div class="glass-panel rounded-xl p-4">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Mix Conditionnement : VRAC vs SAC</h3>
-                    <button onclick="renderChartVracSac()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                </div>
-                <div id="chartVracSac" class="w-full h-[350px]"></div>
-            </div>
-
-            <div class="glass-panel rounded-xl p-4">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Mix Segment : Retail vs Industrial</h3>
-                    <button onclick="renderChartRetInd()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                        <i class="fa-solid fa-rotate-right"></i>
-                    </button>
-                </div>
-                <div id="chartRetInd" class="w-full h-[350px]"></div>
-            </div>
-        </section>
-
-        <!-- Executive Summary -->
-        <section class="glass-panel rounded-xl p-6 border-t-4 border-brand_light mt-4 relative">
-            <div class="flex items-center justify-between gap-2 mb-4">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-brain text-brand_light text-xl"></i>
-                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Executive Summary & Insights Dynamiques</h2>
-                </div>
-                <!-- Bouton IA Gemini -->
-                <button id="btnAiInsights" class="hidden px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-md text-sm font-bold text-white transition shadow-lg flex items-center gap-2">
-                    ✨ Générer Analyse IA
-                </button>
-            </div>
-            
-            <div id="executiveSummary" class="text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 text-sm"></div>
-
-            <!-- Bloc IA caché par défaut -->
-            <div id="aiInsightsContainer" class="hidden mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <div class="flex items-center gap-2 mb-4">
-                    <i class="fa-solid fa-robot text-purple-500 dark:text-purple-400 text-xl"></i>
-                    <h3 class="text-lg font-bold ai-text">CFO Copilot (Gemini AI) ✨</h3>
-                </div>
-                
-                <div id="aiLoading" class="hidden flex items-center gap-3 text-purple-500 dark:text-purple-400 text-sm italic mb-4">
-                    <div class="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-purple-500 dark:border-purple-400"></div>
-                    Analyse stratégique en cours de génération...
-                </div>
-                
-                <div id="aiContent" class="text-gray-800 dark:text-gray-200 text-sm leading-relaxed space-y-4 bg-gray-100 dark:bg-gray-800/60 p-5 rounded-lg ai-border"></div>
-            </div>
-        </section>
-        
-        <div class="h-10"></div>
-    </main>
-
-    <!-- Loading Overlay -->
+    <!-- LOADING OVERLAY -->
     <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/90 dark:bg-darker/90 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand mb-4"></div>
         <p class="text-gray-900 dark:text-white text-lg font-medium">Analyse Multi-Dimensionnelle...</p>
     </div>
 
+    <!-- MAIN CONTAINER -->
+    <main id="dashboardContent" class="hidden flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 space-y-6">
+        
+        <!-- ================================================================================================= -->
+        <!-- ONGLET 1 : VENTES & MARGES -->
+        <!-- ================================================================================================= -->
+        <div id="viewVentes" class="space-y-6">
+            <!-- Interactive Filters -->
+            <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-bold text-brand mb-1">Vue Graphiques</label>
+                    <select id="filterTimeView" class="w-full bg-blue-50/50 dark:bg-blue-900/20 border border-brand text-brand dark:text-brand_light rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none shadow-sm font-medium">
+                        <option value="day">Par Jour</option>
+                        <option value="week">Par Semaine</option>
+                        <option value="month">Par Mois</option>
+                        <option value="quarter">Par Trimestre</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Année</label>
+                    <select id="filterAnnee" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Toutes</option></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mois</label>
+                    <select id="filterMois" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Tous</option></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Semaine</label>
+                    <select id="filterSemaine" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Toutes</option></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Segment Principal</label>
+                    <select id="filterSegment" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                        <option value="ALL">Global</option>
+                        <option value="RETAIL">Retail</option>
+                        <option value="INDUSTRIAL">Industriel</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Produit</label>
+                    <select id="filterProduit" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                        <option value="ALL">Tous</option>
+                        <option value="FANGAH">Fangah</option>
+                        <option value="EXTRA">Extra</option>
+                        <option value="SUPERPRO">Superpro</option>
+                        <option value="SUPERBRIC">Superbric</option>
+                        <option value="BLANC">Blanc</option>
+                        <option value="ZEBDA">Zebda</option>
+                        <option value="CHF">CHF</option>
+                        <option value="CPA">CPA</option>
+                        <option value="MINIER">Minier</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Conditionnement</label>
+                    <select id="filterCond" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                        <option value="ALL">Tous</option>
+                        <option value="SAC">Sacs</option>
+                        <option value="VRAC">Vrac</option>
+                        <option value="BIG-BAG">Big-Bag</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Transport</label>
+                    <select id="filterTransport" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                        <option value="ALL">Tous</option>
+                        <option value="DDP">DDP</option>
+                        <option value="EXW">EXW</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Région</label>
+                    <select id="filterRegion" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                        <option value="ALL">Toutes</option>
+                        <option value="ABIDJAN">Abidjan</option>
+                        <option value="BOUAKE">Bouaké</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Cible Annuelle (T)</label>
+                    <input type="number" id="inputCibleAnnuelle" value="1340000" step="10000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                </div>
+                <div class="col-span-2 md:col-span-2 lg:col-span-2">
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Vol. Min/Jour : <span id="volVal" class="text-brand">0</span></label>
+                    <input type="range" id="filterVolume" min="0" max="10000" value="0" class="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer mt-2">
+                </div>
+                <div class="col-span-2 md:col-span-2 lg:col-span-2 flex items-end gap-2">
+                    <div class="flex-1">
+                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Marge Min.</label>
+                        <select id="filterMargin" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                            <option value="0">Toutes</option>
+                            <option value="90">> 90%</option>
+                            <option value="95">> 95%</option>
+                        </select>
+                    </div>
+                    <button id="resetFilters" class="px-4 py-1.5 h-[34px] bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-gray-800 dark:text-white text-sm transition font-medium">Reset</button>
+                </div>
+            </section>
+
+            <!-- Top KPIs -->
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-brand relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-brand opacity-10 text-7xl"><i class="fa-solid fa-coins"></i></div>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Ventes Filtrées</h3>
+                    <div class="flex items-end gap-3">
+                        <span id="kpiVentes" class="text-3xl font-bold text-gray-900 dark:text-white">0</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">T</span>
+                    </div>
+                    <div class="text-xs mt-2 text-gray-500 dark:text-gray-400">Total strict de la sélection</div>
+                </div>
+
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-accent relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-accent opacity-10 text-7xl"><i class="fa-solid fa-bullseye"></i></div>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Taux de Réalisation</h3>
+                    <div class="flex items-end gap-3">
+                        <span id="kpiRealisation" class="text-3xl font-bold text-gray-900 dark:text-white">0%</span>
+                    </div>
+                    <div class="text-xs mt-2 text-gray-500 dark:text-gray-400">Obj Global vs Ventes Sélectionnées</div>
+                    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5 mt-2">
+                        <div id="kpiProgress" class="bg-accent h-1.5 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-purple-500 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-purple-500 opacity-10 text-7xl"><i class="fa-solid fa-chart-pie"></i></div>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Mix Retail & Industrial</h3>
+                    <div class="flex flex-col gap-2 mt-2">
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-1">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Retail</span>
+                            <div>
+                                <span id="kpiVolRetail" class="text-lg font-bold text-gray-900 dark:text-white">0</span>
+                                <span id="kpiRatioRetail" class="text-xs font-bold text-purple-500 dark:text-purple-400 ml-1">(0%)</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center pt-1">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Industrial</span>
+                            <div>
+                                <span id="kpiVolIndus" class="text-lg font-bold text-gray-900 dark:text-white">0</span>
+                                <span id="kpiRatioIndus" class="text-xs font-bold text-brand ml-1">(0%)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-yellow-500 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-yellow-500 opacity-10 text-7xl"><i class="fa-solid fa-truck"></i></div>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Ratios Opérationnels</h3>
+                    <div class="flex flex-col gap-2 mt-2">
+                        <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-1">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Ratio CPA (Moy)</span>
+                            <span id="kpiRatioCPA" class="text-xl font-bold text-gray-900 dark:text-white">0%</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-1">
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Ratio DDP (Moy)</span>
+                            <span id="kpiRatioDDP" class="text-xl font-bold text-gray-900 dark:text-white">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Grid -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse de Tendance : Volumes Strictement Filtrés</h3>
+                        <button onclick="renderChartTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartTrend" class="w-full h-[300px]"></div>
+                </div>
+
+                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution : Ratios CPA & DDP</h3>
+                        <button onclick="renderChartRatios()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartRatios" class="w-full h-[300px]"></div>
+                </div>
+
+                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 id="titleForecast" class="text-lg font-semibold text-gray-800 dark:text-white">Prévisions (Objectif 1,34M) : Retail vs Industrial (Année en cours)</h3>
+                        <button onclick="renderChartForecast()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartForecast" class="w-full h-[300px]"></div>
+                </div>
+
+                <div class="glass-panel rounded-xl p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Décomposition de la Performance (Waterfall)</h3>
+                        <button onclick="renderChartWaterfall()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartWaterfall" class="w-full h-[350px]"></div>
+                </div>
+
+                <div class="glass-panel rounded-xl p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse de Pareto : Top Produits (Actifs)</h3>
+                        <button onclick="renderChartPareto()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartPareto" class="w-full h-[350px]"></div>
+                </div>
+
+                <div class="glass-panel rounded-xl p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Mix Cond. : SAC / VRAC / BIG-BAG</h3>
+                        <button onclick="renderChartVracSac()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartVracSac" class="w-full h-[350px]"></div>
+                </div>
+
+                <div class="glass-panel rounded-xl p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Mix Segment : Retail vs Industrial</h3>
+                        <button onclick="renderChartRetInd()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartRetInd" class="w-full h-[350px]"></div>
+                </div>
+            </section>
+
+            <!-- Executive Summary Sales -->
+            <section class="glass-panel rounded-xl p-6 border-t-4 border-brand_light mt-4 relative">
+                <div class="flex items-center justify-between gap-2 mb-4">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-brain text-brand_light text-xl"></i>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Executive Summary & Insights Dynamiques</h2>
+                    </div>
+                    <button id="btnAiInsights" class="hidden px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-md text-sm font-bold text-white transition shadow-lg flex items-center gap-2">
+                        ✨ Générer Analyse IA
+                    </button>
+                </div>
+                
+                <div id="executiveSummary" class="text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 text-sm"></div>
+
+                <div id="aiInsightsContainer" class="hidden mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i class="fa-solid fa-robot text-purple-500 dark:text-purple-400 text-xl"></i>
+                        <h3 class="text-lg font-bold ai-text">CFO Copilot (Gemini AI) ✨</h3>
+                    </div>
+                    <div id="aiLoading" class="hidden flex items-center gap-3 text-purple-500 dark:text-purple-400 text-sm italic mb-4">
+                        <div class="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-purple-500 dark:border-purple-400"></div>
+                        Analyse stratégique en cours de génération...
+                    </div>
+                    <div id="aiContent" class="text-gray-800 dark:text-gray-200 text-sm leading-relaxed space-y-4 bg-gray-100 dark:bg-gray-800/60 p-5 rounded-lg ai-border"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ================================================================================================= -->
+        <!-- ONGLET 2 : PRODUCTION & COÛTS -->
+        <!-- ================================================================================================= -->
+        <div id="viewProduction" class="space-y-6 hidden">
+            
+            <!-- Interactive Filters (Prod) -->
+            <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
+                <div>
+                    <label class="block text-xs font-bold text-prod mb-1">Vue Temporelle</label>
+                    <select id="filterProdTimeView" class="w-full bg-orange-50/50 dark:bg-orange-900/20 border border-prod text-prod dark:text-yellow-500 rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none shadow-sm font-medium">
+                        <option value="day">Par Jour</option>
+                        <option value="week">Par Semaine</option>
+                        <option value="month">Par Mois</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Année</label>
+                    <select id="filterProdAnnee" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none"><option value="ALL">Toutes</option></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Mois</label>
+                    <select id="filterProdMois" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none"><option value="ALL">Tous</option></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Semaine</label>
+                    <select id="filterProdSemaine" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none"><option value="ALL">Toutes</option></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Produit de Production</label>
+                    <select id="filterProdProduit" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none"><option value="ALL">Tous</option></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type de Broyeur (BK)</label>
+                    <select id="filterProdBK" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none"><option value="ALL">Tous</option></select>
+                </div>
+                <div class="col-span-2 md:col-span-4 lg:col-span-6 flex justify-end mt-2">
+                    <button id="resetProdFilters" class="px-4 py-1.5 h-[34px] bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-gray-800 dark:text-white text-sm transition font-medium">Reset Filtres</button>
+                </div>
+            </section>
+
+            <!-- Top KPIs Prod -->
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Volume Produit & Débit -->
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-prod relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-prod opacity-10 text-7xl"><i class="fa-solid fa-industry"></i></div>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Qtte Produite (T)</h3>
+                    <div class="flex items-end gap-3">
+                        <span id="kpiProdVol" class="text-3xl font-bold text-gray-900 dark:text-white">0</span>
+                    </div>
+                    <div class="text-xs mt-2 text-gray-500 dark:text-gray-400 font-medium">Débit Moyen: <span id="kpiProdDebit" class="text-cyan-500 font-bold">0</span> t/h</div>
+                </div>
+
+                <!-- Coût MP Moyen (€/t) -->
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-cyan-500 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-cyan-500 opacity-10 text-7xl"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Coût MP Moyen</h3>
+                    <div class="flex items-end gap-3">
+                        <span id="kpiProdCoutMP" class="text-3xl font-bold text-gray-900 dark:text-white">0</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">€/t</span>
+                    </div>
+                    <div class="text-xs mt-2 text-gray-500 dark:text-gray-400 font-medium">Écart vs Target: <span id="kpiProdEcartMPUnit" class="font-bold">0</span> €/t</div>
+                </div>
+
+                <!-- Marge Globale (€) -->
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-accent relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-accent opacity-10 text-7xl"><i class="fa-solid fa-sack-dollar"></i></div>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Marge Globale Générée</h3>
+                    <div class="flex items-end gap-3">
+                        <span id="kpiProdMarge" class="text-3xl font-bold text-gray-900 dark:text-white">0</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">€</span>
+                    </div>
+                    <div class="text-xs mt-2 text-gray-500 dark:text-gray-400 font-medium">Marge Unitaire Moy: <span id="kpiProdMargeUnit" class="text-accent font-bold">0</span> €/t</div>
+                </div>
+
+                <!-- Ecart Marge vs Target (€) -->
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-purple-500 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 text-purple-500 opacity-10 text-7xl"><i class="fa-solid fa-scale-unbalanced"></i></div>
+                    <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Ecart Marge vs Target</h3>
+                    <div class="flex items-end gap-3">
+                        <span id="kpiProdEcart" class="text-3xl font-bold text-gray-900 dark:text-white">0</span>
+                        <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">€</span>
+                    </div>
+                    <div class="text-xs mt-2 text-gray-500 dark:text-gray-400 font-medium tracking-wide">Positif = Défavorable (Rouge)</div>
+                </div>
+            </section>
+
+            <!-- NOUVEAU: Bandeau des Consommations de Matières Premières -->
+            <div class="mb-2">
+                <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Composants Consommés (Tonnages Calculés)</h3>
+                <div id="prodComponentsSummary" class="flex flex-wrap gap-3">
+                    <!-- Les étiquettes MP s'afficheront ici -->
+                </div>
+            </div>
+
+            <!-- Charts Grid Prod -->
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Trend Prod -->
+                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Tendance : Volume Produit & Débit Horloger</h3>
+                        <button onclick="renderChartProdTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartProdTrend" class="w-full h-[300px]"></div>
+                </div>
+
+                <!-- Marge par Produit dans le temps -->
+                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Génération de Marge : Contribution par Produit</h3>
+                        <button onclick="renderChartProdMargeTime()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartProdMargeTime" class="w-full h-[300px]"></div>
+                </div>
+
+                <!-- Mix MP -->
+                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Structure de Recette : Consommation des Matières Premières (Tonnes)</h3>
+                        <button onclick="renderChartProdMix()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartProdMix" class="w-full h-[350px]"></div>
+                </div>
+
+                <!-- Évolution des Coûts (CORRIGÉE : Unitaires €/T) -->
+                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution des Coûts Unitaires Moyens : Calculés vs Targets (€/t)</h3>
+                        <button onclick="renderChartProdCostEvolution()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartProdCostEvolution" class="w-full h-[300px]"></div>
+                </div>
+
+                <!-- Analyse chronologique des écarts -->
+                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse Chronologique : Écarts de Marge Globale vs Target</h3>
+                        <button onclick="renderChartProdEcartTime()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartProdEcartTime" class="w-full h-[300px]"></div>
+                </div>
+
+                <!-- Analyse des Marges / Ecarts par Produit (Horizontal) -->
+                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Performance Financière : Marge Globale (€) et Unitaire (€/t) par Produit</h3>
+                        <button onclick="renderChartProdCost()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartProdCost" class="w-full h-[400px]"></div>
+                </div>
+            </section>
+        </div>
+        
+        <div class="h-10"></div>
+    </main>
+
     <!-- Scripts Core Logic -->
     <script>
         const apiKey = ""; // API Key fournie dynamiquement par l'environnement
         
+        function showLoading(show) {
+            if (show) UI.loadingOverlay.classList.remove('hidden');
+            else setTimeout(() => UI.loadingOverlay.classList.add('hidden'), 500);
+        }
+
         // --- GESTION DU THEME SOMBRE/CLAIR ---
         const themeToggle = document.getElementById('themeToggle');
         const themeIcon = document.getElementById('themeIcon');
@@ -393,7 +573,6 @@
             htmlEl.classList.toggle('dark');
             const isDark = htmlEl.classList.contains('dark');
             localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            
             if (isDark) {
                 themeIcon.classList.replace('fa-moon', 'fa-sun');
                 themeIcon.classList.replace('text-gray-600', 'text-yellow-500');
@@ -401,27 +580,59 @@
                 themeIcon.classList.replace('fa-sun', 'fa-moon');
                 themeIcon.classList.replace('text-yellow-500', 'text-gray-600');
             }
-            
-            if (State.filtered && State.filtered.length > 0) {
-                updateDashboard();
-            }
+            refreshCurrentView();
         });
 
         const isDarkMode = () => htmlEl.classList.contains('dark');
 
+        // --- GESTION DES ONGLETS ---
+        let currentTab = 'VENTES';
+        function switchTab(tab) {
+            currentTab = tab;
+            if(tab === 'VENTES') {
+                document.getElementById('viewVentes').classList.remove('hidden');
+                document.getElementById('viewProduction').classList.add('hidden');
+                document.getElementById('tabVentes').classList.add('bg-brand', 'text-white');
+                document.getElementById('tabVentes').classList.remove('bg-transparent', 'text-gray-500', 'dark:text-gray-400');
+                document.getElementById('tabProd').classList.add('bg-transparent', 'text-gray-500', 'dark:text-gray-400');
+                document.getElementById('tabProd').classList.remove('bg-brand', 'text-white');
+                if(State.filtered.length > 0) updateDashboard();
+            } else {
+                document.getElementById('viewVentes').classList.add('hidden');
+                document.getElementById('viewProduction').classList.remove('hidden');
+                document.getElementById('tabProd').classList.add('bg-prod', 'text-white');
+                document.getElementById('tabProd').classList.remove('bg-transparent', 'text-gray-500', 'dark:text-gray-400');
+                document.getElementById('tabVentes').classList.add('bg-transparent', 'text-gray-500', 'dark:text-gray-400');
+                document.getElementById('tabVentes').classList.remove('bg-brand', 'text-white');
+                if(State.filteredProd.length > 0) updateDashboardProd();
+            }
+        }
+        function refreshCurrentView() {
+            if(currentTab === 'VENTES') updateDashboard();
+            else updateDashboardProd();
+        }
+
+        // --- ETAT DE L'APPLICATION ---
         const State = {
-            raw: [],
+            raw: [], // Données Ventes
             filtered: [],
             columns: [],
             colMeta: {},
             activeCols: [],
             targetLanding: 1340000,
             filters: {
-                annee: 'ALL', mois: 'ALL', semaine: 'ALL',
-                segment: 'ALL', produit: 'ALL', cond: 'ALL',
-                transport: 'ALL', region: 'ALL',
-                minVolume: 0, minMargin: 0
-            }
+                annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0
+            },
+            
+            rawProd: [], // Données Production
+            filteredProd: [],
+            filtersProd: {
+                annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL'
+            },
+            
+            dimMapping: [], // Données Dimension
+
+            matiereCols: ['Clinker Gris', 'Clinker Blanc', 'Gypse', 'Granit', 'Laitier', 'Calcaire', 'Pouzzolane', 'Marbre', 'Carbonate']
         };
 
         const UI = {
@@ -443,17 +654,11 @@
             plot_bgcolor: 'rgba(0,0,0,0)',
             font: { color: isDarkMode() ? '#94a3b8' : '#475569', family: 'Inter, sans-serif' },
             margin: { t: 20, r: 20, l: 50, b: 40 },
-            xaxis: { 
-                gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', 
-                zerolinecolor: isDarkMode() ? '#334155' : '#e2e8f0' 
-            },
-            yaxis: { 
-                gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', 
-                zerolinecolor: isDarkMode() ? '#334155' : '#e2e8f0' 
-            }
+            xaxis: { gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', zerolinecolor: isDarkMode() ? '#334155' : '#e2e8f0' },
+            yaxis: { gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', zerolinecolor: isDarkMode() ? '#334155' : '#e2e8f0' }
         });
 
-        // --- OUTILS DE NETTOYAGE ROBUSTES ---
+        // --- OUTILS DE NETTOYAGE ---
         function cleanNumber(val) {
             if (val === null || val === undefined || val === '') return 0;
             if (typeof val === 'number') return val;
@@ -470,7 +675,7 @@
 
         function parseDateToTimestamp(dateStr) {
             if (!dateStr) return 0;
-            let s = String(dateStr).trim().split(' ')[0]; // Retirer l'heure si présente
+            let s = String(dateStr).trim().split(' ')[0];
             let parts = s.split(/[\/\-]/);
             if (parts.length === 3) {
                 let p0 = parts[0], p1 = parts[1], p2 = parts[2];
@@ -481,11 +686,7 @@
                     if (y < 100) y += 2000;
                     let m = parseInt(p1, 10) - 1;
                     let d = parseInt(p0, 10);
-                    // Inversion si format US détecté (MM/DD/YYYY)
-                    if (m > 11) {
-                        m = parseInt(p0, 10) - 1;
-                        d = parseInt(p1, 10);
-                    }
+                    if (m > 11) { m = parseInt(p0, 10) - 1; d = parseInt(p1, 10); }
                     return new Date(y, m, d).getTime();
                 }
             }
@@ -493,7 +694,7 @@
             return isNaN(dObj.getTime()) ? 0 : dObj.getTime();
         }
 
-        function getPlotlyDate(r) {
+        function getPlotlyDate(r, isProd = false) {
             if (r._DATE_SORT > 0) {
                 let d = new Date(r._DATE_SORT);
                 let year = d.getFullYear();
@@ -501,47 +702,37 @@
                 let day = String(d.getDate()).padStart(2, '0');
                 return `${year}-${month}-${day}`; 
             }
-            return r['DATE'] || r['Mois'] || 'Inconnu';
+            return r['Date'] || r['DATE'] || r['Mois'] || 'Inconnu';
         }
 
-        // --- NOUVEAU : Fonction d'agrégation temporelle ---
         function getBucketDate(dateStr, granularity) {
             if (!dateStr || dateStr === 'Inconnu') return 'Inconnu';
             let parts = dateStr.split('-');
             if (parts.length !== 3) return dateStr;
-            
-            let y = parseInt(parts[0], 10);
-            let m = parseInt(parts[1], 10) - 1;
-            let d = parseInt(parts[2], 10);
+            let y = parseInt(parts[0], 10), m = parseInt(parts[1], 10) - 1, d = parseInt(parts[2], 10);
             let dateObj = new Date(y, m, d);
 
-            if (granularity === 'month') {
-                return `${y}-${String(m + 1).padStart(2, '0')}-01`;
-            } else if (granularity === 'quarter') {
-                let qM = Math.floor(m / 3) * 3 + 1;
-                return `${y}-${String(qM).padStart(2, '0')}-01`;
-            } else if (granularity === 'week') {
+            if (granularity === 'month') return `${y}-${String(m + 1).padStart(2, '0')}-01`;
+            if (granularity === 'quarter') { let qM = Math.floor(m / 3) * 3 + 1; return `${y}-${String(qM).padStart(2, '0')}-01`; }
+            if (granularity === 'week') {
                 let day = dateObj.getDay() || 7; 
-                dateObj.setDate(dateObj.getDate() - day + 1); // Retourner au Lundi
-                let wY = dateObj.getFullYear();
-                let wM = String(dateObj.getMonth() + 1).padStart(2, '0');
-                let wD = String(dateObj.getDate()).padStart(2, '0');
-                return `${wY}-${wM}-${wD}`;
+                dateObj.setDate(dateObj.getDate() - day + 1); 
+                return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}-${String(dateObj.getDate()).padStart(2, '0')}`;
             }
-            return dateStr; // Par défaut : Jour
+            return dateStr;
         }
 
-        // Fichiers et Ingéstion
+        // --- FICHIERS ET INGESTION ---
         function handleFile(file) {
             showLoading(true);
-            Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => processData(res.data, res.meta.fields) });
+            Papa.parse(file, { header: false, skipEmptyLines: true, complete: res => processDataRaw(res.data) });
         }
         function handleUrl() {
             let url = UI.gsheetUrl.value.trim();
             if (!url) return;
             if (url.includes('/edit')) url = url.replace(/\/edit.*$/, '/export?format=csv');
             showLoading(true);
-            Papa.parse(url, { download: true, header: true, skipEmptyLines: true, complete: res => processData(res.data, res.meta.fields) });
+            Papa.parse(url, { download: true, header: false, skipEmptyLines: true, complete: res => processDataRaw(res.data) });
         }
 
         UI.dropZone.addEventListener('click', () => UI.fileInput.click());
@@ -551,29 +742,79 @@
         UI.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
         UI.btnLoadUrl.addEventListener('click', handleUrl);
 
-        window.addEventListener('DOMContentLoaded', () => {
-            if (UI.gsheetUrl.value.trim() !== '') {
-                handleUrl();
-            }
-        });
+        window.addEventListener('DOMContentLoaded', () => { if (UI.gsheetUrl.value.trim() !== '') handleUrl(); });
 
-        // -- DATA PROCESSING & OLAP MAPPING --
-        function processData(data, fields) {
-            State.columns = fields;
+        // --- DATA SEPARATION (Ventes / Prod / Dim) ---
+        function processDataRaw(rawArray) {
+            if (!rawArray || rawArray.length < 2) return;
+            
+            let headers = rawArray[0];
+            
+            let prodStartIndex = 52;
+            let dimStartIndex = 84;
+            
+            let ventesFields = headers.slice(0, prodStartIndex);
+            let prodFields = headers.slice(prodStartIndex, dimStartIndex);
+            let dimFields = headers.slice(dimStartIndex);
+
+            let dataVentes = [];
+            let dataProd = [];
+            let dataDim = [];
+
+            for (let i = 1; i < rawArray.length; i++) {
+                let row = rawArray[i];
+                
+                let vRow = {};
+                let hasVentes = false;
+                ventesFields.forEach((h, j) => { 
+                    vRow[h] = row[j]; 
+                    if(row[j] && String(row[j]).trim() !== '') hasVentes = true;
+                });
+                if (hasVentes) dataVentes.push(vRow);
+
+                let pRow = {};
+                let hasProd = false;
+                prodFields.forEach((h, j) => { 
+                    let val = row[prodStartIndex + j];
+                    pRow[h] = val; 
+                    if(val && String(val).trim() !== '') hasProd = true;
+                });
+                if (hasProd) dataProd.push(pRow);
+
+                let dRow = {};
+                let hasDim = false;
+                dimFields.forEach((h, j) => { 
+                    let val = row[dimStartIndex + j];
+                    dRow[h] = val; 
+                    if(val && String(val).trim() !== '') hasDim = true;
+                });
+                if (hasDim) dataDim.push(dRow);
+            }
+
+            processParsedData(dataVentes, dataProd, dataDim, ventesFields);
+        }
+
+        // --- PROCESSING FINAL ---
+        function processParsedData(ventesData, prodData, dimData, ventesFields) {
+            State.columns = ventesFields;
             State.colMeta = {};
             
-            const PRODUCTS = ['FANGAH', 'EXTRA', 'SUPERPRO', 'SUPERBRIC', 'BLANC', 'ZEBDA', 'CHF', 'CPA'];
-            const SEGMENTS = ['RETAIL', 'INDUSTRIAL', 'MINIER'];
-            const CONDS = ['SAC', 'VRAC'];
+            // Paramétrage Ventes
+            const PRODUCTS = ['FANGAH', 'EXTRA', 'SUPERPRO', 'SUPERBRIC', 'BLANC', 'ZEBDA', 'CHF', 'CPA', 'MINIER'];
+            const SEGMENTS = ['RETAIL', 'INDUSTRIAL'];
+            const CONDS = ['SAC', 'VRAC', 'BIG-BAG'];
             const TRANSPORTS = ['DDP', 'EXW'];
-            const metaCols = ['Année', 'Mois', 'Semaine', 'DATE', 'Objectif fixé', 'RETOUR PRODUIT', 'RATIO CPA', 'RATIO DDP'];
+            const metaColsVentes = ['Année', 'Mois', 'Semaine', 'DATE', 'Objectif fixé', 'RETOUR PRODUIT', 'RATIO CPA', 'RATIO DDP'];
             
-            fields.forEach(col => {
+            ventesFields.forEach(col => {
+                if(!col) return;
                 let upperCol = col.toUpperCase();
-                if (metaCols.some(m => m.toUpperCase() === upperCol)) {
+                
+                if (metaColsVentes.some(m => m.toUpperCase() === upperCol)) {
                     State.colMeta[col] = { isData: false };
                     return;
                 }
+                
                 let meta = { isData: true, product: null, segment: null, cond: null, transport: null, region: null };
                 PRODUCTS.forEach(p => { if (upperCol.includes(p)) meta.product = p; });
                 SEGMENTS.forEach(s => { if (upperCol.includes(s)) meta.segment = s; });
@@ -581,88 +822,156 @@
                 TRANSPORTS.forEach(t => { if (upperCol.includes(t)) meta.transport = t; });
                 if (upperCol.includes('ABIDJAN')) meta.region = 'ABIDJAN';
                 if (upperCol.includes('BOUAKE') || upperCol.includes('BKE')) meta.region = 'BOUAKE';
-                State.colMeta[col] = meta;
+                
+                if(meta.product || meta.segment || meta.cond) {
+                    State.colMeta[col] = meta;
+                }
             });
 
-            State.raw = data.map(row => {
+            // Parsing VENTES
+            State.raw = ventesData.map(row => {
                 let cleanRow = {};
-                for (let key in row) {
-                    let meta = State.colMeta[key];
-                    if (!meta) continue;
-                    if (!meta.isData && ['DATE', 'Mois', 'Année', 'Semaine'].includes(key)) {
-                        cleanRow[key] = row[key];
-                    } else {
+                let dStr = row['DATE'] || row['Date'] || '';
+                let mStr = row['Mois'] || '';
+                let yStr = row['Année'] || '';
+                let sStr = row['Semaine'] || '';
+
+                cleanRow['DATE'] = dStr; cleanRow['Mois'] = mStr; cleanRow['Année'] = yStr; cleanRow['Semaine'] = sStr;
+                cleanRow['Objectif fixé'] = cleanNumber(row['Objectif fixé']);
+                cleanRow['RETOUR PRODUIT'] = cleanNumber(row['RETOUR PRODUIT']);
+
+                for (let key in State.colMeta) {
+                    if (State.colMeta[key].isData) {
                         cleanRow[key] = cleanNumber(row[key]);
                     }
                 }
                 
-                cleanRow['_DATE_SORT'] = parseDateToTimestamp(cleanRow['DATE']);
-                
-                if (cleanRow['_DATE_SORT'] === 0 && cleanRow['Année'] && cleanRow['Mois']) {
-                    let y = parseInt(cleanRow['Année']);
-                    let moisStr = String(cleanRow['Mois']).toLowerCase().trim();
+                cleanRow['_DATE_SORT'] = parseDateToTimestamp(dStr);
+                if (cleanRow['_DATE_SORT'] === 0 && yStr && mStr) {
+                    let y = parseInt(yStr);
                     let mNum = 1;
-                    
-                    let parsedM = parseInt(moisStr);
-                    if (!isNaN(parsedM) && parsedM >= 1 && parsedM <= 12) {
-                        mNum = parsedM;
-                    } else {
-                        const moisMap = { 'jan':1, 'fév':2, 'fev':2, 'mar':3, 'avr':4, 'mai':5, 'juin':6, 'juil':7, 'aoû':8, 'aou':8, 'sep':9, 'oct':10, 'nov':11, 'déc':12, 'dec':12 };
-                        for (let k in moisMap) {
-                            if (moisStr.includes(k)) { mNum = moisMap[k]; break; }
-                        }
+                    let parsedM = parseInt(mStr);
+                    if (!isNaN(parsedM) && parsedM >= 1 && parsedM <= 12) mNum = parsedM;
+                    else {
+                        const mMap = { 'jan':1, 'fév':2, 'fev':2, 'mar':3, 'avr':4, 'mai':5, 'juin':6, 'juil':7, 'aoû':8, 'aou':8, 'sep':9, 'oct':10, 'nov':11, 'déc':12, 'dec':12 };
+                        for (let k in mMap) { if (String(mStr).toLowerCase().includes(k)) { mNum = mMap[k]; break; } }
                     }
-                    
-                    if (!isNaN(y) && y > 2000) {
-                        cleanRow['_DATE_SORT'] = new Date(y, mNum - 1, 28).getTime(); 
-                    }
+                    if (!isNaN(y) && y > 2000) cleanRow['_DATE_SORT'] = new Date(y, mNum - 1, 28).getTime(); 
                 }
-                
                 return cleanRow;
             });
 
+            // Parsing PRODUCTION - Avec tolérance aux fautes de frappe et EXCLUSIONS
+            const getColRobust = (r, searchTerms, excludeTerms = []) => {
+                // 1. Match exact
+                for (let t of searchTerms) {
+                    if (r[t] !== undefined) return cleanNumber(r[t]);
+                }
+                // 2. Match partiel intelligent
+                let keys = Object.keys(r);
+                for (let k of keys) {
+                    let upperK = k.toUpperCase();
+                    let isExcluded = excludeTerms.some(ex => upperK.includes(ex.toUpperCase()));
+                    if (!isExcluded && searchTerms.some(s => upperK.includes(s.toUpperCase()))) {
+                        return cleanNumber(r[k]);
+                    }
+                }
+                return 0;
+            };
+
+            State.rawProd = [];
+            prodData.forEach(row => {
+                let prodName = row['Produit Poduction'] || row['Produit Production'] || row['Produit'];
+                if (prodName && prodName.trim() !== '') {
+                    let dStr = row['Date'] || row['DATE'] || '';
+                    let pRow = {
+                        Date: dStr,
+                        Semaine: row['Semaine'],
+                        Mois: row['Mois'],
+                        Année: row['Année'],
+                        Produit: String(prodName).toUpperCase().trim(),
+                        BK: row['BK'],
+                        Refus45: cleanNumber(row['Refus 45 (%)']),
+                        Debit: cleanNumber(row['Débit (t/h)']),
+                        Qtte: cleanNumber(row['Qtte (t)']),
+                        
+                        // Extractions robustes (Valeurs Unitaires en €/t) - On exclut les mots-clés de "Total"
+                        CoutMPUnit: getColRobust(row, ['Coût Matère Première Calculé', 'Coût Matière Première Calculé', 'Coût MP Calculé'], ['Ecart', 'Target', 'Total']),
+                        CoutMPTargetUnit: getColRobust(row, ['Coût Matère Première Target', 'Coût Matière Première Target', 'Coût MP Target'], ['Ecart', 'Total']),
+                        CoutTotalUnit: getColRobust(row, ['Coût Total Calculé'], ['Ecart', 'Total']),
+                        PrixVenteUnit: getColRobust(row, ['Prix Vente'], ['Total']),
+                        
+                        // Sécurisation de la marge unitaire et de l'écart unitaire
+                        MargeUnit: getColRobust(row, ['Marge (E)', 'Marge'], ['Total', 'Ecart', 'Vs', 'Target']),
+                        EcartMargeUnit: getColRobust(row, ['Ecart Vs Target Marge', 'Ecart Marge'], ['Total']),
+                        EcartCoutMPUnit: getColRobust(row, ['Ecart Coût Matère Première', 'Ecart Coût Matière Première'], ['Total']),
+                        
+                        _DATE_SORT: parseDateToTimestamp(dStr)
+                    };
+                    
+                    // Application stricte de votre règle mathématique (Unitaire * Quantité)
+                    pRow.MargeTotale = pRow.MargeUnit * pRow.Qtte;
+                    pRow.EcartMargeTotale = pRow.EcartMargeUnit * pRow.Qtte;
+
+                    if(!pRow.Année && pRow._DATE_SORT > 0) pRow.Année = new Date(pRow._DATE_SORT).getFullYear();
+
+                    State.matiereCols.forEach(mp => { pRow[mp] = cleanNumber(row[mp]); });
+                    State.rawProd.push(pRow);
+                }
+            });
+
+            // Parsing DIMENSION
+            State.dimMapping = dimData;
+
             setupFilters();
             applyFilters();
+            applyFiltersProd();
+            
             showLoading(false);
             UI.dashboardContent.classList.remove('hidden');
-        }
-
-        function showLoading(show) {
-            if (show) UI.loadingOverlay.classList.remove('hidden');
-            else setTimeout(() => UI.loadingOverlay.classList.add('hidden'), 500);
+            switchTab('VENTES');
         }
 
         function setupFilters() {
-            const populateDropdown = (id, colName, allLabel) => {
-                const values = [...new Set(State.raw.map(d => d[colName]).filter(Boolean))];
-                const select = document.getElementById(id);
-                select.innerHTML = `<option value="ALL">${allLabel}</option>`;
-                values.sort().forEach(v => {
-                    let opt = document.createElement('option');
-                    opt.value = v; opt.textContent = v;
-                    select.appendChild(opt);
-                });
+            const getUniques = (arr, key) => [...new Set(arr.map(d => d[key]).filter(Boolean))].sort((a, b) => {
+                if(!isNaN(a) && !isNaN(b)) return a - b;
+                return String(a).localeCompare(String(b));
+            });
+            const populate = (id, values, allLabel) => {
+                let sel = document.getElementById(id);
+                if(!sel) return;
+                sel.innerHTML = `<option value="ALL">${allLabel}</option>`;
+                values.forEach(v => { let o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
             };
-            populateDropdown('filterAnnee', 'Année', 'Toutes (Années)');
-            populateDropdown('filterMois', 'Mois', 'Tous (Mois)');
-            populateDropdown('filterSemaine', 'Semaine', 'Toutes (Semaines)');
 
+            // VENTES
+            populate('filterAnnee', getUniques(State.raw, 'Année'), 'Toutes');
+            populate('filterMois', getUniques(State.raw, 'Mois'), 'Tous');
+            populate('filterSemaine', getUniques(State.raw, 'Semaine'), 'Toutes');
             let maxVol = 0;
             State.raw.forEach(r => {
                 let sum = 0;
                 Object.keys(State.colMeta).forEach(c => { if(State.colMeta[c].isData) sum += (r[c]||0); });
                 if(sum > maxVol) maxVol = sum;
             });
-            const volFilter = document.getElementById('filterVolume');
-            volFilter.max = Math.ceil(maxVol); volFilter.value = 0; UI.volValDisplay.innerText = 0;
+            let vF = document.getElementById('filterVolume');
+            if(vF) { vF.max = Math.ceil(maxVol); vF.value = 0; UI.volValDisplay.innerText = 0; }
+
+            // PROD
+            populate('filterProdAnnee', getUniques(State.rawProd, 'Année'), 'Toutes');
+            populate('filterProdMois', getUniques(State.rawProd, 'Mois'), 'Tous');
+            populate('filterProdSemaine', getUniques(State.rawProd, 'Semaine'), 'Toutes');
+            populate('filterProdProduit', getUniques(State.rawProd, 'Produit'), 'Tous');
+            populate('filterProdBK', getUniques(State.rawProd, 'BK'), 'Tous');
         }
 
-        // --- CŒUR DE L'OLAP : Moteur d'Agrégation Dynamique ---
+        // =======================================================================================
+        // MOTEUR OLAP - VENTES
+        // =======================================================================================
         function applyFilters() {
             State.activeCols = Object.keys(State.colMeta).filter(col => {
                 let m = State.colMeta[col];
                 if (!m.isData) return false;
-                
                 if (State.filters.produit !== 'ALL') {
                     if (State.filters.produit === 'CPA') {
                         if (m.product !== 'SUPERPRO' && m.product !== 'SUPERBRIC' && m.product !== 'CPA') return false;
@@ -670,7 +979,6 @@
                         if (m.product !== State.filters.produit) return false;
                     }
                 }
-                
                 if (State.filters.segment !== 'ALL' && m.segment !== State.filters.segment) return false;
                 if (State.filters.cond !== 'ALL' && m.cond !== State.filters.cond) return false;
                 if (State.filters.transport !== 'ALL' && m.transport !== State.filters.transport) return false;
@@ -695,138 +1003,109 @@
                 let retours = row['RETOUR PRODUIT'] || 0;
 
                 if (dynVentes === 0 && obj === 0 && retours === 0) return null;
-
                 if (dynVentes < State.filters.minVolume) return null;
                 
                 let netRatio = dynVentes > 0 ? ((dynVentes - retours) / dynVentes) * 100 : 0;
                 if (netRatio < State.filters.minMargin) return null;
 
-                return {
-                    ...row,
-                    _DYN_VENTES: dynVentes,
-                    _DYN_RETAIL: dynRetail,
-                    _DYN_INDUS: dynIndus,
-                    _DYN_NET_RATIO: netRatio
-                };
+                return { ...row, _DYN_VENTES: dynVentes, _DYN_RETAIL: dynRetail, _DYN_INDUS: dynIndus, _DYN_NET_RATIO: netRatio };
             }).filter(Boolean);
 
-            updateDashboard();
+            if(currentTab === 'VENTES') updateDashboard();
         }
 
-        // Ecouteur sur la vue temporelle pour rafraichir seulement les graphiques
-        document.getElementById('filterTimeView').addEventListener('change', () => { updateDashboard(); });
-
         ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => {
-            document.getElementById(id).addEventListener('change', (e) => {
-                State.filters[id.replace('filter', '').toLowerCase()] = e.target.value;
-                applyFilters();
-            });
+            let el = document.getElementById(id);
+            if(el) el.addEventListener('change', (e) => { State.filters[id.replace('filter', '').toLowerCase()] = e.target.value; applyFilters(); });
         });
-        document.getElementById('inputCibleAnnuelle').addEventListener('change', (e) => {
-            State.targetLanding = parseFloat(e.target.value) || 0;
-            renderChartForecast();
-        });
+        document.getElementById('inputCibleAnnuelle').addEventListener('change', (e) => { State.targetLanding = parseFloat(e.target.value) || 0; renderChartForecast(); });
         document.getElementById('filterMargin').addEventListener('change', (e) => { State.filters.minMargin = parseFloat(e.target.value); applyFilters(); });
-        document.getElementById('filterVolume').addEventListener('input', (e) => { 
-            State.filters.minVolume = parseFloat(e.target.value); UI.volValDisplay.innerText = formatVal(State.filters.minVolume);
-        });
+        document.getElementById('filterVolume').addEventListener('input', (e) => { State.filters.minVolume = parseFloat(e.target.value); UI.volValDisplay.innerText = formatVal(State.filters.minVolume); });
         document.getElementById('filterVolume').addEventListener('change', () => applyFilters());
         document.getElementById('resetFilters').addEventListener('click', () => {
-            ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => {
-                document.getElementById(id).value = 'ALL';
-            });
-            document.getElementById('filterTimeView').value = 'day';
-            document.getElementById('filterMargin').value = '0';
+            ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => { document.getElementById(id).value = 'ALL'; });
+            document.getElementById('filterTimeView').value = 'day'; document.getElementById('filterMargin').value = '0';
             document.getElementById('filterVolume').value = 0; UI.volValDisplay.innerText = "0";
             State.filters = { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0 };
             applyFilters();
         });
+        document.getElementById('filterTimeView').addEventListener('change', () => { if(currentTab === 'VENTES') updateDashboard(); });
 
-        // --- DASHBOARD RENDERER ---
+        // =======================================================================================
+        // MOTEUR OLAP - PRODUCTION
+        // =======================================================================================
+        function applyFiltersProd() {
+            State.filteredProd = State.rawProd.map(row => {
+                if (State.filtersProd.annee !== 'ALL' && String(row['Année']) !== State.filtersProd.annee) return null;
+                if (State.filtersProd.mois !== 'ALL' && String(row['Mois']) !== State.filtersProd.mois) return null;
+                if (State.filtersProd.semaine !== 'ALL' && String(row['Semaine']) !== State.filtersProd.semaine) return null;
+                if (State.filtersProd.produit !== 'ALL' && row['Produit'] !== State.filtersProd.produit) return null;
+                if (State.filtersProd.bk !== 'ALL' && String(row['BK']) !== State.filtersProd.bk) return null;
+                return row;
+            }).filter(Boolean);
+
+            if(currentTab === 'PROD') updateDashboardProd();
+        }
+
+        ['filterProdAnnee', 'filterProdMois', 'filterProdSemaine', 'filterProdProduit', 'filterProdBK'].forEach(id => {
+            let el = document.getElementById(id);
+            if(el) el.addEventListener('change', (e) => { State.filtersProd[id.replace('filterProd', '').toLowerCase()] = e.target.value; applyFiltersProd(); });
+        });
+        document.getElementById('filterProdTimeView').addEventListener('change', () => { if(currentTab === 'PROD') updateDashboardProd(); });
+        document.getElementById('resetProdFilters').addEventListener('click', () => {
+            ['filterProdAnnee', 'filterProdMois', 'filterProdSemaine', 'filterProdProduit', 'filterProdBK'].forEach(id => { document.getElementById(id).value = 'ALL'; });
+            document.getElementById('filterProdTimeView').value = 'day';
+            State.filtersProd = { annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL' };
+            applyFiltersProd();
+        });
+
+        // =======================================================================================
+        // RENDERERS VENTES
+        // =======================================================================================
         function updateDashboard() {
-            updateKPIs();
-            renderChartTrend();
-            renderChartRatios();
-            renderChartForecast();
-            renderChartWaterfall();
-            renderChartPareto();
-            renderChartVracSac();
-            renderChartRetInd();
-            generateExecutiveSummary();
-            
-            UI.aiInsightsContainer.classList.add('hidden');
-            UI.aiContent.innerHTML = '';
-            if (State.filtered.length > 0) {
-                UI.btnAiInsights.classList.remove('hidden');
-            } else {
-                UI.btnAiInsights.classList.add('hidden');
-            }
+            updateKPIs(); renderChartTrend(); renderChartRatios(); renderChartForecast(); renderChartWaterfall(); renderChartPareto(); renderChartVracSac(); renderChartRetInd(); generateExecutiveSummary();
+            UI.aiInsightsContainer.classList.add('hidden'); UI.aiContent.innerHTML = '';
+            if (State.filtered.length > 0) UI.btnAiInsights.classList.remove('hidden'); else UI.btnAiInsights.classList.add('hidden');
         }
 
         function updateKPIs() {
-            let totalVentes = 0, totalObj = 0, totalRetours = 0;
-            let totalRetail = 0, totalIndus = 0;
-            let totalCPA = 0, totalDDP = 0; 
-            
+            let totalVentes = 0, totalObj = 0, totalRetours = 0, totalRetail = 0, totalIndus = 0, totalCPA = 0, totalDDP = 0; 
             State.filtered.forEach(r => {
-                totalVentes += r._DYN_VENTES;
-                totalObj += (r['Objectif fixé'] || 0);
-                totalRetours += (r['RETOUR PRODUIT'] || 0);
-                totalRetail += r._DYN_RETAIL || 0;
-                totalIndus += r._DYN_INDUS || 0;
-
+                totalVentes += r._DYN_VENTES; totalObj += (r['Objectif fixé'] || 0); totalRetours += (r['RETOUR PRODUIT'] || 0);
+                totalRetail += r._DYN_RETAIL || 0; totalIndus += r._DYN_INDUS || 0;
                 State.activeCols.forEach(col => {
-                    let meta = State.colMeta[col];
-                    let val = r[col] || 0;
+                    let meta = State.colMeta[col]; let val = r[col] || 0;
                     if (meta.transport === 'DDP') totalDDP += val;
                     if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') totalCPA += val;
                 });
             });
-
             document.getElementById('kpiVentes').innerText = formatVal(totalVentes);
-            
             let reaRatio = totalObj > 0 ? (totalVentes / totalObj) * 100 : 0;
-            let reaEl = document.getElementById('kpiRealisation');
-            reaEl.innerText = reaRatio.toFixed(1) + '%';
+            let reaEl = document.getElementById('kpiRealisation'); reaEl.innerText = reaRatio.toFixed(1) + '%';
             document.getElementById('kpiProgress').style.width = Math.min(reaRatio, 100) + '%';
             reaEl.className = `text-3xl font-bold ${reaRatio >= 100 ? 'text-accent' : (reaRatio > 80 ? 'text-brand_light' : 'text-danger')}`;
 
             let ratioRetail = totalVentes > 0 ? (totalRetail / totalVentes) * 100 : 0;
             let ratioIndus = totalVentes > 0 ? (totalIndus / totalVentes) * 100 : 0;
+            document.getElementById('kpiVolRetail').innerText = formatVal(totalRetail, ' T'); document.getElementById('kpiRatioRetail').innerText = `(${ratioRetail.toFixed(1)}%)`;
+            document.getElementById('kpiVolIndus').innerText = formatVal(totalIndus, ' T'); document.getElementById('kpiRatioIndus').innerText = `(${ratioIndus.toFixed(1)}%)`;
             
-            document.getElementById('kpiVolRetail').innerText = formatVal(totalRetail, ' T');
-            document.getElementById('kpiRatioRetail').innerText = `(${ratioRetail.toFixed(1)}%)`;
-            
-            document.getElementById('kpiVolIndus').innerText = formatVal(totalIndus, ' T');
-            document.getElementById('kpiRatioIndus').innerText = `(${ratioIndus.toFixed(1)}%)`;
-
-            let avgCPA = totalVentes > 0 ? (totalCPA / totalVentes) * 100 : 0;
-            let avgDDP = totalVentes > 0 ? (totalDDP / totalVentes) * 100 : 0;
-            document.getElementById('kpiRatioCPA').innerText = avgCPA.toFixed(1) + '%';
-            document.getElementById('kpiRatioDDP').innerText = avgDDP.toFixed(1) + '%';
+            document.getElementById('kpiRatioCPA').innerText = (totalVentes > 0 ? (totalCPA / totalVentes) * 100 : 0).toFixed(1) + '%';
+            document.getElementById('kpiRatioDDP').innerText = (totalVentes > 0 ? (totalDDP / totalVentes) * 100 : 0).toFixed(1) + '%';
         }
 
         function renderChartTrend() {
             let timeView = document.getElementById('filterTimeView').value;
             let bucketData = {};
-            
             State.filtered.forEach(r => {
                 let exactDate = getPlotlyDate(r);
                 if (!exactDate || exactDate === 'Inconnu') return;
-                
                 let bucket = getBucketDate(exactDate, timeView);
-                if (!bucketData[bucket]) {
-                    bucketData[bucket] = { sort: new Date(bucket).getTime(), ventes: 0, obj: 0 };
-                }
-                bucketData[bucket].ventes += r._DYN_VENTES;
-                bucketData[bucket].obj += (r['Objectif fixé'] || 0);
+                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), ventes: 0, obj: 0 };
+                bucketData[bucket].ventes += r._DYN_VENTES; bucketData[bucket].obj += (r['Objectif fixé'] || 0);
             });
-
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
-            if(sortedDates.length === 0) {
-                Plotly.purge('chartTrend');
-                return;
-            }
+            if(sortedDates.length === 0) { Plotly.purge('chartTrend'); return; }
 
             let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].ventes), type: timeView==='day'?'scatter':'bar', mode: 'lines+markers', name: 'Ventes', marker: {color: '#3b82f6'}, line: {color: '#3b82f6', width: 3}, fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)' };
             let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].obj), type: 'scatter', mode: 'lines+markers', name: 'Objectif', marker: {color: '#ef4444'}, line: {color: '#ef4444', width: 2, dash: 'dot'} };
@@ -836,50 +1115,31 @@
         function renderChartRatios() {
             let timeView = document.getElementById('filterTimeView').value;
             let bucketData = {};
-            
             State.filtered.forEach(r => {
                 let exactDate = getPlotlyDate(r);
                 if (!exactDate || exactDate === 'Inconnu') return;
-                
                 let bucket = getBucketDate(exactDate, timeView);
                 if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), totalVol: 0, ddpVol: 0, cpaVol: 0 };
-                
                 let dVol = 0, cVol = 0, tVol = r._DYN_VENTES;
-
                 State.activeCols.forEach(col => {
-                    let meta = State.colMeta[col];
-                    let val = r[col] || 0;
+                    let meta = State.colMeta[col]; let val = r[col] || 0;
                     if (meta.transport === 'DDP') dVol += val;
                     if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') cVol += val;
                 });
-
-                bucketData[bucket].totalVol += tVol;
-                bucketData[bucket].ddpVol += dVol;
-                bucketData[bucket].cpaVol += cVol;
+                bucketData[bucket].totalVol += tVol; bucketData[bucket].ddpVol += dVol; bucketData[bucket].cpaVol += cVol;
             });
-
             let sortedDates = Object.keys(bucketData).sort((a,b) => bucketData[a].sort - bucketData[b].sort);
-            if(sortedDates.length === 0) {
-                Plotly.purge('chartRatios');
-                return;
-            }
+            if(sortedDates.length === 0) { Plotly.purge('chartRatios'); return; }
 
             let xVals = [], cpaVals = [], ddpVals = [];
             sortedDates.forEach(d => {
                 xVals.push(d);
-                let day = bucketData[d];
-                cpaVals.push(day.totalVol > 0 ? (day.cpaVol / day.totalVol) * 100 : null);
-                ddpVals.push(day.totalVol > 0 ? (day.ddpVol / day.totalVol) * 100 : null);
+                cpaVals.push(bucketData[d].totalVol > 0 ? (bucketData[d].cpaVol / bucketData[d].totalVol) * 100 : null);
+                ddpVals.push(bucketData[d].totalVol > 0 ? (bucketData[d].ddpVol / bucketData[d].totalVol) * 100 : null);
             });
-
-            let trace1 = { x: xVals, y: cpaVals, type: 'scatter', mode: 'lines+markers', name: 'Ratio CPA', line: {color: '#8b5cf6', width: 2}, connectgaps: true };
-            let trace2 = { x: xVals, y: ddpVals, type: 'scatter', mode: 'lines+markers', name: 'Ratio DDP', line: {color: '#f59e0b', width: 2}, connectgaps: true };
-
-            let layout = { 
-                ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 },
-                yaxis: { title: 'Ratio Moyen (%)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', ticksuffix: '%' }
-            };
-            Plotly.newPlot('chartRatios', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
+            let trace1 = { x: xVals, y: cpaVals, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Ratio CPA', line: {color: '#8b5cf6', width: 2}, connectgaps: true };
+            let trace2 = { x: xVals, y: ddpVals, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Ratio DDP', line: {color: '#f59e0b', width: 2}, connectgaps: true };
+            Plotly.newPlot('chartRatios', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Ratio Moyen (%)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', ticksuffix: '%' } }, {responsive: true, displayModeBar: false});
         }
 
         function renderChartForecast() {
@@ -888,7 +1148,6 @@
                 let dStr = getPlotlyDate(r);
                 if (!dStr || dStr === 'Inconnu') return;
                 if (!dailyData[dStr]) dailyData[dStr] = { sort: r._DATE_SORT, retail: 0, indus: 0 };
-                
                 Object.keys(State.colMeta).forEach(col => {
                     let meta = State.colMeta[col];
                     if (meta && meta.isData) {
@@ -898,153 +1157,78 @@
                     }
                 });
             });
-
             let sortedDates = Object.keys(dailyData).sort((a,b) => dailyData[a].sort - dailyData[b].sort);
-            if (sortedDates.length < 2) {
-                Plotly.purge('chartForecast');
-                return;
-            }
+            if (sortedDates.length < 2) { Plotly.purge('chartForecast'); return; }
 
-            let lastDataTs = dailyData[sortedDates[sortedDates.length-1]].sort;
-            let targetYear = new Date(lastDataTs).getFullYear();
-            
+            let targetYear = new Date(dailyData[sortedDates[sortedDates.length-1]].sort).getFullYear();
             sortedDates = sortedDates.filter(d => new Date(dailyData[d].sort).getFullYear() === targetYear);
-            if (sortedDates.length === 0) {
-                Plotly.purge('chartForecast');
-                return;
-            }
+            if (sortedDates.length === 0) { Plotly.purge('chartForecast'); return; }
 
             let histX = [], cumRet = [], cumInd = [];
-            let totalRet = 0, totalInd = 0;
-            let monthlyActuals = {}; 
-
+            let totalRet = 0, totalInd = 0, monthlyActuals = {}; 
             sortedDates.forEach(d => {
                 let dObj = new Date(dailyData[d].sort);
                 let mKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
-
                 if (!monthlyActuals[mKey]) monthlyActuals[mKey] = { ret: 0, ind: 0 };
-                monthlyActuals[mKey].ret += dailyData[d].retail;
-                monthlyActuals[mKey].ind += dailyData[d].indus;
-
-                totalRet += dailyData[d].retail;
-                totalInd += dailyData[d].indus;
-                
-                histX.push(d);
-                cumRet.push(totalRet);
-                cumInd.push(totalInd);
+                monthlyActuals[mKey].ret += dailyData[d].retail; monthlyActuals[mKey].ind += dailyData[d].indus;
+                totalRet += dailyData[d].retail; totalInd += dailyData[d].indus;
+                histX.push(d); cumRet.push(totalRet); cumInd.push(totalInd);
             });
 
             let lastTs = dailyData[sortedDates[sortedDates.length-1]].sort;
             let endOfYear = new Date(targetYear, 11, 31).getTime();
             
             let targetTotalLanding = State.targetLanding;
-            let targetFormatted = (targetTotalLanding / 1000000).toFixed(2).replace('.', ',');
-            document.getElementById('titleForecast').innerText = `Prévisions (Objectif ${targetFormatted}M) : Retail vs Industrial (Année en cours)`;
-
+            document.getElementById('titleForecast').innerText = `Prévisions (Objectif ${(targetTotalLanding / 1000000).toFixed(2).replace('.', ',')}M) : Retail vs Industrial (Vue Journalière)`;
             let currentTotal = totalRet + totalInd;
             let requiredRemainingVol = Math.max(0, targetTotalLanding - currentTotal);
             let mixRet = currentTotal > 0 ? totalRet / currentTotal : 0.5;
             let mixInd = currentTotal > 0 ? totalInd / currentTotal : 0.5;
 
-            const holidaysList = [
-                '01-01', '03-16', '03-20', '04-06', '05-01', '05-14', 
-                '05-25', '05-27', '07-27', '08-07', '08-15', '11-01', 
-                '11-15', '12-25'
-            ];
+            const holidaysList = [ '01-01', '03-16', '03-20', '04-06', '05-01', '05-14', '05-25', '05-27', '07-27', '08-07', '08-15', '11-01', '11-15', '12-25' ];
             
             const getDayWeight = (dObj) => {
-                let m = dObj.getMonth() + 1;
-                let d = dObj.getDate();
-                let md = `${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                
+                let md = `${String(dObj.getMonth() + 1).padStart(2, '0')}-${String(dObj.getDate()).padStart(2, '0')}`;
                 if (holidaysList.includes(md)) return 0.1;
+                let m = dObj.getMonth() + 1, d = dObj.getDate();
                 if ((m === 5 && d >= 15) || m === 6 || (m === 7 && d <= 15)) return 0.6;
                 if (m === 10 || m === 11) return 0.8;
                 return 1.0;
             };
 
-            let futureX = [], futRet = [], futInd = [];
-            let monthlyTargets = {}; 
-            const monthNames = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"];
-
-            let tempTs = lastTs + 86400000;
-            let totalWeight = 0;
-            let futureDays = [];
-            
-            while (tempTs <= endOfYear) {
-                let dObj = new Date(tempTs);
-                let w = getDayWeight(dObj);
-                totalWeight += w;
-                futureDays.push({ ts: tempTs, weight: w });
-                tempTs += 86400000;
+            let futureX = [], futRet = [], futInd = [], monthlyTargets = {}, totalWeight = 0, futureDays = [];
+            for(let tempTs = lastTs + 86400000; tempTs <= endOfYear; tempTs += 86400000) {
+                let w = getDayWeight(new Date(tempTs)); totalWeight += w; futureDays.push({ ts: tempTs, weight: w });
             }
 
-            let currentCumRet = totalRet;
-            let currentCumInd = totalInd;
-            let landingRet = totalRet;
-            let landingInd = totalInd;
-
+            let currentCumRet = totalRet, currentCumInd = totalInd, landingRet = totalRet, landingInd = totalInd;
             futureDays.forEach(day => {
-                let dObj = new Date(day.ts);
-                futureX.push(dObj.toISOString().split('T')[0]);
-                
+                let dObj = new Date(day.ts); futureX.push(dObj.toISOString().split('T')[0]);
                 let dayVol = totalWeight > 0 ? (requiredRemainingVol * (day.weight / totalWeight)) : 0;
-                let dVolRet = dayVol * mixRet;
-                let dVolInd = dayVol * mixInd;
+                currentCumRet += dayVol * mixRet; currentCumInd += dayVol * mixInd;
+                futRet.push(currentCumRet); futInd.push(currentCumInd);
+                landingRet = currentCumRet; landingInd = currentCumInd;
                 
                 let mKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
-                
                 if (!monthlyTargets[mKey]) {
                     monthlyTargets[mKey] = {
-                        label: monthNames[dObj.getMonth()],
+                        label: ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"][dObj.getMonth()],
                         midDate: new Date(dObj.getFullYear(), dObj.getMonth(), 15).toISOString().split('T')[0], 
                         ret: monthlyActuals[mKey] ? monthlyActuals[mKey].ret : 0,
                         ind: monthlyActuals[mKey] ? monthlyActuals[mKey].ind : 0
                     };
                 }
-                
-                monthlyTargets[mKey].ret += dVolRet;
-                monthlyTargets[mKey].ind += dVolInd;
-                
-                currentCumRet += dVolRet;
-                currentCumInd += dVolInd;
-                
-                futRet.push(currentCumRet);
-                futInd.push(currentCumInd);
-                
-                landingRet = currentCumRet;
-                landingInd = currentCumInd;
+                monthlyTargets[mKey].ret += dayVol * mixRet;
+                monthlyTargets[mKey].ind += dayVol * mixInd;
             });
 
-            if (futureX.length > 0) {
-                futureX.unshift(histX[histX.length-1]);
-                futRet.unshift(cumRet[cumRet.length-1]);
-                futInd.unshift(cumInd[cumInd.length-1]);
-            }
-
-            // --- Agrégation des courbes cumulatives selon la vue temporelle ---
-            let timeView = document.getElementById('filterTimeView').value;
-            
-            function aggregateCumSeries(xArr, yRet, yInd, granularity) {
-                if (granularity === 'day' || xArr.length === 0) return {x: xArr, r: yRet, i: yInd};
-                let buckets = {};
-                for (let i = 0; i < xArr.length; i++) {
-                    let bucket = getBucketDate(xArr[i], granularity);
-                    // Remplacement itératif : on conserve toujours la dernière valeur cumulée de la période
-                    buckets[bucket] = { r: yRet[i], i: yInd[i] };
-                }
-                let sortedKeys = Object.keys(buckets).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-                return { x: sortedKeys, r: sortedKeys.map(k => buckets[k].r), i: sortedKeys.map(k => buckets[k].i) };
-            }
-
-            let histAgg = aggregateCumSeries(histX, cumRet, cumInd, timeView);
-            let futAgg = aggregateCumSeries(futureX, futRet, futInd, timeView);
+            if (futureX.length > 0) { futureX.unshift(histX[histX.length-1]); futRet.unshift(cumRet[cumRet.length-1]); futInd.unshift(cumInd[cumInd.length-1]); }
 
             let traces = [
-                { x: histAgg.x, y: histAgg.r, type: 'scatter', mode: 'lines+markers', name: 'Retail (YTD)', line: {color: '#a855f7', width: 3} },
-                { x: histAgg.x, y: histAgg.i, type: 'scatter', mode: 'lines+markers', name: 'Industrial (YTD)', line: {color: '#10b981', width: 3} },
-                { x: futAgg.x, y: futAgg.r, type: 'scatter', mode: 'lines+markers', name: 'Retail (Atterrissage)', line: {color: '#a855f7', width: 2, dash: 'dot'} },
-                { x: futAgg.x, y: futAgg.i, type: 'scatter', mode: 'lines+markers', name: 'Industrial (Atterrissage)', line: {color: '#10b981', width: 2, dash: 'dot'} }
+                { x: histX, y: cumRet, type: 'scatter', mode: 'lines', name: 'Retail (YTD)', line: {color: '#a855f7', width: 3} },
+                { x: histX, y: cumInd, type: 'scatter', mode: 'lines', name: 'Industrial (YTD)', line: {color: '#10b981', width: 3} },
+                { x: futureX, y: futRet, type: 'scatter', mode: 'lines', name: 'Retail (Atterrissage)', line: {color: '#a855f7', width: 2, dash: 'dot'} },
+                { x: futureX, y: futInd, type: 'scatter', mode: 'lines', name: 'Industrial (Atterrissage)', line: {color: '#10b981', width: 2, dash: 'dot'} }
             ];
 
             let shapes = [];
@@ -1071,8 +1255,8 @@
                 annotations.push({ x: hDate, y: 0.95, xref: 'x', yref: 'paper', text: holidaysNames[dateStr], showarrow: false, textangle: -90, xanchor: 'right', font: {color: 'rgba(239, 68, 68, 0.7)', size: 9} });
             });
 
-            if(futAgg.x.length > 0) {
-                let lastDateStr = futAgg.x[futAgg.x.length-1];
+            if(futureX.length > 0) {
+                let lastDateStr = futureX[futureX.length-1];
                 annotations.push({ x: lastDateStr, y: landingRet, xref: 'x', yref: 'y', text: `🎯 ${formatVal(landingRet, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#a855f7', size: 11} });
                 annotations.push({ x: lastDateStr, y: landingInd, xref: 'x', yref: 'y', text: `🎯 ${formatVal(landingInd, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#10b981', size: 11} });
             }
@@ -1096,25 +1280,16 @@
                 }
             });
 
-            let layout = { 
-                ...getPlotlyLayoutBase(), margin: { t: 40, r: 80, l: 50, b: 40 }, hovermode: 'x unified', legend: { orientation: 'h', y: 1.15 },
-                shapes: shapes, annotations: annotations, yaxis: { title: 'Volume Cumulé (Tonnes)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' }
-            };
-            Plotly.newPlot('chartForecast', traces, layout, {responsive: true, displayModeBar: false});
+            Plotly.newPlot('chartForecast', traces, { ...getPlotlyLayoutBase(), margin: { t: 40, r: 80, l: 50, b: 40 }, hovermode: 'x unified', legend: { orientation: 'h', y: 1.15 }, shapes: shapes, annotations: annotations, yaxis: { title: 'Volume Cumulé (Tonnes)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' } }, {responsive: true, displayModeBar: false});
         }
 
         function renderChartWaterfall() {
             let totals = { obj: 0, ret: 0, indus: 0, retours: 0, brutes: 0 };
             State.filtered.forEach(r => {
-                totals.obj += r['Objectif fixé'] || 0;
-                totals.ret += r._DYN_RETAIL || 0;
-                totals.indus += r._DYN_INDUS || 0;
-                totals.retours += r['RETOUR PRODUIT'] || 0;
-                totals.brutes += r._DYN_VENTES || 0;
+                totals.obj += r['Objectif fixé'] || 0; totals.ret += r._DYN_RETAIL || 0; totals.indus += r._DYN_INDUS || 0;
+                totals.retours += r['RETOUR PRODUIT'] || 0; totals.brutes += r._DYN_VENTES || 0;
             });
-
             let autres = Math.max(0, totals.brutes - (totals.ret + totals.indus));
-
             let data = [{
                 type: "waterfall", orientation: "v", measure: ["relative", "relative", "relative", "total", "relative", "total"],
                 x: ["Retail", "Industriel", "Autres Seg.", "Ventes Brutes", "Retours", "Ventes Nettes"], textposition: "outside",
@@ -1132,104 +1307,367 @@
                 if (!sumsMap[prodName]) sumsMap[prodName] = 0;
                 State.filtered.forEach(r => sumsMap[prodName] += (r[col] || 0));
             });
-
             let sums = Object.keys(sumsMap).map(k => ({name: k, val: sumsMap[k]})).filter(s => s.val > 0).sort((a, b) => b.val - a.val);
             if(sums.length === 0) { Plotly.purge('chartPareto'); return; }
-
             let total = sums.reduce((acc, s) => acc + s.val, 0);
             let cumSum = 0;
             let cumPerc = sums.map(s => { cumSum += s.val; return (cumSum / total) * 100; });
-
             let traceBar = { x: sums.map(s=>s.name), y: sums.map(s=>s.val), type: 'bar', name: 'Volume', marker: { color: '#60a5fa' }};
             let traceLine = { x: sums.map(s=>s.name), y: cumPerc, type: 'scatter', mode: 'lines+markers', name: '% Cumulé', yaxis: 'y2', line: { color: '#f59e0b', width: 3 }};
-
-            let layout = { ...getPlotlyLayoutBase(), yaxis2: { title: '% Cumul', overlaying: 'y', side: 'right', range: [0, 105], gridcolor: 'transparent' }, showlegend: false };
-            Plotly.newPlot('chartPareto', [traceBar, traceLine], layout, {responsive: true, displayModeBar: false});
+            Plotly.newPlot('chartPareto', [traceBar, traceLine], { ...getPlotlyLayoutBase(), yaxis2: { title: '% Cumul', overlaying: 'y', side: 'right', range: [0, 105], gridcolor: 'transparent' }, showlegend: false }, {responsive: true, displayModeBar: false});
         }
 
         function renderChartVracSac() {
             let timeView = document.getElementById('filterTimeView').value;
             let bucketData = {};
-            
             State.filtered.forEach(row => {
                 let exactDate = getPlotlyDate(row);
                 if (!exactDate || exactDate === 'Inconnu') return;
-                
                 let bucket = getBucketDate(exactDate, timeView);
-                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), s: 0, v: 0 };
-                
+                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), s: 0, v: 0, b: 0 };
                 State.activeCols.forEach(col => {
                     let meta = State.colMeta[col];
                     if (meta.cond === 'SAC') bucketData[bucket].s += (row[col] || 0);
                     if (meta.cond === 'VRAC') bucketData[bucket].v += (row[col] || 0);
+                    if (meta.cond === 'BIG-BAG') bucketData[bucket].b += (row[col] || 0);
                 });
             });
-
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
-            if(sortedDates.length === 0) {
-                Plotly.purge('chartVracSac');
-                return;
-            }
-
-            let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].s), type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'SAC', marker: {color: '#3b82f6'}, line: {color: '#3b82f6', width: 1}, fillcolor: 'rgba(59, 130, 246, 0.7)', stackgroup: 'one' };
-            let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].v), type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'VRAC', marker: {color: '#f59e0b'}, line: {color: '#f59e0b', width: 1}, fillcolor: 'rgba(245, 158, 11, 0.7)', stackgroup: 'one' };
-            Plotly.newPlot('chartVracSac', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' }, {responsive: true, displayModeBar: false});
+            if(sortedDates.length === 0) { Plotly.purge('chartVracSac'); return; }
+            let t = timeView === 'day' ? 'scatter' : 'bar';
+            let traces = [
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].s), type: t, mode: 'lines', name: 'SAC', marker: {color: '#3b82f6'}, line: {color: '#3b82f6', width: 1}, fillcolor: 'rgba(59, 130, 246, 0.7)', stackgroup: 'one' },
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].v), type: t, mode: 'lines', name: 'VRAC', marker: {color: '#f59e0b'}, line: {color: '#f59e0b', width: 1}, fillcolor: 'rgba(245, 158, 11, 0.7)', stackgroup: 'one' },
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].b), type: t, mode: 'lines', name: 'BIG-BAG', marker: {color: '#06b6d4'}, line: {color: '#06b6d4', width: 1}, fillcolor: 'rgba(6, 182, 212, 0.7)', stackgroup: 'one' }
+            ];
+            Plotly.newPlot('chartVracSac', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' }, {responsive: true, displayModeBar: false});
         }
 
         function renderChartRetInd() {
             let timeView = document.getElementById('filterTimeView').value;
             let bucketData = {};
-            
             State.filtered.forEach(row => {
                 let exactDate = getPlotlyDate(row);
                 if (!exactDate || exactDate === 'Inconnu') return;
-                
                 let bucket = getBucketDate(exactDate, timeView);
                 if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), r: 0, i: 0 };
-
                 State.activeCols.forEach(col => {
                     let meta = State.colMeta[col];
                     if (meta.segment === 'RETAIL') bucketData[bucket].r += (row[col] || 0);
                     if (meta.segment === 'INDUSTRIAL') bucketData[bucket].i += (row[col] || 0);
                 });
             });
-
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
-            if(sortedDates.length === 0) {
-                Plotly.purge('chartRetInd');
-                return;
-            }
-
-            let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].r), type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'Retail', marker: {color: '#a855f7'}, line: {color: '#a855f7', width: 1}, fillcolor: 'rgba(168, 85, 247, 0.7)', stackgroup: 'one' };
-            let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].i), type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'Industrial', marker: {color: '#10b981'}, line: {color: '#10b981', width: 1}, fillcolor: 'rgba(16, 185, 129, 0.7)', stackgroup: 'one' };
-            Plotly.newPlot('chartRetInd', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' }, {responsive: true, displayModeBar: false});
+            if(sortedDates.length === 0) { Plotly.purge('chartRetInd'); return; }
+            let t = timeView === 'day' ? 'scatter' : 'bar';
+            let traces = [
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].r), type: t, mode: 'lines', name: 'Retail', marker: {color: '#a855f7'}, line: {color: '#a855f7', width: 1}, fillcolor: 'rgba(168, 85, 247, 0.7)', stackgroup: 'one' },
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].i), type: t, mode: 'lines', name: 'Industrial', marker: {color: '#10b981'}, line: {color: '#10b981', width: 1}, fillcolor: 'rgba(16, 185, 129, 0.7)', stackgroup: 'one' }
+            ];
+            Plotly.newPlot('chartRetInd', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' }, {responsive: true, displayModeBar: false});
         }
 
         function generateExecutiveSummary() {
             if (State.filtered.length === 0) { document.getElementById('executiveSummary').innerHTML = "<p>Aucune donnée correspondante.</p>"; return; }
-
             let tVentes = 0, tObj = 0, tRetours = 0, segRetail = 0, segIndus = 0;
-            let worstDay = { date: '', diff: 0 };
-            
             State.filtered.forEach(r => {
                 tVentes += r._DYN_VENTES; tObj += (r['Objectif fixé'] || 0); tRetours += (r['RETOUR PRODUIT'] || 0);
                 segRetail += r._DYN_RETAIL; segIndus += r._DYN_INDUS;
-                let diff = r._DYN_VENTES - (r['Objectif fixé'] || 0);
-                if (diff < worstDay.diff) { worstDay.diff = diff; worstDay.date = getPlotlyDate(r); }
             });
-
             let perf = tObj > 0 ? (tVentes / tObj * 100) : 0;
             let leadSegment = Object.entries({Retail: segRetail, Indus: segIndus}).sort((a,b)=>b[1]-a[1])[0];
-            let netRatio = tVentes > 0 ? ((tVentes - tRetours) / tVentes * 100) : 0;
-
             let html = `<ul class="list-disc pl-5 space-y-2">
-                <li><strong class="text-gray-900 dark:text-white">Performance Filtrée :</strong> Votre sélection représente un volume de <strong>${formatVal(tVentes)}</strong>, soit <strong>${perf.toFixed(1)}%</strong> de l'objectif global assigné.</li>
-                <li><strong class="text-gray-900 dark:text-white">Top Segment :</strong> Le segment moteur de cette sélection est <strong>${leadSegment[0]}</strong> (${formatVal(leadSegment[1])}).</li>
-                <li><strong class="text-gray-900 dark:text-white">Efficacité Opérationnelle :</strong> Avec ${formatVal(tRetours)} de retours globaux, le proxy de marge s'établit à <strong>${netRatio.toFixed(2)}%</strong>.</li>`;
-            
-            if (worstDay.diff < 0 && worstDay.date) html += `<li><strong class="text-gray-900 dark:text-white">Alerte :</strong> Chute sévère de performance enregistrée le <strong>${worstDay.date}</strong> (Écart: ${formatVal(worstDay.diff)}).</li>`;
-            html += `</ul>`;
+                <li><strong class="text-gray-900 dark:text-white">Performance Filtrée :</strong> Volume de <strong>${formatVal(tVentes)}</strong> (${perf.toFixed(1)}% obj).</li>
+                <li><strong class="text-gray-900 dark:text-white">Top Segment :</strong> Moteur <strong>${leadSegment[0]}</strong> (${formatVal(leadSegment[1])}).</li>
+                <li><strong class="text-gray-900 dark:text-white">Opérationnel :</strong> ${formatVal(tRetours)} de retours.</li></ul>`;
             document.getElementById('executiveSummary').innerHTML = html;
+        }
+
+        // =======================================================================================
+        // RENDERERS PRODUCTION
+        // =======================================================================================
+        function updateDashboardProd() {
+            updateKPIsProd();
+            renderChartProdTrend();
+            renderChartProdMargeTime();     
+            renderChartProdMix();
+            renderChartProdCostEvolution(); 
+            renderChartProdEcartTime();     
+            renderChartProdCost();
+        }
+
+        function updateKPIsProd() {
+            let totQtte = 0, totMarge = 0, totEcart = 0, avgDebitSum = 0;
+            let sumCoutMP = 0, sumCoutMPTarget = 0;
+            let compSums = {};
+            State.matiereCols.forEach(mp => compSums[mp] = 0);
+
+            State.filteredProd.forEach(r => {
+                totQtte += r.Qtte;
+                totMarge += r.MargeTotale;
+                totEcart += r.EcartMargeTotale;
+                avgDebitSum += (r.Debit * r.Qtte); 
+                
+                sumCoutMP += (r.CoutMPUnit * r.Qtte);
+                sumCoutMPTarget += (r.CoutMPTargetUnit * r.Qtte);
+
+                State.matiereCols.forEach(mp => {
+                    compSums[mp] += (r.Qtte * (r[mp] || 0)) / 100;
+                });
+            });
+
+            document.getElementById('kpiProdVol').innerText = formatVal(totQtte);
+            let debitMoy = totQtte > 0 ? (avgDebitSum / totQtte) : 0;
+            document.getElementById('kpiProdDebit').innerText = debitMoy.toFixed(1);
+            
+            // Nouveau KPI : Coût MP Moyen
+            let coutMoyen = totQtte > 0 ? (sumCoutMP / totQtte) : 0;
+            let coutTargetMoyen = totQtte > 0 ? (sumCoutMPTarget / totQtte) : 0;
+            let ecartCoutMPMoyen = coutMoyen - coutTargetMoyen;
+            
+            document.getElementById('kpiProdCoutMP').innerText = formatVal(coutMoyen);
+            let elEcartCout = document.getElementById('kpiProdEcartMPUnit');
+            elEcartCout.innerText = formatVal(ecartCoutMPMoyen);
+            elEcartCout.className = `font-bold ${ecartCoutMPMoyen > 0 ? 'text-danger' : 'text-accent'}`;
+            
+            let elMarge = document.getElementById('kpiProdMarge');
+            elMarge.innerText = formatVal(totMarge);
+            elMarge.className = `text-3xl font-bold ${totMarge >= 0 ? 'text-accent' : 'text-danger'}`;
+            
+            let margeUnitaireMoy = totQtte > 0 ? (totMarge / totQtte) : 0;
+            document.getElementById('kpiProdMargeUnit').innerText = formatVal(margeUnitaireMoy);
+
+            let elEcart = document.getElementById('kpiProdEcart');
+            elEcart.innerText = formatVal(totEcart);
+            elEcart.className = `text-3xl font-bold ${totEcart > 0 ? 'text-danger' : 'text-accent'}`;
+
+            let compHtml = '';
+            State.matiereCols.forEach(mp => {
+                if (compSums[mp] > 0) {
+                    compHtml += `
+                    <div class="glass-panel px-3 py-1.5 rounded-lg flex flex-col border-l-2 border-prod min-w-[120px] shadow-sm">
+                        <span class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">${mp}</span>
+                        <span class="text-sm font-bold text-gray-800 dark:text-white">${formatVal(compSums[mp])} <span class="text-[10px] font-normal text-gray-500">T</span></span>
+                    </div>`;
+                }
+            });
+            document.getElementById('prodComponentsSummary').innerHTML = compHtml || '<span class="text-sm text-gray-500 italic">Aucune consommation enregistrée.</span>';
+        }
+
+        function renderChartProdTrend() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = {};
+            
+            State.filteredProd.forEach(r => {
+                let exactDate = getPlotlyDate(r, true);
+                if (!exactDate || exactDate === 'Inconnu') return;
+                
+                let bucket = getBucketDate(exactDate, timeView);
+                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), qtte: 0, debitSum: 0 };
+                
+                bucketData[bucket].qtte += r.Qtte;
+                bucketData[bucket].debitSum += (r.Debit * r.Qtte);
+            });
+
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdTrend'); return; }
+
+            let qttes = sortedDates.map(d => bucketData[d].qtte);
+            let debits = sortedDates.map(d => bucketData[d].qtte > 0 ? (bucketData[d].debitSum / bucketData[d].qtte) : 0);
+
+            let trace1 = { x: sortedDates, y: qttes, type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'Qtte Produite (t)', marker: {color: '#f59e0b'}, line: {color: '#f59e0b', width: 2}, fill: 'tozeroy', fillcolor: 'rgba(245, 158, 11, 0.1)' };
+            let trace2 = { x: sortedDates, y: debits, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Débit Moy (t/h)', yaxis: 'y2', line: {color: '#06b6d4', width: 2} };
+
+            let layout = { 
+                ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 },
+                yaxis: { title: 'Tonnage (t)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' },
+                yaxis2: { title: 'Débit (t/h)', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
+            };
+            Plotly.newPlot('chartProdTrend', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartProdMargeTime() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = {};
+            let allProds = new Set();
+            
+            State.filteredProd.forEach(r => {
+                let exactDate = getPlotlyDate(r, true);
+                if (!exactDate || exactDate === 'Inconnu') return;
+                let bucket = getBucketDate(exactDate, timeView);
+                
+                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), prods: {} };
+                if (!bucketData[bucket].prods[r.Produit]) bucketData[bucket].prods[r.Produit] = 0;
+                
+                bucketData[bucket].prods[r.Produit] += r.MargeTotale;
+                allProds.add(r.Produit);
+            });
+
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdMargeTime'); return; }
+
+            let traces = [];
+            Array.from(allProds).forEach(prod => {
+                let yVals = sortedDates.map(d => bucketData[d].prods[prod] || 0);
+                if (yVals.some(v => v !== 0)) {
+                    traces.push({
+                        x: sortedDates, 
+                        y: yVals, 
+                        type: timeView==='day'?'scatter':'bar', 
+                        mode: 'lines', 
+                        name: prod, 
+                        stackgroup: timeView==='day'?'one':null
+                    });
+                }
+            });
+
+            Plotly.newPlot('chartProdMargeTime', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Marge Totale (€)', tickformat: ',.0f' } }, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartProdMix() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = {};
+            
+            State.filteredProd.forEach(r => {
+                let exactDate = getPlotlyDate(r, true);
+                if (!exactDate || exactDate === 'Inconnu') return;
+                let bucket = getBucketDate(exactDate, timeView);
+                
+                if (!bucketData[bucket]) {
+                    bucketData[bucket] = { sort: new Date(bucket).getTime(), vals: {} };
+                    State.matiereCols.forEach(mp => bucketData[bucket].vals[mp] = 0);
+                }
+                
+                // Calcul des TONNES réelles (Quantité Produite * Pourcentage Composant)
+                State.matiereCols.forEach(mp => {
+                    bucketData[bucket].vals[mp] += (r.Qtte * (r[mp] || 0)) / 100;
+                });
+            });
+
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdMix'); return; }
+
+            let traces = [];
+            const colors = ['#64748b', '#cbd5e1', '#d9f99d', '#94a3b8', '#fca5a5', '#fdba74', '#bbf7d0', '#e9d5ff', '#a7f3d0'];
+            
+            State.matiereCols.forEach((mp, i) => {
+                let yVals = sortedDates.map(d => bucketData[d].vals[mp]);
+                if (yVals.some(v => v > 0)) {
+                    traces.push({
+                        x: sortedDates, y: yVals, type: timeView==='day'?'scatter':'bar', mode: 'lines', name: mp, 
+                        line: {width: 1}, marker: {color: colors[i % colors.length]},
+                        fillcolor: colors[i % colors.length], stackgroup: timeView==='day'?'one':null
+                    });
+                }
+            });
+
+            Plotly.newPlot('chartProdMix', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Tonnes (T)' } }, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartProdCostEvolution() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = {};
+            
+            State.filteredProd.forEach(r => {
+                let exactDate = getPlotlyDate(r, true);
+                if (!exactDate || exactDate === 'Inconnu') return;
+                let bucket = getBucketDate(exactDate, timeView);
+                
+                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), calcSum: 0, targetSum: 0, totalSum: 0, qtte: 0 };
+                
+                bucketData[bucket].calcSum += (r.CoutMPUnit * r.Qtte);
+                bucketData[bucket].targetSum += (r.CoutMPTargetUnit * r.Qtte);
+                bucketData[bucket].totalSum += (r.CoutTotalUnit * r.Qtte);
+                bucketData[bucket].qtte += r.Qtte;
+            });
+
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdCostEvolution'); return; }
+
+            let modeType = timeView === 'day' ? 'lines' : 'lines+markers';
+            
+            let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].calcSum / bucketData[d].qtte : 0), type: 'scatter', mode: modeType, name: 'Coût MP Calculé', line: {color: '#f59e0b', width: 2} };
+            let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].targetSum / bucketData[d].qtte : 0), type: 'scatter', mode: modeType, name: 'Coût MP Target', line: {color: '#10b981', width: 2, dash: 'dot'} };
+            let trace3 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].totalSum / bucketData[d].qtte : 0), type: 'scatter', mode: modeType, name: 'Coût Total Calculé', line: {color: '#8b5cf6', width: 2} };
+
+            let layout = { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Coût (€/t)', tickformat: ',.1f' } };
+            Plotly.newPlot('chartProdCostEvolution', [trace1, trace2, trace3], layout, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartProdEcartTime() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = {};
+            
+            State.filteredProd.forEach(r => {
+                let exactDate = getPlotlyDate(r, true);
+                if (!exactDate || exactDate === 'Inconnu') return;
+                let bucket = getBucketDate(exactDate, timeView);
+                
+                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), ecart: 0 };
+                bucketData[bucket].ecart += r.EcartMargeTotale;
+            });
+
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdEcartTime'); return; }
+
+            let yVals = sortedDates.map(d => bucketData[d].ecart);
+            let colors = yVals.map(v => v > 0 ? '#ef4444' : '#10b981'); // Positif = Mauvais = Rouge
+
+            let trace1 = { x: sortedDates, y: yVals, type: 'bar', name: 'Écart de Marge', marker: { color: colors } };
+
+            let layout = { ...getPlotlyLayoutBase(), hovermode: 'x unified', showlegend: false, yaxis: { title: 'Écart Marge (€)', tickformat: ',.0f' } };
+            Plotly.newPlot('chartProdEcartTime', [trace1], layout, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartProdCost() {
+            let prods = {};
+            State.filteredProd.forEach(r => {
+                if (!prods[r.Produit]) prods[r.Produit] = { qtte: 0, marge: 0, ecart: 0 };
+                prods[r.Produit].qtte += r.Qtte;
+                prods[r.Produit].marge += r.MargeTotale;
+                prods[r.Produit].ecart += r.EcartMargeTotale;
+            });
+
+            let sortedProds = Object.keys(prods).filter(p => prods[p].qtte > 0).sort((a,b) => prods[a].marge - prods[b].marge);
+            if (sortedProds.length === 0) { Plotly.purge('chartProdCost'); return; }
+
+            let ecarts = sortedProds.map(p => prods[p].ecart);
+            let ecartColors = ecarts.map(v => v > 0 ? '#ef4444' : '#10b981'); // Positif = Mauvais = Rouge
+
+            let trace1 = { 
+                y: sortedProds, 
+                x: sortedProds.map(p => prods[p].marge), 
+                type: 'bar', 
+                orientation: 'h',
+                name: 'Marge Globale (€)', 
+                marker: { color: '#3b82f6' },
+                text: sortedProds.map(p => formatVal(prods[p].marge) + " €  (" + formatVal(prods[p].marge / prods[p].qtte) + " €/t)"),
+                textposition: 'auto',
+                insidetextanchor: 'middle',
+                textfont: {color: '#ffffff'}
+            };
+            
+            let trace2 = { 
+                y: sortedProds, 
+                x: ecarts, 
+                type: 'bar', 
+                orientation: 'h',
+                name: 'Écart vs Target (€)', 
+                marker: { color: ecartColors },
+                text: ecarts.map((v, i) => formatVal(v) + " €  (" + formatVal(v / sortedProds.map(p => prods[p].qtte)[i]) + " €/t)"),
+                textposition: 'auto',
+                insidetextanchor: 'middle'
+            };
+
+            let layout = { 
+                ...getPlotlyLayoutBase(), 
+                barmode: 'group', 
+                hovermode: 'y unified', 
+                legend: { orientation: 'h', y: 1.1 },
+                margin: { l: 150, r: 20, t: 40, b: 40 }, 
+                xaxis: { title: 'Euros (€)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', tickformat: ',.0f' } 
+            };
+            Plotly.newPlot('chartProdCost', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
         }
 
         // --- GEMINI API INTEGRATION ✨ ---
