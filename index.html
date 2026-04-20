@@ -514,7 +514,7 @@
                 <!-- Évolution des Coûts (CORRIGÉE : Unitaires €/T) -->
                 <div class="glass-panel rounded-xl p-4 lg:col-span-2">
                     <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution des Coûts Unitaires Moyens : Calculés vs Targets (€/t)</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution des Coûts & Prix de Vente (Bande de Marge) en €/t</h3>
                         <button onclick="renderChartProdCostEvolution()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
@@ -898,8 +898,8 @@
                         // Extractions robustes (Valeurs Unitaires en €/t) - On exclut les mots-clés de "Total"
                         CoutMPUnit: getColRobust(row, ['Coût Matère Première Calculé', 'Coût Matière Première Calculé', 'Coût MP Calculé'], ['Ecart', 'Target', 'Total']),
                         CoutMPTargetUnit: getColRobust(row, ['Coût Matère Première Target', 'Coût Matière Première Target', 'Coût MP Target'], ['Ecart', 'Total']),
-                        CoutTotalUnit: getColRobust(row, ['Coût Total Calculé'], ['Ecart', 'Total']),
-                        PrixVenteUnit: getColRobust(row, ['Prix Vente'], ['Total']),
+                        CoutTotalUnit: getColRobust(row, ['Coût Total Calculé'], ['Ecart']), // CORRECTION: Retrait du mot 'Total' des exclusions pour cette colonne
+                        PrixVenteUnit: getColRobust(row, ['Prix Vente'], ['Total', 'Ecart']),
                         
                         // Sécurisation de la marge unitaire et de l'écart unitaire
                         MargeUnit: getColRobust(row, ['Marge (E)', 'Marge'], ['Total', 'Ecart', 'Vs', 'Target']),
@@ -1573,11 +1573,13 @@
                 if (!exactDate || exactDate === 'Inconnu') return;
                 let bucket = getBucketDate(exactDate, timeView);
                 
-                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), calcSum: 0, targetSum: 0, totalSum: 0, qtte: 0 };
+                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), calcSum: 0, targetSum: 0, totalSum: 0, pvSum: 0, margeSum: 0, qtte: 0 };
                 
                 bucketData[bucket].calcSum += (r.CoutMPUnit * r.Qtte);
                 bucketData[bucket].targetSum += (r.CoutMPTargetUnit * r.Qtte);
                 bucketData[bucket].totalSum += (r.CoutTotalUnit * r.Qtte);
+                bucketData[bucket].pvSum += (r.PrixVenteUnit * r.Qtte);
+                bucketData[bucket].margeSum += (r.MargeUnit * r.Qtte);
                 bucketData[bucket].qtte += r.Qtte;
             });
 
@@ -1586,12 +1588,32 @@
 
             let modeType = timeView === 'day' ? 'lines' : 'lines+markers';
             
-            let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].calcSum / bucketData[d].qtte : 0), type: 'scatter', mode: modeType, name: 'Coût MP Calculé', line: {color: '#f59e0b', width: 2} };
-            let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].targetSum / bucketData[d].qtte : 0), type: 'scatter', mode: modeType, name: 'Coût MP Target', line: {color: '#10b981', width: 2, dash: 'dot'} };
-            let trace3 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].totalSum / bucketData[d].qtte : 0), type: 'scatter', mode: modeType, name: 'Coût Total Calculé', line: {color: '#8b5cf6', width: 2} };
+            let arrCoutMPTarget = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].targetSum / bucketData[d].qtte : 0);
+            let arrCoutMPCalc = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].calcSum / bucketData[d].qtte : 0);
+            let arrCoutTotal = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].totalSum / bucketData[d].qtte : 0);
+            let arrPrixVente = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].pvSum / bucketData[d].qtte : 0);
+            let arrMarge = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].margeSum / bucketData[d].qtte : 0);
+            
+            let traceTarget = { x: sortedDates, y: arrCoutMPTarget, type: 'scatter', mode: modeType, name: 'Coût MP Target', line: {color: '#10b981', width: 2, dash: 'dot'} };
+            let traceMPCalc = { x: sortedDates, y: arrCoutMPCalc, type: 'scatter', mode: modeType, name: 'Coût MP Calculé', line: {color: '#f59e0b', width: 2} };
+            
+            // On trace le Coût Total, puis le Prix de Vente avec un remplissage "tonexty" pour dessiner la bande de marge
+            let traceTotal = { x: sortedDates, y: arrCoutTotal, type: 'scatter', mode: modeType, name: 'Coût Total Calculé', line: {color: '#8b5cf6', width: 2} };
+            let tracePV = { 
+                x: sortedDates, 
+                y: arrPrixVente, 
+                type: 'scatter', 
+                mode: modeType, 
+                name: 'Prix de Vente (Haut de la bande Marge)', 
+                line: {color: '#3b82f6', width: 2},
+                fill: 'tonexty', // Remplit l'espace entre la courbe du Prix Vente et celle du Coût Total
+                fillcolor: 'rgba(16, 185, 129, 0.15)', // Couleur verte transparente pour la bande de marge
+                text: arrMarge.map(m => `Marge nette: ${formatVal(m)} €/t`),
+                hovertemplate: '%{y:.1f} €/t<br>%{text}<extra></extra>'
+            };
 
-            let layout = { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Coût (€/t)', tickformat: ',.1f' } };
-            Plotly.newPlot('chartProdCostEvolution', [trace1, trace2, trace3], layout, {responsive: true, displayModeBar: false});
+            let layout = { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Euros (€/t)', tickformat: ',.1f' } };
+            Plotly.newPlot('chartProdCostEvolution', [traceTarget, traceMPCalc, traceTotal, tracePV], layout, {responsive: true, displayModeBar: false});
         }
 
         function renderChartProdEcartTime() {
