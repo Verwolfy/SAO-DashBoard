@@ -76,7 +76,7 @@
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
                     <div>
-                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev.</h1>
+                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">FP&A Executive</h1>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Finance & Operations</p>
                     </div>
                 </div>
@@ -509,6 +509,17 @@
                         </button>
                     </div>
                     <div id="chartProdMix" class="w-full h-[350px]"></div>
+                </div>
+
+                <!-- NOUVEAU: Facteur Clinker -->
+                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Facteur Clinker (Clinker / Ciment)</h3>
+                        <button onclick="renderChartProdClinkerFactor()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                    <div id="chartProdClinkerFactor" class="w-full h-[300px]"></div>
                 </div>
 
                 <!-- Évolution des Coûts (CORRIGÉE : Unitaires €/T) -->
@@ -1391,6 +1402,7 @@
             renderChartProdTrend();
             renderChartProdMargeTime();     
             renderChartProdMix();
+            renderChartProdClinkerFactor(); // NOUVEL APPEL
             renderChartProdCostEvolution(); 
             renderChartProdEcartTime();     
             renderChartProdCost();
@@ -1562,6 +1574,84 @@
             });
 
             Plotly.newPlot('chartProdMix', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Tonnes (T)' } }, {responsive: true, displayModeBar: false});
+        }
+
+        function renderChartProdClinkerFactor() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = {};
+            let allProds = new Set();
+            
+            State.filteredProd.forEach(r => {
+                let exactDate = getPlotlyDate(r, true);
+                if (!exactDate || exactDate === 'Inconnu') return;
+                let bucket = getBucketDate(exactDate, timeView);
+                
+                if (!bucketData[bucket]) {
+                    bucketData[bucket] = { sort: new Date(bucket).getTime(), globalClinker: 0, globalCement: 0, prods: {} };
+                }
+                
+                // Calcul des tonnes de Clinker (Gris + Blanc) pour cette ligne
+                let clinkerRatio = (r['Clinker Gris'] || 0) + (r['Clinker Blanc'] || 0);
+                let clinkerT = r.Qtte * (clinkerRatio / 100);
+                
+                bucketData[bucket].globalClinker += clinkerT;
+                bucketData[bucket].globalCement += r.Qtte;
+                
+                if (!bucketData[bucket].prods[r.Produit]) {
+                    bucketData[bucket].prods[r.Produit] = { clinker: 0, cement: 0 };
+                }
+                bucketData[bucket].prods[r.Produit].clinker += clinkerT;
+                bucketData[bucket].prods[r.Produit].cement += r.Qtte;
+                
+                allProds.add(r.Produit);
+            });
+
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdClinkerFactor'); return; }
+
+            let traces = [];
+            
+            // Lignes par produit (fines et pointillées)
+            Array.from(allProds).forEach(prod => {
+                let yVals = sortedDates.map(d => {
+                    let pData = bucketData[d].prods[prod];
+                    return pData && pData.cement > 0 ? (pData.clinker / pData.cement) * 100 : null;
+                });
+                
+                if (yVals.some(v => v !== null)) {
+                    traces.push({
+                        x: sortedDates, 
+                        y: yVals, 
+                        type: 'scatter', 
+                        mode: timeView==='day'?'lines':'lines+markers', 
+                        name: prod, 
+                        line: {width: 1, dash: 'dot'},
+                        connectgaps: true
+                    });
+                }
+            });
+
+            // Ligne Globale (épaisse)
+            let globalY = sortedDates.map(d => {
+                return bucketData[d].globalCement > 0 ? (bucketData[d].globalClinker / bucketData[d].globalCement) * 100 : null;
+            });
+            traces.push({
+                x: sortedDates, 
+                y: globalY, 
+                type: 'scatter', 
+                mode: timeView==='day'?'lines':'lines+markers', 
+                name: 'Global Pondéré', 
+                line: {color: '#f59e0b', width: 4}, // Couleur orange 'prod' épaisse pour se démarquer
+                connectgaps: true
+            });
+
+            let layout = { 
+                ...getPlotlyLayoutBase(), 
+                hovermode: 'x unified', 
+                legend: { orientation: 'h', y: 1.15 }, 
+                yaxis: { title: 'Facteur Clinker (%)', tickformat: ',.1f', ticksuffix: '%' } 
+            };
+            Plotly.newPlot('chartProdClinkerFactor', traces, layout, {responsive: true, displayModeBar: false});
         }
 
         function renderChartProdCostEvolution() {
