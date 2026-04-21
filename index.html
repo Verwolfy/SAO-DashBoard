@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Executive FP&A Dashboard | Commercial & Production</title>
+    <title>Business Dev. Dashboard | Commercial & Production</title>
     
     <!-- Librairies (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -76,7 +76,7 @@
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
                     <div>
-                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">FP&A Executive</h1>
+                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev.</h1>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Finance & Operations</p>
                     </div>
                 </div>
@@ -325,7 +325,7 @@
 
                 <div class="glass-panel rounded-xl p-4">
                     <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse de Pareto : Top Produits (Actifs)</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse Pareto : Top Produits (Actifs)</h3>
                         <button onclick="renderChartPareto()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
@@ -359,10 +359,10 @@
                 <div class="flex items-center justify-between gap-2 mb-4">
                     <div class="flex items-center gap-2">
                         <i class="fa-solid fa-brain text-brand_light text-xl"></i>
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Executive Summary & Insights Dynamiques</h2>
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Business Dev. Summary & Insights Dynamiques</h2>
                     </div>
                     <button id="btnAiInsights" class="hidden px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-md text-sm font-bold text-white transition shadow-lg flex items-center gap-2">
-                        ✨ Générer Analyse IA
+                        ✨ Analyse
                     </button>
                 </div>
                 
@@ -414,7 +414,7 @@
                     <select id="filterProdProduit" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none"><option value="ALL">Tous</option></select>
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Type de Broyeur (BK)</label>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Broyeur (BK)</label>
                     <select id="filterProdBK" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none"><option value="ALL">Tous</option></select>
                 </div>
                 <div class="col-span-2 md:col-span-4 lg:col-span-6 flex justify-end mt-2">
@@ -464,7 +464,7 @@
                         <span id="kpiProdEcart" class="text-3xl font-bold text-gray-900 dark:text-white">0</span>
                         <span class="text-sm text-gray-500 dark:text-gray-400 mb-1">€</span>
                     </div>
-                    <div class="text-xs mt-2 text-gray-500 dark:text-gray-400 font-medium tracking-wide">Positif = Défavorable (Rouge)</div>
+                    <div class="text-xs mt-2 text-gray-500 dark:text-gray-400 font-medium tracking-wide">Positif (Vert) = Défavorable (Rouge)</div>
                 </div>
             </section>
 
@@ -481,7 +481,7 @@
                 <!-- Trend Prod -->
                 <div class="glass-panel rounded-xl p-4 lg:col-span-2">
                     <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Tendance : Volume Produit & Débit Horloger</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Tendance : Volume Produit & Débit </h3>
                         <button onclick="renderChartProdTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
                             <i class="fa-solid fa-rotate-right"></i>
                         </button>
