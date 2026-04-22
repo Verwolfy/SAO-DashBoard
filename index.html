@@ -129,7 +129,7 @@
         <!-- ================================================================================================= -->
         <div id="viewVentes" class="space-y-6">
             <!-- Interactive Filters -->
-            <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 items-end">
+            <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 items-end">
                 <div>
                     <label class="block text-xs font-bold text-brand mb-1">Vue Graphiques</label>
                     <select id="filterTimeView" class="w-full bg-blue-50/50 dark:bg-blue-900/20 border border-brand text-brand dark:text-brand_light rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none shadow-sm font-medium">
@@ -150,6 +150,14 @@
                 <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Semaine</label>
                     <select id="filterSemaine" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none"><option value="ALL">Toutes</option></select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Date Début</label>
+                    <input type="date" id="filterDateStart" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Date Fin</label>
+                    <input type="date" id="filterDateEnd" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Segment Principal</label>
@@ -278,6 +286,33 @@
                             <span id="kpiRatioDDP" class="text-xl font-bold text-gray-900 dark:text-white">0%</span>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <!-- NOUVEAU : Tableau des Ventes par Produit -->
+            <section class="glass-panel rounded-xl p-0 overflow-hidden flex flex-col border-t-4 border-brand">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-dark/50 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        <i class="fa-solid fa-table-list text-brand"></i>
+                        Détail des Ventes par Produit
+                    </h3>
+                    <span class="text-xs text-gray-500 dark:text-gray-400 italic">Dynamique selon les filtres actifs</span>
+                </div>
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
+                                <th class="p-4 font-bold">Produit</th>
+                                <th class="p-4 font-bold text-right">Volume Filtré (T)</th>
+                                <th class="p-4 font-bold text-right">Poids dans le Mix (%)</th>
+                                <th class="p-4 font-bold text-right">Part Retail (T)</th>
+                                <th class="p-4 font-bold text-right">Part Indus. (T)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableVentesBody" class="divide-y divide-gray-100 dark:divide-gray-800 text-sm text-gray-800 dark:text-gray-200 bg-white/30 dark:bg-gray-900/30">
+                            <!-- Les lignes seront générées par JavaScript ici -->
+                        </tbody>
+                    </table>
                 </div>
             </section>
 
@@ -468,7 +503,7 @@
                 </div>
             </section>
 
-            <!-- NOUVEAU: Bandeau des Consommations de Matières Premières -->
+            <!-- Bandeau des Consommations de Matières Premières -->
             <div class="mb-2">
                 <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Composants Consommés (Tonnages Calculés)</h3>
                 <div id="prodComponentsSummary" class="flex flex-wrap gap-3">
@@ -511,7 +546,7 @@
                     <div id="chartProdMix" class="w-full h-[350px]"></div>
                 </div>
 
-                <!-- NOUVEAU: Facteur Clinker -->
+                <!-- Facteur Clinker -->
                 <div class="glass-panel rounded-xl p-4 lg:col-span-2">
                     <div class="flex justify-between items-start mb-2">
                         <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Facteur Clinker (Clinker / Ciment)</h3>
@@ -522,7 +557,7 @@
                     <div id="chartProdClinkerFactor" class="w-full h-[300px]"></div>
                 </div>
 
-                <!-- Évolution des Coûts (CORRIGÉE : Unitaires €/T) -->
+                <!-- Évolution des Coûts -->
                 <div class="glass-panel rounded-xl p-4 lg:col-span-2">
                     <div class="flex justify-between items-start mb-2">
                         <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution des Coûts & Prix de Vente (Bande de Marge) en €/t</h3>
@@ -632,7 +667,7 @@
             activeCols: [],
             targetLanding: 1340000,
             filters: {
-                annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0
+                annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: ''
             },
             
             rawProd: [], // Données Production
@@ -657,7 +692,8 @@
             btnAiInsights: document.getElementById('btnAiInsights'),
             aiInsightsContainer: document.getElementById('aiInsightsContainer'),
             aiLoading: document.getElementById('aiLoading'),
-            aiContent: document.getElementById('aiContent')
+            aiContent: document.getElementById('aiContent'),
+            tableVentesBody: document.getElementById('tableVentesBody') // Nouvel élément UI
         };
 
         const getPlotlyLayoutBase = () => ({
@@ -906,13 +942,11 @@
                         Debit: cleanNumber(row['Débit (t/h)']),
                         Qtte: cleanNumber(row['Qtte (t)']),
                         
-                        // Extractions robustes (Valeurs Unitaires en €/t) - On exclut les mots-clés de "Total"
                         CoutMPUnit: getColRobust(row, ['Coût Matère Première Calculé', 'Coût Matière Première Calculé', 'Coût MP Calculé'], ['Ecart', 'Target', 'Total']),
                         CoutMPTargetUnit: getColRobust(row, ['Coût Matère Première Target', 'Coût Matière Première Target', 'Coût MP Target'], ['Ecart', 'Total']),
-                        CoutTotalUnit: getColRobust(row, ['Coût Total Calculé'], ['Ecart']), // CORRECTION: Retrait du mot 'Total' des exclusions pour cette colonne
+                        CoutTotalUnit: getColRobust(row, ['Coût Total Calculé'], ['Ecart']),
                         PrixVenteUnit: getColRobust(row, ['Prix Vente'], ['Total', 'Ecart']),
                         
-                        // Sécurisation de la marge unitaire et de l'écart unitaire
                         MargeUnit: getColRobust(row, ['Marge (E)', 'Marge'], ['Total', 'Ecart', 'Vs', 'Target']),
                         EcartMargeUnit: getColRobust(row, ['Ecart Vs Target Marge', 'Ecart Marge'], ['Total']),
                         EcartCoutMPUnit: getColRobust(row, ['Ecart Coût Matère Première', 'Ecart Coût Matière Première'], ['Total']),
@@ -920,7 +954,6 @@
                         _DATE_SORT: parseDateToTimestamp(dStr)
                     };
                     
-                    // Application stricte de votre règle mathématique (Unitaire * Quantité)
                     pRow.MargeTotale = pRow.MargeUnit * pRow.Qtte;
                     pRow.EcartMargeTotale = pRow.EcartMargeUnit * pRow.Qtte;
 
@@ -1002,6 +1035,16 @@
                 if (State.filters.mois !== 'ALL' && String(row['Mois']) !== State.filters.mois) return null;
                 if (State.filters.semaine !== 'ALL' && String(row['Semaine']) !== State.filters.semaine) return null;
 
+                if (State.filters.datestart || State.filters.dateend) {
+                    let rowTime = row._DATE_SORT;
+                    if (rowTime > 0) {
+                        if (State.filters.datestart && rowTime < new Date(State.filters.datestart).getTime()) return null;
+                        if (State.filters.dateend && rowTime > new Date(State.filters.dateend).getTime() + 86399999) return null;
+                    } else {
+                        return null; // Si on filtre par date et que la date de la ligne est inconnue
+                    }
+                }
+
                 let dynVentes = 0, dynRetail = 0, dynIndus = 0;
                 State.activeCols.forEach(col => {
                     let val = row[col] || 0;
@@ -1025,7 +1068,7 @@
             if(currentTab === 'VENTES') updateDashboard();
         }
 
-        ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => {
+        ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion', 'filterDateStart', 'filterDateEnd'].forEach(id => {
             let el = document.getElementById(id);
             if(el) el.addEventListener('change', (e) => { State.filters[id.replace('filter', '').toLowerCase()] = e.target.value; applyFilters(); });
         });
@@ -1035,9 +1078,11 @@
         document.getElementById('filterVolume').addEventListener('change', () => applyFilters());
         document.getElementById('resetFilters').addEventListener('click', () => {
             ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => { document.getElementById(id).value = 'ALL'; });
+            document.getElementById('filterDateStart').value = '';
+            document.getElementById('filterDateEnd').value = '';
             document.getElementById('filterTimeView').value = 'day'; document.getElementById('filterMargin').value = '0';
             document.getElementById('filterVolume').value = 0; UI.volValDisplay.innerText = "0";
-            State.filters = { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0 };
+            State.filters = { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: '' };
             applyFilters();
         });
         document.getElementById('filterTimeView').addEventListener('change', () => { if(currentTab === 'VENTES') updateDashboard(); });
@@ -1074,7 +1119,16 @@
         // RENDERERS VENTES
         // =======================================================================================
         function updateDashboard() {
-            updateKPIs(); renderChartTrend(); renderChartRatios(); renderChartForecast(); renderChartWaterfall(); renderChartPareto(); renderChartVracSac(); renderChartRetInd(); generateExecutiveSummary();
+            updateKPIs(); 
+            renderVentesTable(); // Nouvel appel pour la table interactive
+            renderChartTrend(); 
+            renderChartRatios(); 
+            renderChartForecast(); 
+            renderChartWaterfall(); 
+            renderChartPareto(); 
+            renderChartVracSac(); 
+            renderChartRetInd(); 
+            generateExecutiveSummary();
             UI.aiInsightsContainer.classList.add('hidden'); UI.aiContent.innerHTML = '';
             if (State.filtered.length > 0) UI.btnAiInsights.classList.remove('hidden'); else UI.btnAiInsights.classList.add('hidden');
         }
@@ -1103,6 +1157,85 @@
             
             document.getElementById('kpiRatioCPA').innerText = (totalVentes > 0 ? (totalCPA / totalVentes) * 100 : 0).toFixed(1) + '%';
             document.getElementById('kpiRatioDDP').innerText = (totalVentes > 0 ? (totalDDP / totalVentes) * 100 : 0).toFixed(1) + '%';
+        }
+
+        // --- NOUVELLE FONCTION: Table Ventes par Produit ---
+        function renderVentesTable() {
+            let tbody = UI.tableVentesBody;
+            if (!tbody) return;
+
+            let prodStats = {};
+            let totalVol = 0;
+
+            // Agrégation dynamique par produit
+            State.filtered.forEach(r => {
+                State.activeCols.forEach(col => {
+                    let val = r[col] || 0;
+                    if (val > 0) {
+                        let meta = State.colMeta[col];
+                        let pName = meta.product || 'Divers';
+
+                        if (!prodStats[pName]) {
+                            prodStats[pName] = { vol: 0, retail: 0, indus: 0 };
+                        }
+
+                        prodStats[pName].vol += val;
+                        totalVol += val;
+
+                        if (meta.segment === 'RETAIL') prodStats[pName].retail += val;
+                        if (meta.segment === 'INDUSTRIAL') prodStats[pName].indus += val;
+                    }
+                });
+            });
+
+            // Conversion en tableau et tri par volume décroissant
+            let sortedProds = Object.keys(prodStats).map(k => ({
+                name: k,
+                ...prodStats[k]
+            })).sort((a, b) => b.vol - a.vol);
+
+            if (sortedProds.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500 dark:text-gray-400 italic">Aucune donnée de vente pour cette sélection.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            sortedProds.forEach(p => {
+                let mix = totalVol > 0 ? (p.vol / totalVol) * 100 : 0;
+                // Génération des lignes de la table
+                html += `
+                    <tr class="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors group">
+                        <td class="p-4 font-semibold text-gray-900 dark:text-white flex items-center gap-3">
+                            <div class="w-2.5 h-2.5 rounded-full bg-brand group-hover:scale-125 transition-transform"></div>
+                            ${p.name}
+                        </td>
+                        <td class="p-4 text-right font-bold text-gray-900 dark:text-white">${formatVal(p.vol)} <span class="text-xs text-gray-400 font-normal">T</span></td>
+                        <td class="p-4 text-right">
+                            <div class="flex items-center justify-end gap-3">
+                                <span class="font-medium w-12">${mix.toFixed(1)}%</span>
+                                <div class="w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                                    <div class="h-full bg-brand rounded-full" style="width: ${mix}%"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-4 text-right font-medium text-purple-600 dark:text-purple-400">${p.retail > 0 ? formatVal(p.retail) : '-'}</td>
+                        <td class="p-4 text-right font-medium text-accent">${p.indus > 0 ? formatVal(p.indus) : '-'}</td>
+                    </tr>
+                `;
+            });
+
+            // Ajout d'une ligne de Total Global
+            html += `
+                <tr class="bg-gray-50 dark:bg-gray-800/80 font-bold border-t-2 border-gray-200 dark:border-gray-700">
+                    <td class="p-4 text-gray-900 dark:text-white">TOTAL SÉLECTION</td>
+                    <td class="p-4 text-right text-brand">${formatVal(totalVol)} <span class="text-xs font-normal">T</span></td>
+                    <td class="p-4 text-right">100%</td>
+                    <td class="p-4 text-right text-purple-600 dark:text-purple-400">${formatVal(sortedProds.reduce((sum, p) => sum + p.retail, 0))}</td>
+                    <td class="p-4 text-right text-accent">${formatVal(sortedProds.reduce((sum, p) => sum + p.indus, 0))}</td>
+                </tr>
+            `;
+
+            tbody.innerHTML = html;
         }
 
         function renderChartTrend() {
@@ -1402,7 +1535,7 @@
             renderChartProdTrend();
             renderChartProdMargeTime();     
             renderChartProdMix();
-            renderChartProdClinkerFactor(); // NOUVEL APPEL
+            renderChartProdClinkerFactor(); 
             renderChartProdCostEvolution(); 
             renderChartProdEcartTime();     
             renderChartProdCost();
@@ -1432,7 +1565,6 @@
             let debitMoy = totQtte > 0 ? (avgDebitSum / totQtte) : 0;
             document.getElementById('kpiProdDebit').innerText = debitMoy.toFixed(1);
             
-            // Nouveau KPI : Coût MP Moyen
             let coutMoyen = totQtte > 0 ? (sumCoutMP / totQtte) : 0;
             let coutTargetMoyen = totQtte > 0 ? (sumCoutMPTarget / totQtte) : 0;
             let ecartCoutMPMoyen = coutMoyen - coutTargetMoyen;
@@ -1550,7 +1682,6 @@
                     State.matiereCols.forEach(mp => bucketData[bucket].vals[mp] = 0);
                 }
                 
-                // Calcul des TONNES réelles (Quantité Produite * Pourcentage Composant)
                 State.matiereCols.forEach(mp => {
                     bucketData[bucket].vals[mp] += (r.Qtte * (r[mp] || 0)) / 100;
                 });
@@ -1590,7 +1721,6 @@
                     bucketData[bucket] = { sort: new Date(bucket).getTime(), globalClinker: 0, globalCement: 0, prods: {} };
                 }
                 
-                // Calcul des tonnes de Clinker (Gris + Blanc) pour cette ligne
                 let clinkerRatio = (r['Clinker Gris'] || 0) + (r['Clinker Blanc'] || 0);
                 let clinkerT = r.Qtte * (clinkerRatio / 100);
                 
@@ -1611,7 +1741,6 @@
 
             let traces = [];
             
-            // Lignes par produit (fines et pointillées)
             Array.from(allProds).forEach(prod => {
                 let yVals = sortedDates.map(d => {
                     let pData = bucketData[d].prods[prod];
@@ -1631,7 +1760,6 @@
                 }
             });
 
-            // Ligne Globale (épaisse)
             let globalY = sortedDates.map(d => {
                 return bucketData[d].globalCement > 0 ? (bucketData[d].globalClinker / bucketData[d].globalCement) * 100 : null;
             });
@@ -1641,7 +1769,7 @@
                 type: 'scatter', 
                 mode: timeView==='day'?'lines':'lines+markers', 
                 name: 'Global Pondéré', 
-                line: {color: '#f59e0b', width: 4}, // Couleur orange 'prod' épaisse pour se démarquer
+                line: {color: '#f59e0b', width: 4}, 
                 connectgaps: true
             });
 
@@ -1687,7 +1815,6 @@
             let traceTarget = { x: sortedDates, y: arrCoutMPTarget, type: 'scatter', mode: modeType, name: 'Coût MP Target', line: {color: '#10b981', width: 2, dash: 'dot'} };
             let traceMPCalc = { x: sortedDates, y: arrCoutMPCalc, type: 'scatter', mode: modeType, name: 'Coût MP Calculé', line: {color: '#f59e0b', width: 2} };
             
-            // On trace le Coût Total, puis le Prix de Vente avec un remplissage "tonexty" pour dessiner la bande de marge
             let traceTotal = { x: sortedDates, y: arrCoutTotal, type: 'scatter', mode: modeType, name: 'Coût Total Calculé', line: {color: '#8b5cf6', width: 2} };
             let tracePV = { 
                 x: sortedDates, 
@@ -1696,8 +1823,8 @@
                 mode: modeType, 
                 name: 'Prix de Vente (Haut de la bande Marge)', 
                 line: {color: '#3b82f6', width: 2},
-                fill: 'tonexty', // Remplit l'espace entre la courbe du Prix Vente et celle du Coût Total
-                fillcolor: 'rgba(16, 185, 129, 0.15)', // Couleur verte transparente pour la bande de marge
+                fill: 'tonexty', 
+                fillcolor: 'rgba(16, 185, 129, 0.15)', 
                 text: arrMarge.map(m => `Marge nette: ${formatVal(m)} €/t`),
                 hovertemplate: '%{y:.1f} €/t<br>%{text}<extra></extra>'
             };
