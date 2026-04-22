@@ -363,7 +363,7 @@
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartTrend', 'icon-chartTrend', 'chartTrend')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-brand"></i> Analyse de Tendance : Ventes Vs Objectifs</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-brand"></i> Analyse de Tendance : Volumes Strictement Filtrés</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -456,7 +456,7 @@
 
                 <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartRetInd', 'icon-chartRetInd', 'chartRetInd')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-building text-brand"></i> Mix Segment : Retail / Industriel</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-building text-brand"></i> Mix Segment : Ret / Ind</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartRetInd()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -522,7 +522,7 @@
 
             <!-- Top KPIs Prod -->
             <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Production & Débit Broyeur-->
+                <!-- Volume Produit & Débit -->
                 <div class="glass-panel rounded-xl p-5 border-l-4 border-prod relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 text-prod opacity-10 text-7xl"><i class="fa-solid fa-industry"></i></div>
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Qtte Produite (T)</h3>
@@ -621,7 +621,7 @@
 
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartProdClinkerFactor', 'icon-chartProdClinkerFactor', 'chartProdClinkerFactor')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-flask text-prod"></i> Évolution du Facteur Clinker</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-flask text-prod"></i> Évolution du Facteur Clinker (Clinker / Ciment)</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartProdClinkerFactor()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -636,7 +636,7 @@
 
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartProdCostEvolution', 'icon-chartProdCostEvolution', 'chartProdCostEvolution')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-prod"></i> Évolution des Coûts Prod. & Marges Vs Prix de Vente en €/t</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-prod"></i> Évolution des Coûts & Prix de Vente en €/t</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartProdCostEvolution()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -651,7 +651,7 @@
 
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartProdEcartTime', 'icon-chartProdEcartTime', 'chartProdEcartTime')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-prod"></i> Écarts de Marge Globale Vs Target</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-prod"></i> Analyse Chronologique : Écarts de Marge Globale vs Target</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartProdEcartTime()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -666,7 +666,7 @@
 
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartProdCost', 'icon-chartProdCost', 'chartProdCost')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-coins text-prod"></i> Marge Globale et Unitaire par Produit</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-coins text-prod"></i> Performance Financière : Marge Globale et Unitaire par Produit</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartProdCost()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -831,6 +831,7 @@
             filters: {
                 annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: ''
             },
+            _aggregatesVentes: null, // <-- NOUVEAU : Cache des agrégations centralisées
             rawProd: [], // Données Production
             filteredProd: [],
             filtersProd: {
@@ -1391,7 +1392,10 @@
             document.getElementById('filterDateEnd').value = '';
             document.getElementById('filterTimeView').value = 'day'; document.getElementById('filterMargin').value = '0';
             document.getElementById('filterVolume').value = 0; UI.volValDisplay.innerText = "0";
-            State.filters = { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: '' };
+            
+            // CORRECTION: Utilisation de Object.assign pour conserver la référence de l'objet State.filters
+            Object.assign(State.filters, { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: '' });
+            
             applyFilters();
         });
 
@@ -1400,22 +1404,92 @@
             bindFilter(`filterProd${id}`, State.filtersProd, id.toLowerCase(), applyFiltersProd);
         });
         document.getElementById('filterProdTimeView').addEventListener('change', () => { if(currentTab === 'PROD') debouncedUpdateProd(); });
+        
         document.getElementById('resetProdFilters').addEventListener('click', () => {
             ['filterProdAnnee', 'filterProdMois', 'filterProdSemaine', 'filterProdProduit', 'filterProdBK'].forEach(id => { document.getElementById(id).value = 'ALL'; });
             document.getElementById('filterProdTimeView').value = 'day';
-            State.filtersProd = { annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL' };
+            
+            // CORRECTION: Utilisation de Object.assign pour conserver la référence de l'objet State.filtersProd
+            Object.assign(State.filtersProd, { annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL' });
+            
             applyFiltersProd();
         });
 
         // =======================================================================================
         // RENDERERS VENTES
         // =======================================================================================
+        function computeAggregatesVentes() {
+            let timeView = document.getElementById('filterTimeView').value;
+            let agg = {
+                kpis: { totalVentes: 0, totalObj: 0, totalRetours: 0, totalRetail: 0, totalIndus: 0, totalCPA: 0, totalDDP: 0 },
+                prodStats: {},
+                timeBuckets: {}
+            };
+
+            State.filtered.forEach(r => {
+                // 1. KPIs globaux
+                agg.kpis.totalVentes += r._DYN_VENTES;
+                agg.kpis.totalObj += (r['Objectif fixé'] || 0);
+                agg.kpis.totalRetours += (r['RETOUR PRODUIT'] || 0);
+                agg.kpis.totalRetail += r._DYN_RETAIL || 0;
+                agg.kpis.totalIndus += r._DYN_INDUS || 0;
+
+                // 2. Préparation du bucket temporel (pour les graphiques d'évolution)
+                let exactDate = getPlotlyDate(r);
+                let bucket = 'Inconnu';
+                if (exactDate && exactDate !== 'Inconnu') bucket = getBucketDate(exactDate, timeView);
+
+                if (!agg.timeBuckets[bucket]) {
+                    agg.timeBuckets[bucket] = {
+                        sort: new Date(bucket).getTime() || 0,
+                        ventes: 0, obj: 0, totalVol: 0, ddpVol: 0, cpaVol: 0, s: 0, v: 0, b: 0, r_seg: 0, i_seg: 0
+                    };
+                }
+                let b = agg.timeBuckets[bucket];
+                b.ventes += r._DYN_VENTES;
+                b.obj += (r['Objectif fixé'] || 0);
+                b.totalVol += r._DYN_VENTES;
+
+                // 3. Boucle sur les colonnes actives (Produits spécifiques)
+                State.activeCols.forEach(col => {
+                    let val = r[col] || 0;
+                    if (val > 0) {
+                        let meta = State.colMeta[col];
+                        
+                        // KPIs & Ratios
+                        if (meta.transport === 'DDP') { agg.kpis.totalDDP += val; b.ddpVol += val; }
+                        if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') { agg.kpis.totalCPA += val; b.cpaVol += val; }
+
+                        // Table & Pareto
+                        let pName = meta.product || 'Divers';
+                        if (!agg.prodStats[pName]) agg.prodStats[pName] = { vol: 0, retail: 0, indus: 0 };
+                        agg.prodStats[pName].vol += val;
+                        if (meta.segment === 'RETAIL') agg.prodStats[pName].retail += val;
+                        if (meta.segment === 'INDUSTRIAL') agg.prodStats[pName].indus += val;
+
+                        // Mix Temporels
+                        if (meta.cond === 'SAC') b.s += val;
+                        if (meta.cond === 'VRAC') b.v += val;
+                        if (meta.cond === 'BIG-BAG') b.b += val;
+                        if (meta.segment === 'RETAIL') b.r_seg += val;
+                        if (meta.segment === 'INDUSTRIAL') b.i_seg += val;
+                    }
+                });
+            });
+            State._aggregatesVentes = agg;
+        }
+
         function updateDashboard() {
+            if (State.filtered.length === 0) {
+                // Gestion cas vide (facultatif)
+            }
+            computeAggregatesVentes(); // ⚡ UNE SEULE BOUCLE SUR LES DONNÉES !
+            
             updateKPIs(); 
             renderVentesTable(); 
             renderChartTrend(); 
             renderChartRatios(); 
-            renderChartForecast(); 
+            renderChartForecast(); // Reste inchangé (utilise State.raw)
             renderChartWaterfall(); 
             renderChartPareto(); 
             renderChartVracSac(); 
@@ -1424,57 +1498,30 @@
         }
 
         function updateKPIs() {
-            let totalVentes = 0, totalObj = 0, totalRetours = 0, totalRetail = 0, totalIndus = 0, totalCPA = 0, totalDDP = 0; 
-            State.filtered.forEach(r => {
-                totalVentes += r._DYN_VENTES; totalObj += (r['Objectif fixé'] || 0); totalRetours += (r['RETOUR PRODUIT'] || 0);
-                totalRetail += r._DYN_RETAIL || 0; totalIndus += r._DYN_INDUS || 0;
-                State.activeCols.forEach(col => {
-                    let meta = State.colMeta[col]; let val = r[col] || 0;
-                    if (meta.transport === 'DDP') totalDDP += val;
-                    if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') totalCPA += val;
-                });
-            });
+            let kpis = State._aggregatesVentes.kpis;
+            let totalVentes = kpis.totalVentes, totalObj = kpis.totalObj;
+
             document.getElementById('kpiVentes').innerText = formatVal(totalVentes);
             let reaRatio = totalObj > 0 ? (totalVentes / totalObj) * 100 : 0;
             let reaEl = document.getElementById('kpiRealisation'); reaEl.innerText = reaRatio.toFixed(1) + '%';
             document.getElementById('kpiProgress').style.width = Math.min(reaRatio, 100) + '%';
             reaEl.className = `text-3xl font-bold ${reaRatio >= 100 ? 'text-accent' : (reaRatio > 80 ? 'text-brand_light' : 'text-danger')}`;
 
-            let ratioRetail = totalVentes > 0 ? (totalRetail / totalVentes) * 100 : 0;
-            let ratioIndus = totalVentes > 0 ? (totalIndus / totalVentes) * 100 : 0;
-            document.getElementById('kpiVolRetail').innerText = formatVal(totalRetail, ' T'); document.getElementById('kpiRatioRetail').innerText = `(${ratioRetail.toFixed(1)}%)`;
-            document.getElementById('kpiVolIndus').innerText = formatVal(totalIndus, ' T'); document.getElementById('kpiRatioIndus').innerText = `(${ratioIndus.toFixed(1)}%)`;
+            let ratioRetail = totalVentes > 0 ? (kpis.totalRetail / totalVentes) * 100 : 0;
+            let ratioIndus = totalVentes > 0 ? (kpis.totalIndus / totalVentes) * 100 : 0;
+            document.getElementById('kpiVolRetail').innerText = formatVal(kpis.totalRetail, ' T'); document.getElementById('kpiRatioRetail').innerText = `(${ratioRetail.toFixed(1)}%)`;
+            document.getElementById('kpiVolIndus').innerText = formatVal(kpis.totalIndus, ' T'); document.getElementById('kpiRatioIndus').innerText = `(${ratioIndus.toFixed(1)}%)`;
             
-            document.getElementById('kpiRatioCPA').innerText = (totalVentes > 0 ? (totalCPA / totalVentes) * 100 : 0).toFixed(1) + '%';
-            document.getElementById('kpiRatioDDP').innerText = (totalVentes > 0 ? (totalDDP / totalVentes) * 100 : 0).toFixed(1) + '%';
+            document.getElementById('kpiRatioCPA').innerText = (totalVentes > 0 ? (kpis.totalCPA / totalVentes) * 100 : 0).toFixed(1) + '%';
+            document.getElementById('kpiRatioDDP').innerText = (totalVentes > 0 ? (kpis.totalDDP / totalVentes) * 100 : 0).toFixed(1) + '%';
         }
 
         function renderVentesTable() {
             let tbody = UI.tableVentesBody;
             if (!tbody) return;
 
-            let prodStats = {};
-            let totalVol = 0;
-
-            State.filtered.forEach(r => {
-                State.activeCols.forEach(col => {
-                    let val = r[col] || 0;
-                    if (val > 0) {
-                        let meta = State.colMeta[col];
-                        let pName = meta.product || 'Divers';
-
-                        if (!prodStats[pName]) {
-                            prodStats[pName] = { vol: 0, retail: 0, indus: 0 };
-                        }
-
-                        prodStats[pName].vol += val;
-                        totalVol += val;
-
-                        if (meta.segment === 'RETAIL') prodStats[pName].retail += val;
-                        if (meta.segment === 'INDUSTRIAL') prodStats[pName].indus += val;
-                    }
-                });
-            });
+            let prodStats = State._aggregatesVentes.prodStats;
+            let totalVol = State._aggregatesVentes.kpis.totalVentes;
 
             let sortedProds = Object.keys(prodStats).map(k => ({
                 name: k,
@@ -1525,14 +1572,7 @@
 
         function renderChartTrend() {
             let timeView = document.getElementById('filterTimeView').value;
-            let bucketData = {};
-            State.filtered.forEach(r => {
-                let exactDate = getPlotlyDate(r);
-                if (!exactDate || exactDate === 'Inconnu') return;
-                let bucket = getBucketDate(exactDate, timeView);
-                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), ventes: 0, obj: 0 };
-                bucketData[bucket].ventes += r._DYN_VENTES; bucketData[bucket].obj += (r['Objectif fixé'] || 0);
-            });
+            let bucketData = State._aggregatesVentes.timeBuckets;
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartTrend'); return; }
 
@@ -1544,20 +1584,7 @@
 
         function renderChartRatios() {
             let timeView = document.getElementById('filterTimeView').value;
-            let bucketData = {};
-            State.filtered.forEach(r => {
-                let exactDate = getPlotlyDate(r);
-                if (!exactDate || exactDate === 'Inconnu') return;
-                let bucket = getBucketDate(exactDate, timeView);
-                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), totalVol: 0, ddpVol: 0, cpaVol: 0 };
-                let dVol = 0, cVol = 0, tVol = r._DYN_VENTES;
-                State.activeCols.forEach(col => {
-                    let meta = State.colMeta[col]; let val = r[col] || 0;
-                    if (meta.transport === 'DDP') dVol += val;
-                    if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') cVol += val;
-                });
-                bucketData[bucket].totalVol += tVol; bucketData[bucket].ddpVol += dVol; bucketData[bucket].cpaVol += cVol;
-            });
+            let bucketData = State._aggregatesVentes.timeBuckets;
             let sortedDates = Object.keys(bucketData).sort((a,b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartRatios'); return; }
 
@@ -1715,16 +1742,13 @@
         }
 
         function renderChartWaterfall() {
-            let totals = { obj: 0, ret: 0, indus: 0, retours: 0, brutes: 0 };
-            State.filtered.forEach(r => {
-                totals.obj += r['Objectif fixé'] || 0; totals.ret += r._DYN_RETAIL || 0; totals.indus += r._DYN_INDUS || 0;
-                totals.retours += r['RETOUR PRODUIT'] || 0; totals.brutes += r._DYN_VENTES || 0;
-            });
-            let autres = Math.max(0, totals.brutes - (totals.ret + totals.indus));
+            let kpis = State._aggregatesVentes.kpis;
+            let autres = Math.max(0, kpis.totalVentes - (kpis.totalRetail + kpis.totalIndus));
+            
             let data = [{
                 type: "waterfall", orientation: "v", measure: ["relative", "relative", "relative", "total", "relative", "total"],
                 x: ["Retail", "Industriel", "Autres Seg.", "Ventes Brutes", "Retours", "Ventes Nettes"], textposition: "outside",
-                y: [totals.ret, totals.indus, autres, totals.brutes, -totals.retours, totals.brutes - totals.retours],
+                y: [kpis.totalRetail, kpis.totalIndus, autres, kpis.totalVentes, -kpis.totalRetours, kpis.totalVentes - kpis.totalRetours],
                 connector: { line: { color: isDarkMode() ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)" } },
                 decreasing: { marker: { color: "#ef4444" } }, increasing: { marker: { color: "#3b82f6" } }, totals: { marker: { color: "#10b981" } }
             }];
@@ -1732,14 +1756,10 @@
         }
 
         function renderChartPareto() {
-            let sumsMap = {};
-            State.activeCols.forEach(col => {
-                let prodName = State.colMeta[col].product || 'Divers';
-                if (!sumsMap[prodName]) sumsMap[prodName] = 0;
-                State.filtered.forEach(r => sumsMap[prodName] += (r[col] || 0));
-            });
-            let sums = Object.keys(sumsMap).map(k => ({name: k, val: sumsMap[k]})).filter(s => s.val > 0).sort((a, b) => b.val - a.val);
+            let prodStats = State._aggregatesVentes.prodStats;
+            let sums = Object.keys(prodStats).map(k => ({name: k, val: prodStats[k].vol})).filter(s => s.val > 0).sort((a, b) => b.val - a.val);
             if(sums.length === 0) { Plotly.purge('chartPareto'); return; }
+            
             let total = sums.reduce((acc, s) => acc + s.val, 0);
             let cumSum = 0;
             let cumPerc = sums.map(s => { cumSum += s.val; return (cumSum / total) * 100; });
@@ -1751,21 +1771,10 @@
 
         function renderChartVracSac() {
             let timeView = document.getElementById('filterTimeView').value;
-            let bucketData = {};
-            State.filtered.forEach(row => {
-                let exactDate = getPlotlyDate(row);
-                if (!exactDate || exactDate === 'Inconnu') return;
-                let bucket = getBucketDate(exactDate, timeView);
-                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), s: 0, v: 0, b: 0 };
-                State.activeCols.forEach(col => {
-                    let meta = State.colMeta[col];
-                    if (meta.cond === 'SAC') bucketData[bucket].s += (row[col] || 0);
-                    if (meta.cond === 'VRAC') bucketData[bucket].v += (row[col] || 0);
-                    if (meta.cond === 'BIG-BAG') bucketData[bucket].b += (row[col] || 0);
-                });
-            });
+            let bucketData = State._aggregatesVentes.timeBuckets;
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartVracSac'); return; }
+            
             let t = timeView === 'day' ? 'scatter' : 'bar';
             let traces = [
                 { x: sortedDates, y: sortedDates.map(d => bucketData[d].s), type: t, mode: 'lines', name: 'SAC', marker: {color: '#3b82f6'}, line: {color: '#3b82f6', width: 1}, fillcolor: 'rgba(59, 130, 246, 0.7)', stackgroup: 'one' },
@@ -1777,41 +1786,28 @@
 
         function renderChartRetInd() {
             let timeView = document.getElementById('filterTimeView').value;
-            let bucketData = {};
-            State.filtered.forEach(row => {
-                let exactDate = getPlotlyDate(row);
-                if (!exactDate || exactDate === 'Inconnu') return;
-                let bucket = getBucketDate(exactDate, timeView);
-                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), r: 0, i: 0 };
-                State.activeCols.forEach(col => {
-                    let meta = State.colMeta[col];
-                    if (meta.segment === 'RETAIL') bucketData[bucket].r += (row[col] || 0);
-                    if (meta.segment === 'INDUSTRIAL') bucketData[bucket].i += (row[col] || 0);
-                });
-            });
+            let bucketData = State._aggregatesVentes.timeBuckets;
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartRetInd'); return; }
+            
             let t = timeView === 'day' ? 'scatter' : 'bar';
             let traces = [
-                { x: sortedDates, y: sortedDates.map(d => bucketData[d].r), type: t, mode: 'lines', name: 'Retail', marker: {color: '#a855f7'}, line: {color: '#a855f7', width: 1}, fillcolor: 'rgba(168, 85, 247, 0.7)', stackgroup: 'one' },
-                { x: sortedDates, y: sortedDates.map(d => bucketData[d].i), type: t, mode: 'lines', name: 'Industrial', marker: {color: '#10b981'}, line: {color: '#10b981', width: 1}, fillcolor: 'rgba(16, 185, 129, 0.7)', stackgroup: 'one' }
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].r_seg), type: t, mode: 'lines', name: 'Retail', marker: {color: '#a855f7'}, line: {color: '#a855f7', width: 1}, fillcolor: 'rgba(168, 85, 247, 0.7)', stackgroup: 'one' },
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].i_seg), type: t, mode: 'lines', name: 'Industrial', marker: {color: '#10b981'}, line: {color: '#10b981', width: 1}, fillcolor: 'rgba(16, 185, 129, 0.7)', stackgroup: 'one' }
             ];
             renderPlot('chartRetInd', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' });
         }
 
         function generateExecutiveSummary() {
             if (State.filtered.length === 0) { document.getElementById('executiveSummary').innerHTML = "<p>Aucune donnée correspondante.</p>"; return; }
-            let tVentes = 0, tObj = 0, tRetours = 0, segRetail = 0, segIndus = 0;
-            State.filtered.forEach(r => {
-                tVentes += r._DYN_VENTES; tObj += (r['Objectif fixé'] || 0); tRetours += (r['RETOUR PRODUIT'] || 0);
-                segRetail += r._DYN_RETAIL; segIndus += r._DYN_INDUS;
-            });
-            let perf = tObj > 0 ? (tVentes / tObj * 100) : 0;
-            let leadSegment = Object.entries({Retail: segRetail, Indus: segIndus}).sort((a,b)=>b[1]-a[1])[0];
+            let kpis = State._aggregatesVentes.kpis;
+            
+            let perf = kpis.totalObj > 0 ? (kpis.totalVentes / kpis.totalObj * 100) : 0;
+            let leadSegment = Object.entries({Retail: kpis.totalRetail, Indus: kpis.totalIndus}).sort((a,b)=>b[1]-a[1])[0];
             let html = `<ul class="list-disc pl-5 space-y-2">
-                <li><strong class="text-gray-900 dark:text-white">Ventes Filtrées :</strong> Volume de <strong>${formatVal(tVentes)}</strong> (${perf.toFixed(1)}% obj).</li>
+                <li><strong class="text-gray-900 dark:text-white">Performance Filtrée :</strong> Volume de <strong>${formatVal(kpis.totalVentes)}</strong> (${perf.toFixed(1)}% obj).</li>
                 <li><strong class="text-gray-900 dark:text-white">Top Segment :</strong> Moteur <strong>${leadSegment[0]}</strong> (${formatVal(leadSegment[1])}).</li>
-                <li><strong class="text-gray-900 dark:text-white">Opérationnel :</strong> ${formatVal(tRetours)} de retours.</li></ul>`;
+                <li><strong class="text-gray-900 dark:text-white">Opérationnel :</strong> ${formatVal(kpis.totalRetours)} de retours.</li></ul>`;
             document.getElementById('executiveSummary').innerHTML = html;
         }
 
