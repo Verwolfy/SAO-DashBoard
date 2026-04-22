@@ -61,13 +61,16 @@
         .drop-zone { border: 2px dashed #3b82f6; transition: all 0.3s ease; }
         .drop-zone.dragover { background-color: rgba(59, 130, 246, 0.1); border-color: #60a5fa; scale: 1.02; }
         
-        .ai-text { background: -webkit-linear-gradient(45deg, #a855f7, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .ai-border { border: 1px solid rgba(168, 85, 247, 0.4); box-shadow: inset 0 0 20px rgba(168, 85, 247, 0.05); }
-
         .tab-btn { transition: all 0.3s ease; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col custom-scrollbar bg-gray-50 dark:bg-[#0b0f19] text-gray-900 dark:text-[#f8fafc]">
+
+    <!-- ERROR BANNER -->
+    <div id="globalError" class="hidden bg-red-600 text-white px-4 py-3 text-center font-medium shadow-md z-[300] sticky top-0 flex justify-between items-center">
+        <span id="globalErrorText">Une erreur est survenue.</span>
+        <button onclick="document.getElementById('globalError').classList.add('hidden')" class="text-white hover:text-red-200"><i class="fa-solid fa-xmark"></i></button>
+    </div>
 
     <!-- Header & Ingestion Zone -->
     <header class="glass-panel sticky top-0 z-50 p-4 shadow-xl border-b border-gray-200 dark:border-gray-800">
@@ -87,10 +90,10 @@
             
             <!-- ONGLETS DE NAVIGATION -->
             <div class="flex bg-gray-200 dark:bg-gray-800 rounded-lg p-1 shadow-inner overflow-hidden mx-auto md:mx-0">
-                <button onclick="switchTab('VENTES')" id="tabVentes" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-brand text-white flex items-center gap-2">
+                <button onclick="switchTab('VENTES')" id="tabVentes" data-tab="VENTES" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-brand text-white flex items-center gap-2">
                     <i class="fa-solid fa-chart-pie"></i> Ventes & Marges
                 </button>
-                <button onclick="switchTab('PROD')" id="tabProd" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white flex items-center gap-2">
+                <button onclick="switchTab('PROD')" id="tabProd" data-tab="PROD" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white flex items-center gap-2">
                     <i class="fa-solid fa-industry"></i> Production & Coûts
                 </button>
             </div>
@@ -119,6 +122,44 @@
     <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/90 dark:bg-darker/90 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand mb-4"></div>
         <p class="text-gray-900 dark:text-white text-lg font-medium">Analyse Multi-Dimensionnelle...</p>
+    </div>
+
+    <!-- LOGIN MODAL -->
+    <div id="loginModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/d/1_mjRcYVTI7ycwpXZWOkvRFNEHCvLBtYP');">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="glass-panel relative z-10 p-8 rounded-2xl w-full max-w-md border border-white/20 shadow-2xl mx-4">
+            <div class="text-center mb-8">
+                <i class="fa-solid fa-shield-halved text-brand text-4xl mb-4"></i>
+                <h2 class="text-2xl font-bold text-white tracking-wide">Authentification</h2>
+                <p class="text-gray-300 text-sm mt-2">Veuillez vous connecter pour accéder au Dashboard</p>
+            </div>
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Login</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-user text-gray-400"></i>
+                        </div>
+                        <input type="text" id="loginInput" required class="block w-full pl-10 pr-3 py-2.5 border border-gray-600 rounded-lg bg-gray-800/60 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand sm:text-sm transition">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Mot de Passe</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-key text-gray-400"></i>
+                        </div>
+                        <input type="password" id="pwdInput" required class="block w-full pl-10 pr-3 py-2.5 border border-gray-600 rounded-lg bg-gray-800/60 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand focus:border-brand sm:text-sm transition">
+                    </div>
+                </div>
+                <div id="loginError" class="hidden text-red-200 text-sm font-medium text-center bg-red-500/20 border border-red-500/50 py-2 rounded">
+                    Identifiants incorrects ou rôle non défini.
+                </div>
+                <button type="submit" class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-lg text-sm font-bold text-white bg-brand hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand transition-colors mt-4">
+                    Se connecter
+                </button>
+            </form>
+        </div>
     </div>
 
     <!-- MAIN CONTAINER -->
@@ -289,7 +330,7 @@
                 </div>
             </section>
 
-            <!-- NOUVEAU : Tableau des Ventes par Produit -->
+            <!-- Tableau des Ventes par Produit -->
             <section class="glass-panel rounded-xl p-0 overflow-hidden flex flex-col border-t-4 border-brand">
                 <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-dark/50 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -310,7 +351,7 @@
                             </tr>
                         </thead>
                         <tbody id="tableVentesBody" class="divide-y divide-gray-100 dark:divide-gray-800 text-sm text-gray-800 dark:text-gray-200 bg-white/30 dark:bg-gray-900/30">
-                            <!-- Les lignes seront générées par JavaScript ici -->
+                            <!-- JS Inject -->
                         </tbody>
                     </table>
                 </div>
@@ -318,102 +359,122 @@
 
             <!-- Charts Grid -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse de Tendance : Volumes Strictement Filtrés</h3>
-                        <button onclick="renderChartTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartTrend', 'icon-chartTrend', 'chartTrend')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-brand"></i> Analyse de Tendance : Volumes Strictement Filtrés</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartTrend" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartTrend" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartTrend" class="w-full h-[300px]"></div>
                     </div>
-                    <div id="chartTrend" class="w-full h-[300px]"></div>
                 </div>
 
-                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution : Ratios CPA & DDP</h3>
-                        <button onclick="renderChartRatios()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartRatios', 'icon-chartRatios', 'chartRatios')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-percent text-brand"></i> Évolution : Ratios CPA & DDP</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartRatios()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartRatios" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartRatios" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartRatios" class="w-full h-[300px]"></div>
                     </div>
-                    <div id="chartRatios" class="w-full h-[300px]"></div>
                 </div>
 
-                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 id="titleForecast" class="text-lg font-semibold text-gray-800 dark:text-white">Prévisions (Objectif 1,34M) : Retail vs Industrial (Année en cours)</h3>
-                        <button onclick="renderChartForecast()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartForecast', 'icon-chartForecast', 'chartForecast')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
+                            <i class="fa-solid fa-money-bill-trend-up text-brand"></i>
+                            <span id="titleForecast">Prévisions : Retail vs Industrial (Année en cours)</span>
+                        </h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartForecast()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartForecast" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartForecast" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartForecast" class="w-full h-[300px]"></div>
                     </div>
-                    <div id="chartForecast" class="w-full h-[300px]"></div>
                 </div>
 
-                <div class="glass-panel rounded-xl p-4">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Décomposition de la Performance (Waterfall)</h3>
-                        <button onclick="renderChartWaterfall()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartWaterfall', 'icon-chartWaterfall', 'chartWaterfall')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-water text-brand"></i> Décomposition (Waterfall)</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartWaterfall()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartWaterfall" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartWaterfall" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartWaterfall" class="w-full h-[350px]"></div>
                     </div>
-                    <div id="chartWaterfall" class="w-full h-[350px]"></div>
                 </div>
 
-                <div class="glass-panel rounded-xl p-4">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse Pareto : Top Produits (Actifs)</h3>
-                        <button onclick="renderChartPareto()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartPareto', 'icon-chartPareto', 'chartPareto')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-bar text-brand"></i> Analyse Pareto</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartPareto()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartPareto" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartPareto" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartPareto" class="w-full h-[350px]"></div>
                     </div>
-                    <div id="chartPareto" class="w-full h-[350px]"></div>
                 </div>
 
-                <div class="glass-panel rounded-xl p-4">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Mix Cond. : SAC / VRAC / BIG-BAG</h3>
-                        <button onclick="renderChartVracSac()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartVracSac', 'icon-chartVracSac', 'chartVracSac')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-box-open text-brand"></i> Mix Cond. : SAC / VRAC</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartVracSac()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartVracSac" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartVracSac" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartVracSac" class="w-full h-[350px]"></div>
                     </div>
-                    <div id="chartVracSac" class="w-full h-[350px]"></div>
                 </div>
 
-                <div class="glass-panel rounded-xl p-4">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Mix Segment : Retail vs Industrial</h3>
-                        <button onclick="renderChartRetInd()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartRetInd', 'icon-chartRetInd', 'chartRetInd')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-building text-brand"></i> Mix Segment : Ret / Ind</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartRetInd()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartRetInd" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartRetInd" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartRetInd" class="w-full h-[350px]"></div>
                     </div>
-                    <div id="chartRetInd" class="w-full h-[350px]"></div>
                 </div>
             </section>
 
             <!-- Executive Summary Sales -->
             <section class="glass-panel rounded-xl p-6 border-t-4 border-brand_light mt-4 relative">
-                <div class="flex items-center justify-between gap-2 mb-4">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-brain text-brand_light text-xl"></i>
-                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Business Dev. Summary & Insights Dynamiques</h2>
-                    </div>
-                    <button id="btnAiInsights" class="hidden px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 rounded-md text-sm font-bold text-white transition shadow-lg flex items-center gap-2">
-                        ✨ Analyse
-                    </button>
+                <div class="flex items-center gap-2 mb-4">
+                    <i class="fa-solid fa-brain text-brand_light text-xl"></i>
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Business Dev. Summary</h2>
                 </div>
-                
                 <div id="executiveSummary" class="text-gray-700 dark:text-gray-300 leading-relaxed space-y-3 text-sm"></div>
-
-                <div id="aiInsightsContainer" class="hidden mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <div class="flex items-center gap-2 mb-4">
-                        <i class="fa-solid fa-robot text-purple-500 dark:text-purple-400 text-xl"></i>
-                        <h3 class="text-lg font-bold ai-text">CFO Copilot (Gemini AI) ✨</h3>
-                    </div>
-                    <div id="aiLoading" class="hidden flex items-center gap-3 text-purple-500 dark:text-purple-400 text-sm italic mb-4">
-                        <div class="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-purple-500 dark:border-purple-400"></div>
-                        Analyse stratégique en cours de génération...
-                    </div>
-                    <div id="aiContent" class="text-gray-800 dark:text-gray-200 text-sm leading-relaxed space-y-4 bg-gray-100 dark:bg-gray-800/60 p-5 rounded-lg ai-border"></div>
-                </div>
             </section>
         </div>
 
@@ -506,88 +567,114 @@
             <!-- Bandeau des Consommations de Matières Premières -->
             <div class="mb-2">
                 <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Composants Consommés (Tonnages Calculés)</h3>
-                <div id="prodComponentsSummary" class="flex flex-wrap gap-3">
-                    <!-- Les étiquettes MP s'afficheront ici -->
-                </div>
+                <div id="prodComponentsSummary" class="flex flex-wrap gap-3"></div>
             </div>
 
             <!-- Charts Grid Prod -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Trend Prod -->
-                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Tendance : Volume Produit & Débit </h3>
-                        <button onclick="renderChartProdTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartProdTrend', 'icon-chartProdTrend', 'chartProdTrend')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-area text-prod"></i> Tendance : Volume Produit & Débit</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartProdTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartProdTrend" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartProdTrend" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartProdTrend" class="w-full h-[300px]"></div>
                     </div>
-                    <div id="chartProdTrend" class="w-full h-[300px]"></div>
                 </div>
 
-                <!-- Marge par Produit dans le temps -->
-                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Génération de Marge : Contribution par Produit</h3>
-                        <button onclick="renderChartProdMargeTime()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartProdMargeTime', 'icon-chartProdMargeTime', 'chartProdMargeTime')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-money-check-dollar text-prod"></i> Génération de Marge : Contribution par Produit</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartProdMargeTime()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartProdMargeTime" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartProdMargeTime" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartProdMargeTime" class="w-full h-[300px]"></div>
                     </div>
-                    <div id="chartProdMargeTime" class="w-full h-[300px]"></div>
                 </div>
 
-                <!-- Mix MP -->
-                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Structure de Recette : Consommation des Matières Premières (Tonnes)</h3>
-                        <button onclick="renderChartProdMix()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartProdMix', 'icon-chartProdMix', 'chartProdMix')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-blender text-prod"></i> Structure de Recette : Consommation Matières Premières (T)</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartProdMix()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartProdMix" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartProdMix" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartProdMix" class="w-full h-[350px]"></div>
                     </div>
-                    <div id="chartProdMix" class="w-full h-[350px]"></div>
                 </div>
 
-                <!-- Facteur Clinker -->
-                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution du Facteur Clinker (Clinker / Ciment)</h3>
-                        <button onclick="renderChartProdClinkerFactor()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartProdClinkerFactor', 'icon-chartProdClinkerFactor', 'chartProdClinkerFactor')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-flask text-prod"></i> Évolution du Facteur Clinker (Clinker / Ciment)</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartProdClinkerFactor()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartProdClinkerFactor" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartProdClinkerFactor" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartProdClinkerFactor" class="w-full h-[300px]"></div>
                     </div>
-                    <div id="chartProdClinkerFactor" class="w-full h-[300px]"></div>
                 </div>
 
-                <!-- Évolution des Coûts -->
-                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Évolution des Coûts & Prix de Vente (Bande de Marge) en €/t</h3>
-                        <button onclick="renderChartProdCostEvolution()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartProdCostEvolution', 'icon-chartProdCostEvolution', 'chartProdCostEvolution')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-prod"></i> Évolution des Coûts & Prix de Vente en €/t</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartProdCostEvolution()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartProdCostEvolution" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartProdCostEvolution" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartProdCostEvolution" class="w-full h-[300px]"></div>
                     </div>
-                    <div id="chartProdCostEvolution" class="w-full h-[300px]"></div>
                 </div>
 
-                <!-- Analyse chronologique des écarts -->
-                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Analyse Chronologique : Écarts de Marge Globale vs Target</h3>
-                        <button onclick="renderChartProdEcartTime()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartProdEcartTime', 'icon-chartProdEcartTime', 'chartProdEcartTime')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-prod"></i> Analyse Chronologique : Écarts de Marge Globale vs Target</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartProdEcartTime()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartProdEcartTime" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartProdEcartTime" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartProdEcartTime" class="w-full h-[300px]"></div>
                     </div>
-                    <div id="chartProdEcartTime" class="w-full h-[300px]"></div>
                 </div>
 
-                <!-- Analyse des Marges / Ecarts par Produit (Horizontal) -->
-                <div class="glass-panel rounded-xl p-4 lg:col-span-2">
-                    <div class="flex justify-between items-start mb-2">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Performance Financière : Marge Globale (€) et Unitaire (€/t) par Produit</h3>
-                        <button onclick="renderChartProdCost()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors" title="Réinitialiser l'affichage">
-                            <i class="fa-solid fa-rotate-right"></i>
-                        </button>
+                <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
+                    <button onclick="toggleSection('wrap-chartProdCost', 'icon-chartProdCost', 'chartProdCost')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-coins text-prod"></i> Performance Financière : Marge Globale et Unitaire par Produit</h3>
+                        <div class="flex items-center gap-3">
+                            <span onclick="event.stopPropagation(); renderChartProdCost()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </span>
+                            <i id="icon-chartProdCost" class="fa-solid fa-chevron-down text-gray-500 transition-transform duration-300"></i>
+                        </div>
+                    </button>
+                    <div id="wrap-chartProdCost" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
+                        <div id="chartProdCost" class="w-full h-[400px]"></div>
                     </div>
-                    <div id="chartProdCost" class="w-full h-[400px]"></div>
                 </div>
             </section>
         </div>
@@ -597,11 +684,79 @@
 
     <!-- Scripts Core Logic -->
     <script>
-        const apiKey = ""; // API Key fournie dynamiquement par l'environnement
-        
+        // --- UTILITAIRES GÉNÉRAUX & PERFORMANCE ---
+        function toggleSection(wrapperId, iconId, chartId) {
+            const wrapper = document.getElementById(wrapperId);
+            const icon = document.getElementById(iconId);
+            const isHidden = wrapper.classList.contains('hidden');
+
+            if (isHidden) {
+                // Ouverture
+                wrapper.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+                
+                // On force le redimensionnement de Plotly pour l'adapter au conteneur maintenant visible
+                const chartEl = document.getElementById(chartId);
+                if(chartEl && chartEl.data) {
+                    Plotly.Plots.resize(chartEl);
+                }
+            } else {
+                // Fermeture
+                wrapper.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         function showLoading(show) {
             if (show) UI.loadingOverlay.classList.remove('hidden');
             else setTimeout(() => UI.loadingOverlay.classList.add('hidden'), 500);
+        }
+
+        function showError(msg) {
+            const errBanner = document.getElementById('globalError');
+            document.getElementById('globalErrorText').innerText = msg;
+            errBanner.classList.remove('hidden');
+            setTimeout(() => errBanner.classList.add('hidden'), 5000);
+        }
+
+        // Base config for Plotly (inclut export image par défaut)
+        const getPlotlyLayoutBase = () => ({
+            autosize: true,
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            font: { color: isDarkMode() ? '#94a3b8' : '#475569', family: 'Inter, sans-serif' },
+            margin: { t: 20, r: 20, l: 50, b: 40 },
+            xaxis: { gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', zerolinecolor: isDarkMode() ? '#334155' : '#e2e8f0' },
+            yaxis: { gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', zerolinecolor: isDarkMode() ? '#334155' : '#e2e8f0' }
+        });
+
+        const plotlyConfig = { responsive: true, displayModeBar: true, displaylogo: false };
+
+        function renderPlot(id, traces, layout) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            
+            layout.autosize = true;
+            
+            if (el.data) {
+                Plotly.react(el, traces, layout, plotlyConfig).then(() => {
+                    Plotly.Plots.resize(el);
+                });
+            } else {
+                Plotly.newPlot(el, traces, layout, plotlyConfig);
+            }
         }
 
         // --- GESTION DU THEME SOMBRE/CLAIR ---
@@ -631,31 +786,36 @@
 
         const isDarkMode = () => htmlEl.classList.contains('dark');
 
-        // --- GESTION DES ONGLETS ---
+        // --- GESTION DES ONGLETS (Refactorisée via classes toggles) ---
         let currentTab = 'VENTES';
         function switchTab(tab) {
             currentTab = tab;
-            if(tab === 'VENTES') {
-                document.getElementById('viewVentes').classList.remove('hidden');
-                document.getElementById('viewProduction').classList.add('hidden');
-                document.getElementById('tabVentes').classList.add('bg-brand', 'text-white');
-                document.getElementById('tabVentes').classList.remove('bg-transparent', 'text-gray-500', 'dark:text-gray-400');
-                document.getElementById('tabProd').classList.add('bg-transparent', 'text-gray-500', 'dark:text-gray-400');
-                document.getElementById('tabProd').classList.remove('bg-brand', 'text-white');
-                if(State.filtered.length > 0) updateDashboard();
-            } else {
-                document.getElementById('viewVentes').classList.add('hidden');
-                document.getElementById('viewProduction').classList.remove('hidden');
-                document.getElementById('tabProd').classList.add('bg-prod', 'text-white');
-                document.getElementById('tabProd').classList.remove('bg-transparent', 'text-gray-500', 'dark:text-gray-400');
-                document.getElementById('tabVentes').classList.add('bg-transparent', 'text-gray-500', 'dark:text-gray-400');
-                document.getElementById('tabVentes').classList.remove('bg-brand', 'text-white');
-                if(State.filteredProd.length > 0) updateDashboardProd();
-            }
+            const tabs = [
+                { id: 'tabVentes', viewId: 'viewVentes', activeClass: 'bg-brand' },
+                { id: 'tabProd', viewId: 'viewProduction', activeClass: 'bg-prod' }
+            ];
+
+            tabs.forEach(t => {
+                const btn = document.getElementById(t.id);
+                const view = document.getElementById(t.viewId);
+                const isActive = (tab === 'VENTES' && t.id === 'tabVentes') || (tab === 'PROD' && t.id === 'tabProd');
+                
+                if (isActive) {
+                    view.classList.remove('hidden');
+                    btn.className = `tab-btn px-4 py-1.5 text-sm font-bold rounded-md text-white flex items-center gap-2 ${t.activeClass}`;
+                } else {
+                    view.classList.add('hidden');
+                    btn.className = `tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white flex items-center gap-2`;
+                }
+            });
+
+            if(tab === 'VENTES' && State.filtered.length > 0) updateDashboard();
+            if(tab === 'PROD' && State.filteredProd.length > 0) progressiveRenderProd();
         }
+
         function refreshCurrentView() {
-            if(currentTab === 'VENTES') updateDashboard();
-            else updateDashboardProd();
+            if(currentTab === 'VENTES') debouncedUpdateVentes();
+            else progressiveRenderProd();
         }
 
         // --- ETAT DE L'APPLICATION ---
@@ -669,16 +829,15 @@
             filters: {
                 annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: ''
             },
-            
             rawProd: [], // Données Production
             filteredProd: [],
             filtersProd: {
-                annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL'
+                annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL', timeview: 'day'
             },
-            
             dimMapping: [], // Données Dimension
-
-            matiereCols: ['Clinker Gris', 'Clinker Blanc', 'Gypse', 'Granit', 'Laitier', 'Calcaire', 'Pouzzolane', 'Marbre', 'Carbonate']
+            matiereCols: ['Clinker Gris', 'Clinker Blanc', 'Gypse', 'Granit', 'Laitier', 'Calcaire', 'Pouzzolane', 'Marbre', 'Carbonate'],
+            users: [], // Données Utilisateurs Hachées
+            currentUser: null // Utilisateur connecté
         };
 
         const UI = {
@@ -689,23 +848,24 @@
             dashboardContent: document.getElementById('dashboardContent'),
             loadingOverlay: document.getElementById('loadingOverlay'),
             volValDisplay: document.getElementById('volVal'),
-            btnAiInsights: document.getElementById('btnAiInsights'),
-            aiInsightsContainer: document.getElementById('aiInsightsContainer'),
-            aiLoading: document.getElementById('aiLoading'),
-            aiContent: document.getElementById('aiContent'),
-            tableVentesBody: document.getElementById('tableVentesBody') // Nouvel élément UI
+            tableVentesBody: document.getElementById('tableVentesBody'),
+            
+            // Login UI
+            loginModal: document.getElementById('loginModal'),
+            loginForm: document.getElementById('loginForm'),
+            loginInput: document.getElementById('loginInput'),
+            pwdInput: document.getElementById('pwdInput'),
+            loginError: document.getElementById('loginError')
         };
 
-        const getPlotlyLayoutBase = () => ({
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: 'rgba(0,0,0,0)',
-            font: { color: isDarkMode() ? '#94a3b8' : '#475569', family: 'Inter, sans-serif' },
-            margin: { t: 20, r: 20, l: 50, b: 40 },
-            xaxis: { gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', zerolinecolor: isDarkMode() ? '#334155' : '#e2e8f0' },
-            yaxis: { gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', zerolinecolor: isDarkMode() ? '#334155' : '#e2e8f0' }
-        });
+        // --- CRYPTO & FORMATTAGE ---
+        async function hashPassword(password) {
+            const msgBuffer = new TextEncoder().encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
 
-        // --- OUTILS DE NETTOYAGE ---
         function cleanNumber(val) {
             if (val === null || val === undefined || val === '') return 0;
             if (typeof val === 'number') return val;
@@ -741,7 +901,7 @@
             return isNaN(dObj.getTime()) ? 0 : dObj.getTime();
         }
 
-        function getPlotlyDate(r, isProd = false) {
+        function getPlotlyDate(r) {
             if (r._DATE_SORT > 0) {
                 let d = new Date(r._DATE_SORT);
                 let year = d.getFullYear();
@@ -769,17 +929,28 @@
             return dateStr;
         }
 
-        // --- FICHIERS ET INGESTION ---
+        // --- INGESTION (Avec gestion d'erreur) ---
         function handleFile(file) {
             showLoading(true);
-            Papa.parse(file, { header: false, skipEmptyLines: true, complete: res => processDataRaw(res.data) });
+            Papa.parse(file, { 
+                header: false, 
+                skipEmptyLines: true, 
+                complete: async res => await processDataRaw(res.data),
+                error: (err) => { showLoading(false); showError("Erreur de parsing CSV : " + err.message); }
+            });
         }
         function handleUrl() {
             let url = UI.gsheetUrl.value.trim();
             if (!url) return;
             if (url.includes('/edit')) url = url.replace(/\/edit.*$/, '/export?format=csv');
             showLoading(true);
-            Papa.parse(url, { download: true, header: false, skipEmptyLines: true, complete: res => processDataRaw(res.data) });
+            Papa.parse(url, { 
+                download: true, 
+                header: false, 
+                skipEmptyLines: true, 
+                complete: async res => await processDataRaw(res.data),
+                error: (err) => { showLoading(false); showError("Erreur réseau/URL invalide : " + err.message); }
+            });
         }
 
         UI.dropZone.addEventListener('click', () => UI.fileInput.click());
@@ -791,11 +962,58 @@
 
         window.addEventListener('DOMContentLoaded', () => { if (UI.gsheetUrl.value.trim() !== '') handleUrl(); });
 
-        // --- DATA SEPARATION (Ventes / Prod / Dim) ---
-        function processDataRaw(rawArray) {
-            if (!rawArray || rawArray.length < 2) return;
+        // --- AUTHENTIFICATION ---
+        UI.loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const login = UI.loginInput.value.trim();
+            const pwd = UI.pwdInput.value.trim();
+            const hashed = await hashPassword(pwd);
+
+            const user = State.users.find(u => u.login === login && u.passwordHash === hashed);
+
+            if (user) {
+                UI.loginError.classList.add('hidden');
+                State.currentUser = user;
+                
+                const role = user.role;
+                const tabVentes = document.getElementById('tabVentes');
+                const tabProd = document.getElementById('tabProd');
+                
+                tabVentes.style.display = 'flex';
+                tabProd.style.display = 'flex';
+
+                // On affiche le contenu du Dashboard AVANT de lancer les graphiques
+                UI.loginModal.classList.add('hidden');
+                UI.dashboardContent.classList.remove('hidden');
+
+                if (role === 'commercial' || role === 'marketing') {
+                    tabProd.style.display = 'none';
+                    switchTab('VENTES');
+                } else if (role === 'industriel') {
+                    tabVentes.style.display = 'none';
+                    switchTab('PROD');
+                } else { 
+                    switchTab('VENTES');
+                }
+            } else {
+                UI.loginError.classList.remove('hidden');
+            }
+        });
+
+        // --- DATA SEPARATION & VALIDATION ---
+        async function processDataRaw(rawArray) {
+            if (!rawArray || rawArray.length < 2) {
+                showLoading(false);
+                showError("Le fichier CSV est vide ou invalide.");
+                return;
+            }
             
             let headers = rawArray[0];
+            if (headers.length < 60) {
+                showLoading(false);
+                showError("Structure du CSV non reconnue. Des colonnes importantes sont manquantes.");
+                return;
+            }
             
             let prodStartIndex = 52;
             let dimStartIndex = 84;
@@ -803,6 +1021,35 @@
             let ventesFields = headers.slice(0, prodStartIndex);
             let prodFields = headers.slice(prodStartIndex, dimStartIndex);
             let dimFields = headers.slice(dimStartIndex);
+
+            let loginIdx = 98, roleIdx = 99, pwdIdx = 100;
+            
+            headers.forEach((h, j) => {
+                let upperH = String(h).toUpperCase().trim();
+                if (upperH === 'LOGIN') loginIdx = j;
+                if (upperH === 'ROLE' || upperH === 'RÔLE') roleIdx = j;
+                if (upperH === 'MOT DE PASSE') pwdIdx = j;
+            });
+
+            State.users = [];
+            for (let i = 1; i < rawArray.length; i++) {
+                let login = rawArray[i][loginIdx];
+                let role = rawArray[i][roleIdx];
+                let pwd = rawArray[i][pwdIdx];
+                
+                if (login && pwd && role) {
+                    let hashedPwd = await hashPassword(String(pwd).trim());
+                    State.users.push({
+                        login: String(login).trim(),
+                        role: String(role).trim().toLowerCase(),
+                        passwordHash: hashedPwd
+                    });
+                }
+            }
+            
+            if(State.users.length === 0) {
+                State.users.push({ login: 'admin', role: 'admin', passwordHash: await hashPassword('admin') });
+            }
 
             let dataVentes = [];
             let dataProd = [];
@@ -846,7 +1093,6 @@
             State.columns = ventesFields;
             State.colMeta = {};
             
-            // Paramétrage Ventes
             const PRODUCTS = ['FANGAH', 'EXTRA', 'SUPERPRO', 'SUPERBRIC', 'BLANC', 'ZEBDA', 'CHF', 'CPA', 'MINIER'];
             const SEGMENTS = ['RETAIL', 'INDUSTRIAL'];
             const CONDS = ['SAC', 'VRAC', 'BIG-BAG'];
@@ -908,13 +1154,11 @@
                 return cleanRow;
             });
 
-            // Parsing PRODUCTION - Avec tolérance aux fautes de frappe et EXCLUSIONS
+            // Parsing PRODUCTION
             const getColRobust = (r, searchTerms, excludeTerms = []) => {
-                // 1. Match exact
                 for (let t of searchTerms) {
                     if (r[t] !== undefined) return cleanNumber(r[t]);
                 }
-                // 2. Match partiel intelligent
                 let keys = Object.keys(r);
                 for (let k of keys) {
                     let upperK = k.toUpperCase();
@@ -964,7 +1208,6 @@
                 }
             });
 
-            // Parsing DIMENSION
             State.dimMapping = dimData;
 
             setupFilters();
@@ -972,8 +1215,27 @@
             applyFiltersProd();
             
             showLoading(false);
-            UI.dashboardContent.classList.remove('hidden');
-            switchTab('VENTES');
+
+            if (State.currentUser) {
+                UI.dashboardContent.classList.remove('hidden');
+                if (State.currentUser.role === 'industriel') switchTab('PROD');
+                else switchTab('VENTES');
+            } else {
+                UI.loginInput.value = '';
+                UI.pwdInput.value = '';
+                UI.loginModal.classList.remove('hidden');
+            }
+        }
+
+        // --- FILTER BINDINGS CENTRALISÉS ---
+        function bindFilter(domId, stateObj, stateKey, callback) {
+            let el = document.getElementById(domId);
+            if (el) {
+                el.addEventListener('change', (e) => {
+                    stateObj[stateKey] = e.target.value;
+                    callback();
+                });
+            }
         }
 
         function setupFilters() {
@@ -1009,9 +1271,10 @@
             populate('filterProdBK', getUniques(State.rawProd, 'BK'), 'Tous');
         }
 
-        // =======================================================================================
-        // MOTEUR OLAP - VENTES
-        // =======================================================================================
+        // --- MOTEUR OLAP DECOUPLED & DEBOUNCED ---
+        const debouncedUpdateVentes = debounce(updateDashboard, 150);
+        const debouncedUpdateProd = debounce(progressiveRenderProd, 150);
+
         function applyFilters() {
             State.activeCols = Object.keys(State.colMeta).filter(col => {
                 let m = State.colMeta[col];
@@ -1041,7 +1304,7 @@
                         if (State.filters.datestart && rowTime < new Date(State.filters.datestart).getTime()) return null;
                         if (State.filters.dateend && rowTime > new Date(State.filters.dateend).getTime() + 86399999) return null;
                     } else {
-                        return null; // Si on filtre par date et que la date de la ligne est inconnue
+                        return null; 
                     }
                 }
 
@@ -1065,31 +1328,11 @@
                 return { ...row, _DYN_VENTES: dynVentes, _DYN_RETAIL: dynRetail, _DYN_INDUS: dynIndus, _DYN_NET_RATIO: netRatio };
             }).filter(Boolean);
 
-            if(currentTab === 'VENTES') updateDashboard();
+            if(currentTab === 'VENTES' && !UI.dashboardContent.classList.contains('hidden')) {
+                debouncedUpdateVentes();
+            }
         }
 
-        ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion', 'filterDateStart', 'filterDateEnd'].forEach(id => {
-            let el = document.getElementById(id);
-            if(el) el.addEventListener('change', (e) => { State.filters[id.replace('filter', '').toLowerCase()] = e.target.value; applyFilters(); });
-        });
-        document.getElementById('inputCibleAnnuelle').addEventListener('change', (e) => { State.targetLanding = parseFloat(e.target.value) || 0; renderChartForecast(); });
-        document.getElementById('filterMargin').addEventListener('change', (e) => { State.filters.minMargin = parseFloat(e.target.value); applyFilters(); });
-        document.getElementById('filterVolume').addEventListener('input', (e) => { State.filters.minVolume = parseFloat(e.target.value); UI.volValDisplay.innerText = formatVal(State.filters.minVolume); });
-        document.getElementById('filterVolume').addEventListener('change', () => applyFilters());
-        document.getElementById('resetFilters').addEventListener('click', () => {
-            ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => { document.getElementById(id).value = 'ALL'; });
-            document.getElementById('filterDateStart').value = '';
-            document.getElementById('filterDateEnd').value = '';
-            document.getElementById('filterTimeView').value = 'day'; document.getElementById('filterMargin').value = '0';
-            document.getElementById('filterVolume').value = 0; UI.volValDisplay.innerText = "0";
-            State.filters = { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: '' };
-            applyFilters();
-        });
-        document.getElementById('filterTimeView').addEventListener('change', () => { if(currentTab === 'VENTES') updateDashboard(); });
-
-        // =======================================================================================
-        // MOTEUR OLAP - PRODUCTION
-        // =======================================================================================
         function applyFiltersProd() {
             State.filteredProd = State.rawProd.map(row => {
                 if (State.filtersProd.annee !== 'ALL' && String(row['Année']) !== State.filtersProd.annee) return null;
@@ -1100,14 +1343,46 @@
                 return row;
             }).filter(Boolean);
 
-            if(currentTab === 'PROD') updateDashboardProd();
+            if(currentTab === 'PROD' && !UI.dashboardContent.classList.contains('hidden')) {
+                debouncedUpdateProd();
+            }
         }
 
-        ['filterProdAnnee', 'filterProdMois', 'filterProdSemaine', 'filterProdProduit', 'filterProdBK'].forEach(id => {
-            let el = document.getElementById(id);
-            if(el) el.addEventListener('change', (e) => { State.filtersProd[id.replace('filterProd', '').toLowerCase()] = e.target.value; applyFiltersProd(); });
+        // BINDINGS VENTES
+        ['Annee', 'Mois', 'Semaine', 'Segment', 'Produit', 'Cond', 'Transport', 'Region', 'DateStart', 'DateEnd'].forEach(id => {
+            bindFilter(`filter${id}`, State.filters, id.toLowerCase(), applyFilters);
         });
-        document.getElementById('filterProdTimeView').addEventListener('change', () => { if(currentTab === 'PROD') updateDashboardProd(); });
+        bindFilter('filterMargin', State.filters, 'minMargin', applyFilters);
+        
+        // BINDINGS SLIDERS AVEC DEBOUNCE
+        document.getElementById('inputCibleAnnuelle').addEventListener('input', debounce((e) => { 
+            State.targetLanding = parseFloat(e.target.value) || 0; 
+            if(currentTab === 'VENTES') renderChartForecast(); 
+        }, 200));
+
+        document.getElementById('filterVolume').addEventListener('input', (e) => { 
+            State.filters.minVolume = parseFloat(e.target.value); 
+            UI.volValDisplay.innerText = formatVal(State.filters.minVolume); 
+        });
+        document.getElementById('filterVolume').addEventListener('change', () => applyFilters());
+
+        document.getElementById('filterTimeView').addEventListener('change', () => { if(currentTab === 'VENTES') debouncedUpdateVentes(); });
+
+        document.getElementById('resetFilters').addEventListener('click', () => {
+            ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => { document.getElementById(id).value = 'ALL'; });
+            document.getElementById('filterDateStart').value = '';
+            document.getElementById('filterDateEnd').value = '';
+            document.getElementById('filterTimeView').value = 'day'; document.getElementById('filterMargin').value = '0';
+            document.getElementById('filterVolume').value = 0; UI.volValDisplay.innerText = "0";
+            State.filters = { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: '' };
+            applyFilters();
+        });
+
+        // BINDINGS PROD
+        ['Annee', 'Mois', 'Semaine', 'Produit', 'BK'].forEach(id => {
+            bindFilter(`filterProd${id}`, State.filtersProd, id.toLowerCase(), applyFiltersProd);
+        });
+        document.getElementById('filterProdTimeView').addEventListener('change', () => { if(currentTab === 'PROD') debouncedUpdateProd(); });
         document.getElementById('resetProdFilters').addEventListener('click', () => {
             ['filterProdAnnee', 'filterProdMois', 'filterProdSemaine', 'filterProdProduit', 'filterProdBK'].forEach(id => { document.getElementById(id).value = 'ALL'; });
             document.getElementById('filterProdTimeView').value = 'day';
@@ -1120,7 +1395,7 @@
         // =======================================================================================
         function updateDashboard() {
             updateKPIs(); 
-            renderVentesTable(); // Nouvel appel pour la table interactive
+            renderVentesTable(); 
             renderChartTrend(); 
             renderChartRatios(); 
             renderChartForecast(); 
@@ -1129,8 +1404,6 @@
             renderChartVracSac(); 
             renderChartRetInd(); 
             generateExecutiveSummary();
-            UI.aiInsightsContainer.classList.add('hidden'); UI.aiContent.innerHTML = '';
-            if (State.filtered.length > 0) UI.btnAiInsights.classList.remove('hidden'); else UI.btnAiInsights.classList.add('hidden');
         }
 
         function updateKPIs() {
@@ -1159,7 +1432,6 @@
             document.getElementById('kpiRatioDDP').innerText = (totalVentes > 0 ? (totalDDP / totalVentes) * 100 : 0).toFixed(1) + '%';
         }
 
-        // --- NOUVELLE FONCTION: Table Ventes par Produit ---
         function renderVentesTable() {
             let tbody = UI.tableVentesBody;
             if (!tbody) return;
@@ -1167,7 +1439,6 @@
             let prodStats = {};
             let totalVol = 0;
 
-            // Agrégation dynamique par produit
             State.filtered.forEach(r => {
                 State.activeCols.forEach(col => {
                     let val = r[col] || 0;
@@ -1188,7 +1459,6 @@
                 });
             });
 
-            // Conversion en tableau et tri par volume décroissant
             let sortedProds = Object.keys(prodStats).map(k => ({
                 name: k,
                 ...prodStats[k]
@@ -1202,7 +1472,6 @@
             let html = '';
             sortedProds.forEach(p => {
                 let mix = totalVol > 0 ? (p.vol / totalVol) * 100 : 0;
-                // Génération des lignes de la table
                 html += `
                     <tr class="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors group">
                         <td class="p-4 font-semibold text-gray-900 dark:text-white flex items-center gap-3">
@@ -1224,7 +1493,6 @@
                 `;
             });
 
-            // Ajout d'une ligne de Total Global
             html += `
                 <tr class="bg-gray-50 dark:bg-gray-800/80 font-bold border-t-2 border-gray-200 dark:border-gray-700">
                     <td class="p-4 text-gray-900 dark:text-white">TOTAL SÉLECTION</td>
@@ -1253,7 +1521,8 @@
 
             let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].ventes), type: timeView==='day'?'scatter':'bar', mode: 'lines+markers', name: 'Ventes', marker: {color: '#3b82f6'}, line: {color: '#3b82f6', width: 3}, fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)' };
             let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].obj), type: 'scatter', mode: 'lines+markers', name: 'Objectif', marker: {color: '#ef4444'}, line: {color: '#ef4444', width: 2, dash: 'dot'} };
-            Plotly.newPlot('chartTrend', [trace1, trace2], {...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'group'}, {responsive: true, displayModeBar: false});
+            
+            renderPlot('chartTrend', [trace1, trace2], {...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'group'});
         }
 
         function renderChartRatios() {
@@ -1283,7 +1552,8 @@
             });
             let trace1 = { x: xVals, y: cpaVals, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Ratio CPA', line: {color: '#8b5cf6', width: 2}, connectgaps: true };
             let trace2 = { x: xVals, y: ddpVals, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Ratio DDP', line: {color: '#f59e0b', width: 2}, connectgaps: true };
-            Plotly.newPlot('chartRatios', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Ratio Moyen (%)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', ticksuffix: '%' } }, {responsive: true, displayModeBar: false});
+            
+            renderPlot('chartRatios', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Ratio Moyen (%)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', ticksuffix: '%' } });
         }
 
         function renderChartForecast() {
@@ -1424,7 +1694,7 @@
                 }
             });
 
-            Plotly.newPlot('chartForecast', traces, { ...getPlotlyLayoutBase(), margin: { t: 40, r: 80, l: 50, b: 40 }, hovermode: 'x unified', legend: { orientation: 'h', y: 1.15 }, shapes: shapes, annotations: annotations, yaxis: { title: 'Volume Cumulé (Tonnes)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' } }, {responsive: true, displayModeBar: false});
+            renderPlot('chartForecast', traces, { ...getPlotlyLayoutBase(), margin: { t: 40, r: 80, l: 50, b: 40 }, hovermode: 'x unified', legend: { orientation: 'h', y: 1.15 }, shapes: shapes, annotations: annotations, yaxis: { title: 'Volume Cumulé (Tonnes)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' } });
         }
 
         function renderChartWaterfall() {
@@ -1441,7 +1711,7 @@
                 connector: { line: { color: isDarkMode() ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)" } },
                 decreasing: { marker: { color: "#ef4444" } }, increasing: { marker: { color: "#3b82f6" } }, totals: { marker: { color: "#10b981" } }
             }];
-            Plotly.newPlot('chartWaterfall', data, getPlotlyLayoutBase(), {responsive: true, displayModeBar: false});
+            renderPlot('chartWaterfall', data, getPlotlyLayoutBase());
         }
 
         function renderChartPareto() {
@@ -1458,7 +1728,8 @@
             let cumPerc = sums.map(s => { cumSum += s.val; return (cumSum / total) * 100; });
             let traceBar = { x: sums.map(s=>s.name), y: sums.map(s=>s.val), type: 'bar', name: 'Volume', marker: { color: '#60a5fa' }};
             let traceLine = { x: sums.map(s=>s.name), y: cumPerc, type: 'scatter', mode: 'lines+markers', name: '% Cumulé', yaxis: 'y2', line: { color: '#f59e0b', width: 3 }};
-            Plotly.newPlot('chartPareto', [traceBar, traceLine], { ...getPlotlyLayoutBase(), yaxis2: { title: '% Cumul', overlaying: 'y', side: 'right', range: [0, 105], gridcolor: 'transparent' }, showlegend: false }, {responsive: true, displayModeBar: false});
+            
+            renderPlot('chartPareto', [traceBar, traceLine], { ...getPlotlyLayoutBase(), yaxis2: { title: '% Cumul', overlaying: 'y', side: 'right', range: [0, 105], gridcolor: 'transparent' }, showlegend: false });
         }
 
         function renderChartVracSac() {
@@ -1484,7 +1755,7 @@
                 { x: sortedDates, y: sortedDates.map(d => bucketData[d].v), type: t, mode: 'lines', name: 'VRAC', marker: {color: '#f59e0b'}, line: {color: '#f59e0b', width: 1}, fillcolor: 'rgba(245, 158, 11, 0.7)', stackgroup: 'one' },
                 { x: sortedDates, y: sortedDates.map(d => bucketData[d].b), type: t, mode: 'lines', name: 'BIG-BAG', marker: {color: '#06b6d4'}, line: {color: '#06b6d4', width: 1}, fillcolor: 'rgba(6, 182, 212, 0.7)', stackgroup: 'one' }
             ];
-            Plotly.newPlot('chartVracSac', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' }, {responsive: true, displayModeBar: false});
+            renderPlot('chartVracSac', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' });
         }
 
         function renderChartRetInd() {
@@ -1508,7 +1779,7 @@
                 { x: sortedDates, y: sortedDates.map(d => bucketData[d].r), type: t, mode: 'lines', name: 'Retail', marker: {color: '#a855f7'}, line: {color: '#a855f7', width: 1}, fillcolor: 'rgba(168, 85, 247, 0.7)', stackgroup: 'one' },
                 { x: sortedDates, y: sortedDates.map(d => bucketData[d].i), type: t, mode: 'lines', name: 'Industrial', marker: {color: '#10b981'}, line: {color: '#10b981', width: 1}, fillcolor: 'rgba(16, 185, 129, 0.7)', stackgroup: 'one' }
             ];
-            Plotly.newPlot('chartRetInd', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' }, {responsive: true, displayModeBar: false});
+            renderPlot('chartRetInd', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' });
         }
 
         function generateExecutiveSummary() {
@@ -1528,17 +1799,18 @@
         }
 
         // =======================================================================================
-        // RENDERERS PRODUCTION
+        // RENDERERS PRODUCTION (Avec chargement progressif async)
         // =======================================================================================
-        function updateDashboardProd() {
+        async function progressiveRenderProd() {
             updateKPIsProd();
-            renderChartProdTrend();
-            renderChartProdMargeTime();     
-            renderChartProdMix();
-            renderChartProdClinkerFactor(); 
-            renderChartProdCostEvolution(); 
-            renderChartProdEcartTime();     
-            renderChartProdCost();
+            // Utilisation d'un Timeout court pour rendre l'UI réactive (non bloquante)
+            await new Promise(r => setTimeout(r, 0)); renderChartProdTrend();
+            await new Promise(r => setTimeout(r, 0)); renderChartProdMargeTime();     
+            await new Promise(r => setTimeout(r, 0)); renderChartProdMix();
+            await new Promise(r => setTimeout(r, 0)); renderChartProdClinkerFactor(); 
+            await new Promise(r => setTimeout(r, 0)); renderChartProdCostEvolution(); 
+            await new Promise(r => setTimeout(r, 0)); renderChartProdEcartTime();     
+            await new Promise(r => setTimeout(r, 0)); renderChartProdCost();
         }
 
         function updateKPIsProd() {
@@ -1627,7 +1899,7 @@
                 yaxis: { title: 'Tonnage (t)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' },
                 yaxis2: { title: 'Débit (t/h)', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
             };
-            Plotly.newPlot('chartProdTrend', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
+            renderPlot('chartProdTrend', [trace1, trace2], layout);
         }
 
         function renderChartProdMargeTime() {
@@ -1665,7 +1937,7 @@
                 }
             });
 
-            Plotly.newPlot('chartProdMargeTime', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Marge Totale (€)', tickformat: ',.0f' } }, {responsive: true, displayModeBar: false});
+            renderPlot('chartProdMargeTime', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Marge Totale (€)', tickformat: ',.0f' } });
         }
 
         function renderChartProdMix() {
@@ -1704,7 +1976,7 @@
                 }
             });
 
-            Plotly.newPlot('chartProdMix', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Tonnes (T)' } }, {responsive: true, displayModeBar: false});
+            renderPlot('chartProdMix', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Tonnes (T)' } });
         }
 
         function renderChartProdClinkerFactor() {
@@ -1779,7 +2051,7 @@
                 legend: { orientation: 'h', y: 1.15 }, 
                 yaxis: { title: 'Facteur Clinker (%)', tickformat: ',.1f', ticksuffix: '%' } 
             };
-            Plotly.newPlot('chartProdClinkerFactor', traces, layout, {responsive: true, displayModeBar: false});
+            renderPlot('chartProdClinkerFactor', traces, layout);
         }
 
         function renderChartProdCostEvolution() {
@@ -1830,7 +2102,7 @@
             };
 
             let layout = { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Euros (€/t)', tickformat: ',.1f' } };
-            Plotly.newPlot('chartProdCostEvolution', [traceTarget, traceMPCalc, traceTotal, tracePV], layout, {responsive: true, displayModeBar: false});
+            renderPlot('chartProdCostEvolution', [traceTarget, traceMPCalc, traceTotal, tracePV], layout);
         }
 
         function renderChartProdEcartTime() {
@@ -1855,7 +2127,7 @@
             let trace1 = { x: sortedDates, y: yVals, type: 'bar', name: 'Écart de Marge', marker: { color: colors } };
 
             let layout = { ...getPlotlyLayoutBase(), hovermode: 'x unified', showlegend: false, yaxis: { title: 'Écart Marge (€)', tickformat: ',.0f' } };
-            Plotly.newPlot('chartProdEcartTime', [trace1], layout, {responsive: true, displayModeBar: false});
+            renderPlot('chartProdEcartTime', [trace1], layout);
         }
 
         function renderChartProdCost() {
@@ -1906,83 +2178,8 @@
                 margin: { l: 150, r: 20, t: 40, b: 40 }, 
                 xaxis: { title: 'Euros (€)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', tickformat: ',.0f' } 
             };
-            Plotly.newPlot('chartProdCost', [trace1, trace2], layout, {responsive: true, displayModeBar: false});
+            renderPlot('chartProdCost', [trace1, trace2], layout);
         }
-
-        // --- GEMINI API INTEGRATION ✨ ---
-        async function fetchWithRetry(url, options, maxRetries = 5) {
-            const delays = [1000, 2000, 4000, 8000, 16000];
-            for (let i = 0; i < maxRetries; i++) {
-                try {
-                    const response = await fetch(url, options);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    return await response.json();
-                } catch (error) {
-                    if (i === maxRetries - 1) throw error;
-                    await new Promise(resolve => setTimeout(resolve, delays[i]));
-                }
-            }
-        }
-
-        UI.btnAiInsights.addEventListener('click', async () => {
-            UI.aiInsightsContainer.classList.remove('hidden');
-            UI.aiLoading.classList.remove('hidden');
-            UI.aiContent.innerHTML = '';
-            UI.btnAiInsights.disabled = true;
-            UI.btnAiInsights.classList.add('opacity-50', 'cursor-not-allowed');
-
-            const sumText = document.getElementById('executiveSummary').innerText;
-            let topProducts = "Divers";
-            try {
-                const paretoData = document.getElementById('chartPareto').data;
-                if(paretoData && paretoData[0] && paretoData[0].x) {
-                    topProducts = paretoData[0].x.slice(0, 3).join(", ");
-                }
-            } catch(e) {}
-            
-            const prompt = `Agis en tant que Directeur Financier (CFO) et Analyste FP&A expérimenté travaillant dans le secteur industriel (cimenterie/BTP) en Côte d'Ivoire.
-            Voici le résumé brut de la performance des ventes filtrées actuellement sur mon tableau de bord :
-            
-            ${sumText}
-            
-            Les produits majeurs influençant cette sélection sont : ${topProducts}.
-            
-            Tâche :
-            Rédige un bref commentaire managérial (2 à 3 petits paragraphes maximum) destiné au comité de direction. 
-            Ton analyse doit :
-            1. Interpréter ces chiffres avec un ton "Corporate Finance" et stratégique.
-            2. Proposer 2 recommandations d'actions correctives ou d'optimisation (logistique, pricing, focus commercial ou recouvrement).
-            Formate impérativement ta réponse en HTML basique et propre (utilise <p>, <strong>, <ul>, <li>, <br>) pour une belle intégration. N'inclut pas de balises markdown comme \`\`\`html.`;
-
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: "Tu es un expert financier analytique, précis et orienté solutions business." }] }
-            };
-
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-            try {
-                const result = await fetchWithRetry(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                
-                const aiResponseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (aiResponseText) {
-                    UI.aiContent.innerHTML = aiResponseText.replace(/```html|```/g, ''); 
-                } else {
-                    UI.aiContent.innerHTML = "<p class='text-red-500'>Erreur: Impossible de générer l'analyse.</p>";
-                }
-            } catch (error) {
-                console.error("Gemini API Error:", error);
-                UI.aiContent.innerHTML = `<p class='text-red-500'>Échec de la connexion à Gemini IA. Veuillez vérifier votre réseau ou réessayer plus tard.</p>`;
-            } finally {
-                UI.aiLoading.classList.add('hidden');
-                UI.btnAiInsights.disabled = false;
-                UI.btnAiInsights.classList.remove('opacity-50', 'cursor-not-allowed');
-            }
-        });
 
     </script>
 </body>
