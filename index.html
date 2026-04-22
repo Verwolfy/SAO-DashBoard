@@ -952,7 +952,23 @@
                 header: false, 
                 skipEmptyLines: true, 
                 complete: async res => await processDataRaw(res.data),
-                error: (err) => { showLoading(false); showError("Erreur réseau/URL invalide : " + err.message); }
+                error: (err) => {
+                    showLoading(false);
+                    let msg = 'Impossible de charger le CSV.';
+                    if (err instanceof Error) {
+                        msg = err.message;
+                    } else if (err && err.type) {
+                        const hints = {
+                            error:   "Vérifiez l'URL ou les permissions CORS du fichier.",
+                            abort:   'Le chargement a été interrompu.',
+                            timeout: 'Le serveur n\'a pas répondu à temps.'
+                        };
+                        msg = hints[err.type] || 'Erreur réseau lors du téléchargement.';
+                    } else if (typeof err === 'string') {
+                        msg = err;
+                    }
+                    showError(`Erreur réseau : ${msg}`);
+                }
             });
         }
 
