@@ -363,7 +363,7 @@
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartTrend', 'icon-chartTrend', 'chartTrend')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-brand"></i> Analyse de Tendance : Volumes Strictement Filtrés</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-brand"></i> Analyse de Tendance : Ventes Vs Objectifs</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -456,7 +456,7 @@
 
                 <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartRetInd', 'icon-chartRetInd', 'chartRetInd')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-building text-brand"></i> Mix Segment : Ret / Ind</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-building text-brand"></i> Mix Segment : Retail / Industriel</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartRetInd()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -522,7 +522,7 @@
 
             <!-- Top KPIs Prod -->
             <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Volume Produit & Débit -->
+                <!-- Production & Débit Broyeur-->
                 <div class="glass-panel rounded-xl p-5 border-l-4 border-prod relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 text-prod opacity-10 text-7xl"><i class="fa-solid fa-industry"></i></div>
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Qtte Produite (T)</h3>
@@ -621,7 +621,7 @@
 
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartProdClinkerFactor', 'icon-chartProdClinkerFactor', 'chartProdClinkerFactor')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-flask text-prod"></i> Évolution du Facteur Clinker (Clinker / Ciment)</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-flask text-prod"></i> Évolution du Facteur Clinker</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartProdClinkerFactor()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -636,7 +636,7 @@
 
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartProdCostEvolution', 'icon-chartProdCostEvolution', 'chartProdCostEvolution')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-prod"></i> Évolution des Coûts & Prix de Vente en €/t</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-money-bill-wave text-prod"></i> Évolution des Coûts Prod. & Marges Vs Prix de Vente en €/t</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartProdCostEvolution()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -651,7 +651,7 @@
 
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartProdEcartTime', 'icon-chartProdEcartTime', 'chartProdEcartTime')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-prod"></i> Analyse Chronologique : Écarts de Marge Globale vs Target</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left text-prod"></i> Écarts de Marge Globale Vs Target</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartProdEcartTime()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -666,7 +666,7 @@
 
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartProdCost', 'icon-chartProdCost', 'chartProdCost')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-coins text-prod"></i> Performance Financière : Marge Globale et Unitaire par Produit</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-coins text-prod"></i> Marge Globale et Unitaire par Produit</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartProdCost()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
