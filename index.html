@@ -1809,7 +1809,7 @@
             let perf = tObj > 0 ? (tVentes / tObj * 100) : 0;
             let leadSegment = Object.entries({Retail: segRetail, Indus: segIndus}).sort((a,b)=>b[1]-a[1])[0];
             let html = `<ul class="list-disc pl-5 space-y-2">
-                <li><strong class="text-gray-900 dark:text-white">Performance Filtrée :</strong> Volume de <strong>${formatVal(tVentes)}</strong> (${perf.toFixed(1)}% obj).</li>
+                <li><strong class="text-gray-900 dark:text-white">Ventes Filtrées :</strong> Volume de <strong>${formatVal(tVentes)}</strong> (${perf.toFixed(1)}% obj).</li>
                 <li><strong class="text-gray-900 dark:text-white">Top Segment :</strong> Moteur <strong>${leadSegment[0]}</strong> (${formatVal(leadSegment[1])}).</li>
                 <li><strong class="text-gray-900 dark:text-white">Opérationnel :</strong> ${formatVal(tRetours)} de retours.</li></ul>`;
             document.getElementById('executiveSummary').innerHTML = html;
