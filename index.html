@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Dev. Dashboard | Commercial & Production</title>
     
-    <!-- Librairies (CDN) -->
+    <!-- Librairies (CDN RESTAURÉ) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -486,7 +486,7 @@
         <div id="viewProduction" class="space-y-6 hidden">
             
             <!-- Interactive Filters (Prod) -->
-            <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 items-end">
+            <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 items-end">
                 <div>
                     <label class="block text-xs font-bold text-prod mb-1">Vue Temporelle</label>
                     <select id="filterProdTimeView" class="w-full bg-orange-50/50 dark:bg-orange-900/20 border border-prod text-prod dark:text-yellow-500 rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none shadow-sm font-medium">
@@ -508,6 +508,14 @@
                     <select id="filterProdSemaine" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none"><option value="ALL">Toutes</option></select>
                 </div>
                 <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Date Début</label>
+                    <input type="date" id="filterProdDateStart" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Date Fin</label>
+                    <input type="date" id="filterProdDateEnd" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                </div>
+                <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Produit de Production</label>
                     <select id="filterProdProduit" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none"><option value="ALL">Tous</option></select>
                 </div>
@@ -515,7 +523,7 @@
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Broyeur (BK)</label>
                     <select id="filterProdBK" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-prod outline-none"><option value="ALL">Tous</option></select>
                 </div>
-                <div class="col-span-2 md:col-span-4 lg:col-span-6 flex justify-end mt-2">
+                <div class="col-span-2 md:col-span-4 lg:col-span-8 flex justify-end mt-2">
                     <button id="resetProdFilters" class="px-4 py-1.5 h-[34px] bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-gray-800 dark:text-white text-sm transition font-medium">Reset Filtres</button>
                 </div>
             </section>
@@ -693,17 +701,13 @@
             const isHidden = wrapper.classList.contains('hidden');
 
             if (isHidden) {
-                // Ouverture
                 wrapper.classList.remove('hidden');
                 icon.classList.add('rotate-180');
-                
-                // On force le redimensionnement de Plotly pour l'adapter au conteneur maintenant visible
                 const chartEl = document.getElementById(chartId);
                 if(chartEl && chartEl.data) {
                     Plotly.Plots.resize(chartEl);
                 }
             } else {
-                // Fermeture
                 wrapper.classList.add('hidden');
                 icon.classList.remove('rotate-180');
             }
@@ -733,7 +737,6 @@
             setTimeout(() => errBanner.classList.add('hidden'), 5000);
         }
 
-        // Base config for Plotly (inclut export image par défaut)
         const getPlotlyLayoutBase = () => ({
             autosize: true,
             paper_bgcolor: 'rgba(0,0,0,0)',
@@ -749,19 +752,18 @@
         function renderPlot(id, traces, layout) {
             const el = document.getElementById(id);
             if (!el) return;
-            
             layout.autosize = true;
-            
             if (el.data) {
                 Plotly.react(el, traces, layout, plotlyConfig).then(() => {
-                    Plotly.Plots.resize(el);
+                    if(!document.getElementById('wrap-'+id)?.classList.contains('hidden')) {
+                        Plotly.Plots.resize(el);
+                    }
                 });
             } else {
                 Plotly.newPlot(el, traces, layout, plotlyConfig);
             }
         }
 
-        // --- GESTION DU THEME SOMBRE/CLAIR ---
         const themeToggle = document.getElementById('themeToggle');
         const themeIcon = document.getElementById('themeIcon');
         const htmlEl = document.documentElement;
@@ -788,7 +790,6 @@
 
         const isDarkMode = () => htmlEl.classList.contains('dark');
 
-        // --- GESTION DES ONGLETS (Refactorisée via classes toggles) ---
         let currentTab = 'VENTES';
         function switchTab(tab) {
             currentTab = tab;
@@ -811,18 +812,17 @@
                 }
             });
 
-            if(tab === 'VENTES' && State.filtered.length > 0) updateDashboard();
-            if(tab === 'PROD' && State.filteredProd.length > 0) progressiveRenderProd();
+            if(tab === 'VENTES' && State.filtered.length > 0) debouncedUpdateVentes();
+            if(tab === 'PROD' && State.filteredProd.length > 0) debouncedUpdateProd();
         }
 
         function refreshCurrentView() {
             if(currentTab === 'VENTES') debouncedUpdateVentes();
-            else progressiveRenderProd();
+            else debouncedUpdateProd();
         }
 
-        // --- ETAT DE L'APPLICATION ---
         const State = {
-            raw: [], // Données Ventes
+            raw: [], 
             filtered: [],
             columns: [],
             colMeta: {},
@@ -831,16 +831,17 @@
             filters: {
                 annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: ''
             },
-            _aggregatesVentes: null, // <-- NOUVEAU : Cache des agrégations centralisées
-            rawProd: [], // Données Production
+            _aggregatesVentes: null,
+            rawProd: [], 
             filteredProd: [],
             filtersProd: {
-                annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL', timeview: 'day'
+                annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL', datestart: '', dateend: ''
             },
-            dimMapping: [], // Données Dimension
+            _aggregatesProd: null, // NOUVEAU
+            dimMapping: [], 
             matiereCols: ['Clinker Gris', 'Clinker Blanc', 'Gypse', 'Granit', 'Laitier', 'Calcaire', 'Pouzzolane', 'Marbre', 'Carbonate'],
-            users: [], // Données Utilisateurs Hachées
-            currentUser: null // Utilisateur connecté
+            users: [], 
+            currentUser: null 
         };
 
         const UI = {
@@ -852,8 +853,6 @@
             loadingOverlay: document.getElementById('loadingOverlay'),
             volValDisplay: document.getElementById('volVal'),
             tableVentesBody: document.getElementById('tableVentesBody'),
-            
-            // Login UI
             loginModal: document.getElementById('loginModal'),
             loginForm: document.getElementById('loginForm'),
             loginInput: document.getElementById('loginInput'),
@@ -861,7 +860,6 @@
             loginError: document.getElementById('loginError')
         };
 
-        // --- CRYPTO & FORMATTAGE ---
         async function hashPassword(password) {
             const msgBuffer = new TextEncoder().encode(password);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -932,12 +930,10 @@
             return dateStr;
         }
 
-        // --- INGESTION (Avec gestion d'erreur) ---
         function handleFile(file) {
             showLoading(true);
             Papa.parse(file, { 
-                header: false, 
-                skipEmptyLines: true, 
+                header: false, skipEmptyLines: true, 
                 complete: async res => await processDataRaw(res.data),
                 error: (err) => { showLoading(false); showError("Erreur de parsing CSV : " + err.message); }
             });
@@ -948,25 +944,16 @@
             if (url.includes('/edit')) url = url.replace(/\/edit.*$/, '/export?format=csv');
             showLoading(true);
             Papa.parse(url, { 
-                download: true, 
-                header: false, 
-                skipEmptyLines: true, 
+                download: true, header: false, skipEmptyLines: true, 
                 complete: async res => await processDataRaw(res.data),
                 error: (err) => {
                     showLoading(false);
                     let msg = 'Impossible de charger le CSV.';
-                    if (err instanceof Error) {
-                        msg = err.message;
-                    } else if (err && err.type) {
-                        const hints = {
-                            error:   "Vérifiez l'URL ou les permissions CORS du fichier.",
-                            abort:   'Le chargement a été interrompu.',
-                            timeout: 'Le serveur n\'a pas répondu à temps.'
-                        };
-                        msg = hints[err.type] || 'Erreur réseau lors du téléchargement.';
-                    } else if (typeof err === 'string') {
-                        msg = err;
-                    }
+                    if (err instanceof Error) msg = err.message;
+                    else if (err && err.type) {
+                        const hints = { error: "Vérifiez l'URL ou les permissions CORS.", abort: 'Interrompu.', timeout: 'Délai dépassé.' };
+                        msg = hints[err.type] || 'Erreur réseau.';
+                    } else if (typeof err === 'string') msg = err;
                     showError(`Erreur réseau : ${msg}`);
                 }
             });
@@ -981,27 +968,22 @@
 
         window.addEventListener('DOMContentLoaded', () => { if (UI.gsheetUrl.value.trim() !== '') handleUrl(); });
 
-        // --- AUTHENTIFICATION ---
         UI.loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const login = UI.loginInput.value.trim();
             const pwd = UI.pwdInput.value.trim();
             const hashed = await hashPassword(pwd);
-
             const user = State.users.find(u => u.login === login && u.passwordHash === hashed);
 
             if (user) {
                 UI.loginError.classList.add('hidden');
                 State.currentUser = user;
-                
                 const role = user.role;
                 const tabVentes = document.getElementById('tabVentes');
                 const tabProd = document.getElementById('tabProd');
                 
                 tabVentes.style.display = 'flex';
                 tabProd.style.display = 'flex';
-
-                // On affiche le contenu du Dashboard AVANT de lancer les graphiques
                 UI.loginModal.classList.add('hidden');
                 UI.dashboardContent.classList.remove('hidden');
 
@@ -1019,28 +1001,13 @@
             }
         });
 
-        // --- DATA SEPARATION & VALIDATION ---
         async function processDataRaw(rawArray) {
-            if (!rawArray || rawArray.length < 2) {
-                showLoading(false);
-                showError("Le fichier CSV est vide ou invalide.");
-                return;
-            }
-            
+            if (!rawArray || rawArray.length < 2) { showLoading(false); showError("Le fichier CSV est vide."); return; }
             let headers = rawArray[0];
-            if (headers.length < 60) {
-                showLoading(false);
-                showError("Structure du CSV non reconnue. Des colonnes importantes sont manquantes.");
-                return;
-            }
+            if (headers.length < 60) { showLoading(false); showError("Structure du CSV non reconnue."); return; }
             
-            let prodStartIndex = 52;
-            let dimStartIndex = 84;
-            
-            let ventesFields = headers.slice(0, prodStartIndex);
-            let prodFields = headers.slice(prodStartIndex, dimStartIndex);
-            let dimFields = headers.slice(dimStartIndex);
-
+            let prodStartIndex = 52, dimStartIndex = 84;
+            let ventesFields = headers.slice(0, prodStartIndex), prodFields = headers.slice(prodStartIndex, dimStartIndex), dimFields = headers.slice(dimStartIndex);
             let loginIdx = 98, roleIdx = 99, pwdIdx = 100;
             
             headers.forEach((h, j) => {
@@ -1052,69 +1019,37 @@
 
             State.users = [];
             for (let i = 1; i < rawArray.length; i++) {
-                let login = rawArray[i][loginIdx];
-                let role = rawArray[i][roleIdx];
-                let pwd = rawArray[i][pwdIdx];
-                
+                let login = rawArray[i][loginIdx], role = rawArray[i][roleIdx], pwd = rawArray[i][pwdIdx];
                 if (login && pwd && role) {
-                    let hashedPwd = await hashPassword(String(pwd).trim());
-                    State.users.push({
-                        login: String(login).trim(),
-                        role: String(role).trim().toLowerCase(),
-                        passwordHash: hashedPwd
-                    });
+                    State.users.push({ login: String(login).trim(), role: String(role).trim().toLowerCase(), passwordHash: await hashPassword(String(pwd).trim()) });
                 }
             }
-            
-            if(State.users.length === 0) {
-                State.users.push({ login: 'admin', role: 'admin', passwordHash: await hashPassword('admin') });
-            }
+            if(State.users.length === 0) State.users.push({ login: 'admin', role: 'admin', passwordHash: await hashPassword('admin') });
 
-            let dataVentes = [];
-            let dataProd = [];
-            let dataDim = [];
-
+            let dataVentes = [], dataProd = [], dataDim = [];
             for (let i = 1; i < rawArray.length; i++) {
                 let row = rawArray[i];
-                
-                let vRow = {};
-                let hasVentes = false;
-                ventesFields.forEach((h, j) => { 
-                    vRow[h] = row[j]; 
-                    if(row[j] && String(row[j]).trim() !== '') hasVentes = true;
-                });
+                let vRow = {}; let hasVentes = false;
+                ventesFields.forEach((h, j) => { vRow[h] = row[j]; if(row[j] && String(row[j]).trim() !== '') hasVentes = true; });
                 if (hasVentes) dataVentes.push(vRow);
 
-                let pRow = {};
-                let hasProd = false;
-                prodFields.forEach((h, j) => { 
-                    let val = row[prodStartIndex + j];
-                    pRow[h] = val; 
-                    if(val && String(val).trim() !== '') hasProd = true;
-                });
+                let pRow = {}; let hasProd = false;
+                prodFields.forEach((h, j) => { let val = row[prodStartIndex + j]; pRow[h] = val; if(val && String(val).trim() !== '') hasProd = true; });
                 if (hasProd) dataProd.push(pRow);
 
-                let dRow = {};
-                let hasDim = false;
-                dimFields.forEach((h, j) => { 
-                    let val = row[dimStartIndex + j];
-                    dRow[h] = val; 
-                    if(val && String(val).trim() !== '') hasDim = true;
-                });
+                let dRow = {}; let hasDim = false;
+                dimFields.forEach((h, j) => { let val = row[dimStartIndex + j]; dRow[h] = val; if(val && String(val).trim() !== '') hasDim = true; });
                 if (hasDim) dataDim.push(dRow);
             }
-
             processParsedData(dataVentes, dataProd, dataDim, ventesFields);
         }
 
-        // --- PROCESSING FINAL ---
         function processParsedData(ventesData, prodData, dimData, ventesFields) {
             State.columns = ventesFields;
             State.colMeta = {};
             
             const PRODUCTS = ['FANGAH', 'EXTRA', 'SUPERPRO', 'SUPERBRIC', 'BLANC', 'ZEBDA', 'CHF', 'CPA', 'MINIER'];
             const SEGMENTS = ['RETAIL', 'INDUSTRIAL'];
-            const CONDS = ['SAC', 'VRAC', 'BIG-BAG'];
             const TRANSPORTS = ['DDP', 'EXW'];
             const metaColsVentes = ['Année', 'Mois', 'Semaine', 'DATE', 'Objectif fixé', 'RETOUR PRODUIT', 'RATIO CPA', 'RATIO DDP'];
             
@@ -1123,46 +1058,44 @@
                 let upperCol = col.toUpperCase();
                 
                 if (metaColsVentes.some(m => m.toUpperCase() === upperCol)) {
-                    State.colMeta[col] = { isData: false };
-                    return;
+                    State.colMeta[col] = { isData: false }; return;
                 }
                 
                 let meta = { isData: true, product: null, segment: null, cond: null, transport: null, region: null };
                 PRODUCTS.forEach(p => { if (upperCol.includes(p)) meta.product = p; });
                 SEGMENTS.forEach(s => { if (upperCol.includes(s)) meta.segment = s; });
-                CONDS.forEach(c => { if (upperCol.includes(c)) meta.cond = c; });
                 TRANSPORTS.forEach(t => { if (upperCol.includes(t)) meta.transport = t; });
                 if (upperCol.includes('ABIDJAN')) meta.region = 'ABIDJAN';
                 if (upperCol.includes('BOUAKE') || upperCol.includes('BKE')) meta.region = 'BOUAKE';
+                
+                // --- CORRECTION DU BUG "SACS" ---
+                let isBB = upperCol.includes('BIG-BAG') || upperCol.includes('BIG BAG') || upperCol.includes('BB');
+                let isVrac = upperCol.includes('VRAC');
+                if (isBB) meta.cond = 'BIG-BAG';
+                else if (isVrac) meta.cond = 'VRAC';
+                else meta.cond = 'SAC'; // Déduction implicite
                 
                 if(meta.product || meta.segment || meta.cond) {
                     State.colMeta[col] = meta;
                 }
             });
 
-            // Parsing VENTES
             State.raw = ventesData.map(row => {
                 let cleanRow = {};
                 let dStr = row['DATE'] || row['Date'] || '';
-                let mStr = row['Mois'] || '';
-                let yStr = row['Année'] || '';
-                let sStr = row['Semaine'] || '';
+                let mStr = row['Mois'] || ''; let yStr = row['Année'] || ''; let sStr = row['Semaine'] || '';
 
                 cleanRow['DATE'] = dStr; cleanRow['Mois'] = mStr; cleanRow['Année'] = yStr; cleanRow['Semaine'] = sStr;
                 cleanRow['Objectif fixé'] = cleanNumber(row['Objectif fixé']);
                 cleanRow['RETOUR PRODUIT'] = cleanNumber(row['RETOUR PRODUIT']);
 
                 for (let key in State.colMeta) {
-                    if (State.colMeta[key].isData) {
-                        cleanRow[key] = cleanNumber(row[key]);
-                    }
+                    if (State.colMeta[key].isData) cleanRow[key] = cleanNumber(row[key]);
                 }
                 
                 cleanRow['_DATE_SORT'] = parseDateToTimestamp(dStr);
                 if (cleanRow['_DATE_SORT'] === 0 && yStr && mStr) {
-                    let y = parseInt(yStr);
-                    let mNum = 1;
-                    let parsedM = parseInt(mStr);
+                    let y = parseInt(yStr); let mNum = 1; let parsedM = parseInt(mStr);
                     if (!isNaN(parsedM) && parsedM >= 1 && parsedM <= 12) mNum = parsedM;
                     else {
                         const mMap = { 'jan':1, 'fév':2, 'fev':2, 'mar':3, 'avr':4, 'mai':5, 'juin':6, 'juil':7, 'aoû':8, 'aou':8, 'sep':9, 'oct':10, 'nov':11, 'déc':12, 'dec':12 };
@@ -1173,18 +1106,13 @@
                 return cleanRow;
             });
 
-            // Parsing PRODUCTION
             const getColRobust = (r, searchTerms, excludeTerms = []) => {
-                for (let t of searchTerms) {
-                    if (r[t] !== undefined) return cleanNumber(r[t]);
-                }
+                for (let t of searchTerms) { if (r[t] !== undefined) return cleanNumber(r[t]); }
                 let keys = Object.keys(r);
                 for (let k of keys) {
                     let upperK = k.toUpperCase();
                     let isExcluded = excludeTerms.some(ex => upperK.includes(ex.toUpperCase()));
-                    if (!isExcluded && searchTerms.some(s => upperK.includes(s.toUpperCase()))) {
-                        return cleanNumber(r[k]);
-                    }
+                    if (!isExcluded && searchTerms.some(s => upperK.includes(s.toUpperCase()))) return cleanNumber(r[k]);
                 }
                 return 0;
             };
@@ -1195,33 +1123,18 @@
                 if (prodName && prodName.trim() !== '') {
                     let dStr = row['Date'] || row['DATE'] || '';
                     let pRow = {
-                        Date: dStr,
-                        Semaine: row['Semaine'],
-                        Mois: row['Mois'],
-                        Année: row['Année'],
-                        Produit: String(prodName).toUpperCase().trim(),
-                        BK: row['BK'],
-                        Refus45: cleanNumber(row['Refus 45 (%)']),
-                        Debit: cleanNumber(row['Débit (t/h)']),
-                        Qtte: cleanNumber(row['Qtte (t)']),
-                        
+                        Date: dStr, Semaine: row['Semaine'], Mois: row['Mois'], Année: row['Année'], Produit: String(prodName).toUpperCase().trim(), BK: row['BK'],
+                        Refus45: cleanNumber(row['Refus 45 (%)']), Debit: cleanNumber(row['Débit (t/h)']), Qtte: cleanNumber(row['Qtte (t)']),
                         CoutMPUnit: getColRobust(row, ['Coût Matère Première Calculé', 'Coût Matière Première Calculé', 'Coût MP Calculé'], ['Ecart', 'Target', 'Total']),
                         CoutMPTargetUnit: getColRobust(row, ['Coût Matère Première Target', 'Coût Matière Première Target', 'Coût MP Target'], ['Ecart', 'Total']),
                         CoutTotalUnit: getColRobust(row, ['Coût Total Calculé'], ['Ecart']),
                         PrixVenteUnit: getColRobust(row, ['Prix Vente'], ['Total', 'Ecart']),
-                        
                         MargeUnit: getColRobust(row, ['Marge (E)', 'Marge'], ['Total', 'Ecart', 'Vs', 'Target']),
                         EcartMargeUnit: getColRobust(row, ['Ecart Vs Target Marge', 'Ecart Marge'], ['Total']),
-                        EcartCoutMPUnit: getColRobust(row, ['Ecart Coût Matère Première', 'Ecart Coût Matière Première'], ['Total']),
-                        
                         _DATE_SORT: parseDateToTimestamp(dStr)
                     };
-                    
-                    pRow.MargeTotale = pRow.MargeUnit * pRow.Qtte;
-                    pRow.EcartMargeTotale = pRow.EcartMargeUnit * pRow.Qtte;
-
+                    pRow.MargeTotale = pRow.MargeUnit * pRow.Qtte; pRow.EcartMargeTotale = pRow.EcartMargeUnit * pRow.Qtte;
                     if(!pRow.Année && pRow._DATE_SORT > 0) pRow.Année = new Date(pRow._DATE_SORT).getFullYear();
-
                     State.matiereCols.forEach(mp => { pRow[mp] = cleanNumber(row[mp]); });
                     State.rawProd.push(pRow);
                 }
@@ -1229,83 +1142,39 @@
 
             State.dimMapping = dimData;
 
-            // --- Calcul des dates de mise à jour ---
-            let maxDateVentes = 0;
-            State.raw.forEach(r => { if (r._DATE_SORT > maxDateVentes) maxDateVentes = r._DATE_SORT; });
-            if (maxDateVentes > 0) {
-                let d = new Date(maxDateVentes);
-                document.getElementById('majVentes').innerText = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-            }
+            let maxDateVentes = 0; State.raw.forEach(r => { if (r._DATE_SORT > maxDateVentes) maxDateVentes = r._DATE_SORT; });
+            if (maxDateVentes > 0) { let d = new Date(maxDateVentes); document.getElementById('majVentes').innerText = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; }
 
-            let maxDateProd = 0;
-            State.rawProd.forEach(r => { if (r._DATE_SORT > maxDateProd) maxDateProd = r._DATE_SORT; });
-            if (maxDateProd > 0) {
-                let d = new Date(maxDateProd);
-                document.getElementById('majProd').innerText = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-            }
+            let maxDateProd = 0; State.rawProd.forEach(r => { if (r._DATE_SORT > maxDateProd) maxDateProd = r._DATE_SORT; });
+            if (maxDateProd > 0) { let d = new Date(maxDateProd); document.getElementById('majProd').innerText = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; }
 
-            setupFilters();
-            applyFilters();
-            applyFiltersProd();
-            
-            showLoading(false);
+            setupFilters(); applyFilters(); applyFiltersProd(); showLoading(false);
 
             if (State.currentUser) {
                 UI.dashboardContent.classList.remove('hidden');
-                if (State.currentUser.role === 'industriel') switchTab('PROD');
-                else switchTab('VENTES');
+                if (State.currentUser.role === 'industriel') switchTab('PROD'); else switchTab('VENTES');
             } else {
-                UI.loginInput.value = '';
-                UI.pwdInput.value = '';
-                UI.loginModal.classList.remove('hidden');
+                UI.loginInput.value = ''; UI.pwdInput.value = ''; UI.loginModal.classList.remove('hidden');
             }
         }
 
-        // --- FILTER BINDINGS CENTRALISÉS ---
         function bindFilter(domId, stateObj, stateKey, callback) {
             let el = document.getElementById(domId);
-            if (el) {
-                el.addEventListener('change', (e) => {
-                    stateObj[stateKey] = e.target.value;
-                    callback();
-                });
-            }
+            if (el) el.addEventListener('change', (e) => { stateObj[stateKey] = e.target.value; callback(); });
         }
 
         function setupFilters() {
-            const getUniques = (arr, key) => [...new Set(arr.map(d => d[key]).filter(Boolean))].sort((a, b) => {
-                if(!isNaN(a) && !isNaN(b)) return a - b;
-                return String(a).localeCompare(String(b));
-            });
-            const populate = (id, values, allLabel) => {
-                let sel = document.getElementById(id);
-                if(!sel) return;
-                sel.innerHTML = `<option value="ALL">${allLabel}</option>`;
-                values.forEach(v => { let o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
-            };
+            const getUniques = (arr, key) => [...new Set(arr.map(d => d[key]).filter(Boolean))].sort((a, b) => { if(!isNaN(a) && !isNaN(b)) return a - b; return String(a).localeCompare(String(b)); });
+            const populate = (id, values, allLabel) => { let sel = document.getElementById(id); if(!sel) return; sel.innerHTML = `<option value="ALL">${allLabel}</option>`; values.forEach(v => { let o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); }); };
 
-            // VENTES
-            populate('filterAnnee', getUniques(State.raw, 'Année'), 'Toutes');
-            populate('filterMois', getUniques(State.raw, 'Mois'), 'Tous');
-            populate('filterSemaine', getUniques(State.raw, 'Semaine'), 'Toutes');
-            let maxVol = 0;
-            State.raw.forEach(r => {
-                let sum = 0;
-                Object.keys(State.colMeta).forEach(c => { if(State.colMeta[c].isData) sum += (r[c]||0); });
-                if(sum > maxVol) maxVol = sum;
-            });
-            let vF = document.getElementById('filterVolume');
-            if(vF) { vF.max = Math.ceil(maxVol); vF.value = 0; UI.volValDisplay.innerText = 0; }
+            populate('filterAnnee', getUniques(State.raw, 'Année'), 'Toutes'); populate('filterMois', getUniques(State.raw, 'Mois'), 'Tous'); populate('filterSemaine', getUniques(State.raw, 'Semaine'), 'Toutes');
+            let maxVol = 0; State.raw.forEach(r => { let sum = 0; Object.keys(State.colMeta).forEach(c => { if(State.colMeta[c].isData) sum += (r[c]||0); }); if(sum > maxVol) maxVol = sum; });
+            let vF = document.getElementById('filterVolume'); if(vF) { vF.max = Math.ceil(maxVol); vF.value = 0; UI.volValDisplay.innerText = 0; }
 
-            // PROD
-            populate('filterProdAnnee', getUniques(State.rawProd, 'Année'), 'Toutes');
-            populate('filterProdMois', getUniques(State.rawProd, 'Mois'), 'Tous');
-            populate('filterProdSemaine', getUniques(State.rawProd, 'Semaine'), 'Toutes');
-            populate('filterProdProduit', getUniques(State.rawProd, 'Produit'), 'Tous');
-            populate('filterProdBK', getUniques(State.rawProd, 'BK'), 'Tous');
+            populate('filterProdAnnee', getUniques(State.rawProd, 'Année'), 'Toutes'); populate('filterProdMois', getUniques(State.rawProd, 'Mois'), 'Tous'); populate('filterProdSemaine', getUniques(State.rawProd, 'Semaine'), 'Toutes');
+            populate('filterProdProduit', getUniques(State.rawProd, 'Produit'), 'Tous'); populate('filterProdBK', getUniques(State.rawProd, 'BK'), 'Tous');
         }
 
-        // --- MOTEUR OLAP DECOUPLED & DEBOUNCED ---
         const debouncedUpdateVentes = debounce(updateDashboard, 150);
         const debouncedUpdateProd = debounce(progressiveRenderProd, 150);
 
@@ -1314,11 +1183,8 @@
                 let m = State.colMeta[col];
                 if (!m.isData) return false;
                 if (State.filters.produit !== 'ALL') {
-                    if (State.filters.produit === 'CPA') {
-                        if (m.product !== 'SUPERPRO' && m.product !== 'SUPERBRIC' && m.product !== 'CPA') return false;
-                    } else {
-                        if (m.product !== State.filters.produit) return false;
-                    }
+                    if (State.filters.produit === 'CPA') { if (m.product !== 'SUPERPRO' && m.product !== 'SUPERBRIC' && m.product !== 'CPA') return false; }
+                    else { if (m.product !== State.filters.produit) return false; }
                 }
                 if (State.filters.segment !== 'ALL' && m.segment !== State.filters.segment) return false;
                 if (State.filters.cond !== 'ALL' && m.cond !== State.filters.cond) return false;
@@ -1331,40 +1197,31 @@
                 if (State.filters.annee !== 'ALL' && String(row['Année']) !== State.filters.annee) return null;
                 if (State.filters.mois !== 'ALL' && String(row['Mois']) !== State.filters.mois) return null;
                 if (State.filters.semaine !== 'ALL' && String(row['Semaine']) !== State.filters.semaine) return null;
-
                 if (State.filters.datestart || State.filters.dateend) {
                     let rowTime = row._DATE_SORT;
                     if (rowTime > 0) {
                         if (State.filters.datestart && rowTime < new Date(State.filters.datestart).getTime()) return null;
                         if (State.filters.dateend && rowTime > new Date(State.filters.dateend).getTime() + 86399999) return null;
-                    } else {
-                        return null; 
-                    }
+                    } else return null;
                 }
 
                 let dynVentes = 0, dynRetail = 0, dynIndus = 0;
                 State.activeCols.forEach(col => {
-                    let val = row[col] || 0;
-                    dynVentes += val;
+                    let val = row[col] || 0; dynVentes += val;
                     if (State.colMeta[col].segment === 'RETAIL') dynRetail += val;
                     if (State.colMeta[col].segment === 'INDUSTRIAL') dynIndus += val;
                 });
 
-                let obj = row['Objectif fixé'] || 0;
-                let retours = row['RETOUR PRODUIT'] || 0;
-
+                let obj = row['Objectif fixé'] || 0, retours = row['RETOUR PRODUIT'] || 0;
                 if (dynVentes === 0 && obj === 0 && retours === 0) return null;
                 if (dynVentes < State.filters.minVolume) return null;
-                
                 let netRatio = dynVentes > 0 ? ((dynVentes - retours) / dynVentes) * 100 : 0;
                 if (netRatio < State.filters.minMargin) return null;
 
                 return { ...row, _DYN_VENTES: dynVentes, _DYN_RETAIL: dynRetail, _DYN_INDUS: dynIndus, _DYN_NET_RATIO: netRatio };
             }).filter(Boolean);
 
-            if(currentTab === 'VENTES' && !UI.dashboardContent.classList.contains('hidden')) {
-                debouncedUpdateVentes();
-            }
+            if(currentTab === 'VENTES' && !UI.dashboardContent.classList.contains('hidden')) debouncedUpdateVentes();
         }
 
         function applyFiltersProd() {
@@ -1374,143 +1231,135 @@
                 if (State.filtersProd.semaine !== 'ALL' && String(row['Semaine']) !== State.filtersProd.semaine) return null;
                 if (State.filtersProd.produit !== 'ALL' && row['Produit'] !== State.filtersProd.produit) return null;
                 if (State.filtersProd.bk !== 'ALL' && String(row['BK']) !== State.filtersProd.bk) return null;
+                
+                // NOUVEAUX FILTRES DATES POUR PRODUCTION
+                if (State.filtersProd.datestart || State.filtersProd.dateend) {
+                    let rowTime = row._DATE_SORT;
+                    if (rowTime > 0) {
+                        if (State.filtersProd.datestart && rowTime < new Date(State.filtersProd.datestart).getTime()) return null;
+                        if (State.filtersProd.dateend && rowTime > new Date(State.filtersProd.dateend).getTime() + 86399999) return null;
+                    } else return null;
+                }
                 return row;
             }).filter(Boolean);
 
-            if(currentTab === 'PROD' && !UI.dashboardContent.classList.contains('hidden')) {
-                debouncedUpdateProd();
-            }
+            if(currentTab === 'PROD' && !UI.dashboardContent.classList.contains('hidden')) debouncedUpdateProd();
         }
 
-        // BINDINGS VENTES
-        ['Annee', 'Mois', 'Semaine', 'Segment', 'Produit', 'Cond', 'Transport', 'Region', 'DateStart', 'DateEnd'].forEach(id => {
-            bindFilter(`filter${id}`, State.filters, id.toLowerCase(), applyFilters);
-        });
+        ['Annee', 'Mois', 'Semaine', 'Segment', 'Produit', 'Cond', 'Transport', 'Region', 'DateStart', 'DateEnd'].forEach(id => { bindFilter(`filter${id}`, State.filters, id.toLowerCase(), applyFilters); });
         bindFilter('filterMargin', State.filters, 'minMargin', applyFilters);
         
-        // BINDINGS SLIDERS AVEC DEBOUNCE
-        document.getElementById('inputCibleAnnuelle').addEventListener('input', debounce((e) => { 
-            State.targetLanding = parseFloat(e.target.value) || 0; 
-            if(currentTab === 'VENTES') renderChartForecast(); 
-        }, 200));
-
-        document.getElementById('filterVolume').addEventListener('input', (e) => { 
-            State.filters.minVolume = parseFloat(e.target.value); 
-            UI.volValDisplay.innerText = formatVal(State.filters.minVolume); 
-        });
+        document.getElementById('inputCibleAnnuelle').addEventListener('input', debounce((e) => { State.targetLanding = parseFloat(e.target.value) || 0; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
+        document.getElementById('filterVolume').addEventListener('input', (e) => { State.filters.minVolume = parseFloat(e.target.value); UI.volValDisplay.innerText = formatVal(State.filters.minVolume); });
         document.getElementById('filterVolume').addEventListener('change', () => applyFilters());
-
         document.getElementById('filterTimeView').addEventListener('change', () => { if(currentTab === 'VENTES') debouncedUpdateVentes(); });
-
         document.getElementById('resetFilters').addEventListener('click', () => {
             ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => { document.getElementById(id).value = 'ALL'; });
-            document.getElementById('filterDateStart').value = '';
-            document.getElementById('filterDateEnd').value = '';
+            document.getElementById('filterDateStart').value = ''; document.getElementById('filterDateEnd').value = '';
             document.getElementById('filterTimeView').value = 'day'; document.getElementById('filterMargin').value = '0';
             document.getElementById('filterVolume').value = 0; UI.volValDisplay.innerText = "0";
-            
-            // CORRECTION: Utilisation de Object.assign pour conserver la référence de l'objet State.filters
             Object.assign(State.filters, { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: '' });
-            
             applyFilters();
         });
 
-        // BINDINGS PROD
-        ['Annee', 'Mois', 'Semaine', 'Produit', 'BK'].forEach(id => {
-            bindFilter(`filterProd${id}`, State.filtersProd, id.toLowerCase(), applyFiltersProd);
-        });
+        ['Annee', 'Mois', 'Semaine', 'Produit', 'BK', 'DateStart', 'DateEnd'].forEach(id => { bindFilter(`filterProd${id}`, State.filtersProd, id.toLowerCase(), applyFiltersProd); });
         document.getElementById('filterProdTimeView').addEventListener('change', () => { if(currentTab === 'PROD') debouncedUpdateProd(); });
-        
         document.getElementById('resetProdFilters').addEventListener('click', () => {
             ['filterProdAnnee', 'filterProdMois', 'filterProdSemaine', 'filterProdProduit', 'filterProdBK'].forEach(id => { document.getElementById(id).value = 'ALL'; });
-            document.getElementById('filterProdTimeView').value = 'day';
-            
-            // CORRECTION: Utilisation de Object.assign pour conserver la référence de l'objet State.filtersProd
-            Object.assign(State.filtersProd, { annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL' });
-            
+            document.getElementById('filterProdTimeView').value = 'day'; document.getElementById('filterProdDateStart').value = ''; document.getElementById('filterProdDateEnd').value = '';
+            Object.assign(State.filtersProd, { annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL', datestart: '', dateend: '' });
             applyFiltersProd();
         });
 
-        // =======================================================================================
-        // RENDERERS VENTES
-        // =======================================================================================
         function computeAggregatesVentes() {
             let timeView = document.getElementById('filterTimeView').value;
-            let agg = {
-                kpis: { totalVentes: 0, totalObj: 0, totalRetours: 0, totalRetail: 0, totalIndus: 0, totalCPA: 0, totalDDP: 0 },
-                prodStats: {},
-                timeBuckets: {}
-            };
+            let agg = { kpis: { totalVentes: 0, totalObj: 0, totalRetours: 0, totalRetail: 0, totalIndus: 0, totalCPA: 0, totalDDP: 0 }, prodStats: {}, timeBuckets: {} };
 
             State.filtered.forEach(r => {
-                // 1. KPIs globaux
-                agg.kpis.totalVentes += r._DYN_VENTES;
-                agg.kpis.totalObj += (r['Objectif fixé'] || 0);
-                agg.kpis.totalRetours += (r['RETOUR PRODUIT'] || 0);
-                agg.kpis.totalRetail += r._DYN_RETAIL || 0;
-                agg.kpis.totalIndus += r._DYN_INDUS || 0;
+                agg.kpis.totalVentes += r._DYN_VENTES; agg.kpis.totalObj += (r['Objectif fixé'] || 0); agg.kpis.totalRetours += (r['RETOUR PRODUIT'] || 0);
+                agg.kpis.totalRetail += r._DYN_RETAIL || 0; agg.kpis.totalIndus += r._DYN_INDUS || 0;
 
-                // 2. Préparation du bucket temporel (pour les graphiques d'évolution)
-                let exactDate = getPlotlyDate(r);
-                let bucket = 'Inconnu';
+                let exactDate = getPlotlyDate(r); let bucket = 'Inconnu';
                 if (exactDate && exactDate !== 'Inconnu') bucket = getBucketDate(exactDate, timeView);
 
-                if (!agg.timeBuckets[bucket]) {
-                    agg.timeBuckets[bucket] = {
-                        sort: new Date(bucket).getTime() || 0,
-                        ventes: 0, obj: 0, totalVol: 0, ddpVol: 0, cpaVol: 0, s: 0, v: 0, b: 0, r_seg: 0, i_seg: 0
-                    };
-                }
+                if (!agg.timeBuckets[bucket]) { agg.timeBuckets[bucket] = { sort: new Date(bucket).getTime() || 0, ventes: 0, obj: 0, totalVol: 0, ddpVol: 0, cpaVol: 0, s: 0, v: 0, b: 0, r_seg: 0, i_seg: 0 }; }
                 let b = agg.timeBuckets[bucket];
-                b.ventes += r._DYN_VENTES;
-                b.obj += (r['Objectif fixé'] || 0);
-                b.totalVol += r._DYN_VENTES;
+                b.ventes += r._DYN_VENTES; b.obj += (r['Objectif fixé'] || 0); b.totalVol += r._DYN_VENTES;
 
-                // 3. Boucle sur les colonnes actives (Produits spécifiques)
                 State.activeCols.forEach(col => {
                     let val = r[col] || 0;
                     if (val > 0) {
                         let meta = State.colMeta[col];
-                        
-                        // KPIs & Ratios
                         if (meta.transport === 'DDP') { agg.kpis.totalDDP += val; b.ddpVol += val; }
                         if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') { agg.kpis.totalCPA += val; b.cpaVol += val; }
-
-                        // Table & Pareto
                         let pName = meta.product || 'Divers';
                         if (!agg.prodStats[pName]) agg.prodStats[pName] = { vol: 0, retail: 0, indus: 0 };
                         agg.prodStats[pName].vol += val;
                         if (meta.segment === 'RETAIL') agg.prodStats[pName].retail += val;
                         if (meta.segment === 'INDUSTRIAL') agg.prodStats[pName].indus += val;
 
-                        // Mix Temporels
-                        if (meta.cond === 'SAC') b.s += val;
-                        if (meta.cond === 'VRAC') b.v += val;
-                        if (meta.cond === 'BIG-BAG') b.b += val;
-                        if (meta.segment === 'RETAIL') b.r_seg += val;
-                        if (meta.segment === 'INDUSTRIAL') b.i_seg += val;
+                        if (meta.cond === 'SAC') b.s += val; if (meta.cond === 'VRAC') b.v += val; if (meta.cond === 'BIG-BAG') b.b += val;
+                        if (meta.segment === 'RETAIL') b.r_seg += val; if (meta.segment === 'INDUSTRIAL') b.i_seg += val;
                     }
                 });
             });
             State._aggregatesVentes = agg;
         }
 
+        // --- NOUVEAU: MOTEUR D'AGREGATION PRODUCTION (O(N) unique) ---
+        function computeAggregatesProd() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let agg = {
+                kpis: { totQtte: 0, totMarge: 0, totEcart: 0, avgDebitSum: 0, sumCoutMP: 0, sumCoutMPTarget: 0, compSums: {} },
+                timeBuckets: {},
+                prods: {}
+            };
+            State.matiereCols.forEach(mp => agg.kpis.compSums[mp] = 0);
+
+            State.filteredProd.forEach(r => {
+                agg.kpis.totQtte += r.Qtte;
+                agg.kpis.totMarge += r.MargeTotale;
+                agg.kpis.totEcart += r.EcartMargeTotale;
+                agg.kpis.avgDebitSum += (r.Debit * r.Qtte);
+                agg.kpis.sumCoutMP += (r.CoutMPUnit * r.Qtte);
+                agg.kpis.sumCoutMPTarget += (r.CoutMPTargetUnit * r.Qtte);
+
+                State.matiereCols.forEach(mp => { agg.kpis.compSums[mp] += (r.Qtte * (r[mp] || 0)) / 100; });
+
+                let exactDate = getPlotlyDate(r, true);
+                let bucket = exactDate && exactDate !== 'Inconnu' ? getBucketDate(exactDate, timeView) : 'Inconnu';
+
+                if (!agg.timeBuckets[bucket]) {
+                    agg.timeBuckets[bucket] = {
+                        sort: new Date(bucket).getTime(), qtte: 0, debitSum: 0, prods: {}, vals: {}, globalClinker: 0, globalCement: 0,
+                        calcSum: 0, targetSum: 0, totalSum: 0, pvSum: 0, margeSum: 0, ecart: 0
+                    };
+                    State.matiereCols.forEach(mp => agg.timeBuckets[bucket].vals[mp] = 0);
+                }
+                let b = agg.timeBuckets[bucket];
+                b.qtte += r.Qtte; b.debitSum += (r.Debit * r.Qtte);
+                if (!b.prods[r.Produit]) b.prods[r.Produit] = { marge: 0, clinker: 0, cement: 0 };
+                b.prods[r.Produit].marge += r.MargeTotale;
+
+                State.matiereCols.forEach(mp => b.vals[mp] += (r.Qtte * (r[mp] || 0)) / 100);
+
+                let clinkerRatio = (r['Clinker Gris'] || 0) + (r['Clinker Blanc'] || 0);
+                let clinkerT = r.Qtte * (clinkerRatio / 100);
+                b.globalClinker += clinkerT; b.globalCement += r.Qtte;
+                b.prods[r.Produit].clinker += clinkerT; b.prods[r.Produit].cement += r.Qtte;
+
+                b.calcSum += (r.CoutMPUnit * r.Qtte); b.targetSum += (r.CoutMPTargetUnit * r.Qtte); b.totalSum += (r.CoutTotalUnit * r.Qtte);
+                b.pvSum += (r.PrixVenteUnit * r.Qtte); b.margeSum += (r.MargeUnit * r.Qtte); b.ecart += r.EcartMargeTotale;
+
+                if (!agg.prods[r.Produit]) agg.prods[r.Produit] = { qtte: 0, marge: 0, ecart: 0 };
+                agg.prods[r.Produit].qtte += r.Qtte; agg.prods[r.Produit].marge += r.MargeTotale; agg.prods[r.Produit].ecart += r.EcartMargeTotale;
+            });
+            State._aggregatesProd = agg;
+        }
+
         function updateDashboard() {
-            if (State.filtered.length === 0) {
-                // Gestion cas vide (facultatif)
-            }
-            computeAggregatesVentes(); // ⚡ UNE SEULE BOUCLE SUR LES DONNÉES !
-            
-            updateKPIs(); 
-            renderVentesTable(); 
-            renderChartTrend(); 
-            renderChartRatios(); 
-            renderChartForecast(); // Reste inchangé (utilise State.raw)
-            renderChartWaterfall(); 
-            renderChartPareto(); 
-            renderChartVracSac(); 
-            renderChartRetInd(); 
-            generateExecutiveSummary();
+            computeAggregatesVentes();
+            updateKPIs(); renderVentesTable(); renderChartTrend(); renderChartRatios(); renderChartForecast(); renderChartWaterfall(); renderChartPareto(); renderChartVracSac(); renderChartRetInd(); generateExecutiveSummary();
         }
 
         function updateKPIs() {
@@ -1533,21 +1382,12 @@
         }
 
         function renderVentesTable() {
-            let tbody = UI.tableVentesBody;
-            if (!tbody) return;
-
+            let tbody = UI.tableVentesBody; if (!tbody) return;
             let prodStats = State._aggregatesVentes.prodStats;
             let totalVol = State._aggregatesVentes.kpis.totalVentes;
 
-            let sortedProds = Object.keys(prodStats).map(k => ({
-                name: k,
-                ...prodStats[k]
-            })).sort((a, b) => b.vol - a.vol);
-
-            if (sortedProds.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500 dark:text-gray-400 italic">Aucune donnée de vente pour cette sélection.</td></tr>`;
-                return;
-            }
+            let sortedProds = Object.keys(prodStats).map(k => ({ name: k, ...prodStats[k] })).sort((a, b) => b.vol - a.vol);
+            if (sortedProds.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500 dark:text-gray-400 italic">Aucune donnée de vente pour cette sélection.</td></tr>`; return; }
 
             let html = '';
             sortedProds.forEach(p => {
@@ -1555,24 +1395,19 @@
                 html += `
                     <tr class="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors group">
                         <td class="p-4 font-semibold text-gray-900 dark:text-white flex items-center gap-3">
-                            <div class="w-2.5 h-2.5 rounded-full bg-brand group-hover:scale-125 transition-transform"></div>
-                            ${p.name}
+                            <div class="w-2.5 h-2.5 rounded-full bg-brand group-hover:scale-125 transition-transform"></div> ${p.name}
                         </td>
                         <td class="p-4 text-right font-bold text-gray-900 dark:text-white">${formatVal(p.vol)} <span class="text-xs text-gray-400 font-normal">T</span></td>
                         <td class="p-4 text-right">
                             <div class="flex items-center justify-end gap-3">
                                 <span class="font-medium w-12">${mix.toFixed(1)}%</span>
-                                <div class="w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                                    <div class="h-full bg-brand rounded-full" style="width: ${mix}%"></div>
-                                </div>
+                                <div class="w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"><div class="h-full bg-brand rounded-full" style="width: ${mix}%"></div></div>
                             </div>
                         </td>
                         <td class="p-4 text-right font-medium text-purple-600 dark:text-purple-400">${p.retail > 0 ? formatVal(p.retail) : '-'}</td>
                         <td class="p-4 text-right font-medium text-accent">${p.indus > 0 ? formatVal(p.indus) : '-'}</td>
-                    </tr>
-                `;
+                    </tr>`;
             });
-
             html += `
                 <tr class="bg-gray-50 dark:bg-gray-800/80 font-bold border-t-2 border-gray-200 dark:border-gray-700">
                     <td class="p-4 text-gray-900 dark:text-white">TOTAL SÉLECTION</td>
@@ -1580,9 +1415,7 @@
                     <td class="p-4 text-right">100%</td>
                     <td class="p-4 text-right text-purple-600 dark:text-purple-400">${formatVal(sortedProds.reduce((sum, p) => sum + p.retail, 0))}</td>
                     <td class="p-4 text-right text-accent">${formatVal(sortedProds.reduce((sum, p) => sum + p.indus, 0))}</td>
-                </tr>
-            `;
-
+                </tr>`;
             tbody.innerHTML = html;
         }
 
@@ -1591,10 +1424,8 @@
             let bucketData = State._aggregatesVentes.timeBuckets;
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartTrend'); return; }
-
             let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].ventes), type: timeView==='day'?'scatter':'bar', mode: 'lines+markers', name: 'Ventes', marker: {color: '#3b82f6'}, line: {color: '#3b82f6', width: 3}, fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)' };
             let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].obj), type: 'scatter', mode: 'lines+markers', name: 'Objectif', marker: {color: '#ef4444'}, line: {color: '#ef4444', width: 2, dash: 'dot'} };
-            
             renderPlot('chartTrend', [trace1, trace2], {...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'group'});
         }
 
@@ -1603,16 +1434,13 @@
             let bucketData = State._aggregatesVentes.timeBuckets;
             let sortedDates = Object.keys(bucketData).sort((a,b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartRatios'); return; }
-
             let xVals = [], cpaVals = [], ddpVals = [];
             sortedDates.forEach(d => {
-                xVals.push(d);
-                cpaVals.push(bucketData[d].totalVol > 0 ? (bucketData[d].cpaVol / bucketData[d].totalVol) * 100 : null);
+                xVals.push(d); cpaVals.push(bucketData[d].totalVol > 0 ? (bucketData[d].cpaVol / bucketData[d].totalVol) * 100 : null);
                 ddpVals.push(bucketData[d].totalVol > 0 ? (bucketData[d].ddpVol / bucketData[d].totalVol) * 100 : null);
             });
             let trace1 = { x: xVals, y: cpaVals, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Ratio CPA', line: {color: '#8b5cf6', width: 2}, connectgaps: true };
             let trace2 = { x: xVals, y: ddpVals, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Ratio DDP', line: {color: '#f59e0b', width: 2}, connectgaps: true };
-            
             renderPlot('chartRatios', [trace1, trace2], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Ratio Moyen (%)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', ticksuffix: '%' } });
         }
 
@@ -1651,16 +1479,15 @@
 
             let lastTs = dailyData[sortedDates[sortedDates.length-1]].sort;
             let endOfYear = new Date(targetYear, 11, 31).getTime();
-            
             let targetTotalLanding = State.targetLanding;
-            document.getElementById('titleForecast').innerText = `Prévisions (Objectif ${(targetTotalLanding / 1000000).toFixed(2).replace('.', ',')}M) : Retail vs Industrial (Vue Journalière)`;
+            document.getElementById('titleForecast').innerText = `Prévisions (Objectif ${(targetTotalLanding / 1000000).toFixed(2).replace('.', ',')}M) : Retail vs Industrial (Année en cours)`;
+            
             let currentTotal = totalRet + totalInd;
             let requiredRemainingVol = Math.max(0, targetTotalLanding - currentTotal);
             let mixRet = currentTotal > 0 ? totalRet / currentTotal : 0.5;
             let mixInd = currentTotal > 0 ? totalInd / currentTotal : 0.5;
 
             const holidaysList = [ '01-01', '03-16', '03-20', '04-06', '05-01', '05-14', '05-25', '05-27', '07-27', '08-07', '08-15', '11-01', '11-15', '12-25' ];
-            
             const getDayWeight = (dObj) => {
                 let md = `${String(dObj.getMonth() + 1).padStart(2, '0')}-${String(dObj.getDate()).padStart(2, '0')}`;
                 if (holidaysList.includes(md)) return 0.1;
@@ -1671,9 +1498,7 @@
             };
 
             let futureX = [], futRet = [], futInd = [], monthlyTargets = {}, totalWeight = 0, futureDays = [];
-            for(let tempTs = lastTs + 86400000; tempTs <= endOfYear; tempTs += 86400000) {
-                let w = getDayWeight(new Date(tempTs)); totalWeight += w; futureDays.push({ ts: tempTs, weight: w });
-            }
+            for(let tempTs = lastTs + 86400000; tempTs <= endOfYear; tempTs += 86400000) { let w = getDayWeight(new Date(tempTs)); totalWeight += w; futureDays.push({ ts: tempTs, weight: w }); }
 
             let currentCumRet = totalRet, currentCumInd = totalInd, landingRet = totalRet, landingInd = totalInd;
             futureDays.forEach(day => {
@@ -1685,15 +1510,9 @@
                 
                 let mKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
                 if (!monthlyTargets[mKey]) {
-                    monthlyTargets[mKey] = {
-                        label: ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"][dObj.getMonth()],
-                        midDate: new Date(dObj.getFullYear(), dObj.getMonth(), 15).toISOString().split('T')[0], 
-                        ret: monthlyActuals[mKey] ? monthlyActuals[mKey].ret : 0,
-                        ind: monthlyActuals[mKey] ? monthlyActuals[mKey].ind : 0
-                    };
+                    monthlyTargets[mKey] = { label: ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"][dObj.getMonth()], midDate: new Date(dObj.getFullYear(), dObj.getMonth(), 15).toISOString().split('T')[0], ret: monthlyActuals[mKey] ? monthlyActuals[mKey].ret : 0, ind: monthlyActuals[mKey] ? monthlyActuals[mKey].ind : 0 };
                 }
-                monthlyTargets[mKey].ret += dayVol * mixRet;
-                monthlyTargets[mKey].ind += dayVol * mixInd;
+                monthlyTargets[mKey].ret += dayVol * mixRet; monthlyTargets[mKey].ind += dayVol * mixInd;
             });
 
             if (futureX.length > 0) { futureX.unshift(histX[histX.length-1]); futRet.unshift(cumRet[cumRet.length-1]); futInd.unshift(cumInd[cumInd.length-1]); }
@@ -1705,24 +1524,13 @@
                 { x: futureX, y: futInd, type: 'scatter', mode: 'lines', name: 'Industrial (Atterrissage)', line: {color: '#10b981', width: 2, dash: 'dot'} }
             ];
 
-            let shapes = [];
-            let annotations = [];
-            let yearForEvents = targetYear;
-
+            let shapes = [], annotations = [], yearForEvents = targetYear;
             shapes.push({ type: 'rect', xref: 'x', yref: 'paper', x0: `${yearForEvents}-05-15`, y0: 0, x1: `${yearForEvents}-07-15`, y1: 1, fillcolor: 'rgba(59, 130, 246, 0.1)', line: { width: 0 }, layer: 'below' });
             annotations.push({ x: `${yearForEvents}-06-15`, y: 1.05, xref: 'x', yref: 'paper', text: '🌧️ Gdes Pluies', showarrow: false, font: {color: '#60a5fa', size: 10} });
-
             shapes.push({ type: 'rect', xref: 'x', yref: 'paper', x0: `${yearForEvents}-10-01`, y0: 0, x1: `${yearForEvents}-11-30`, y1: 1, fillcolor: 'rgba(59, 130, 246, 0.08)', line: { width: 0 }, layer: 'below' });
             annotations.push({ x: `${yearForEvents}-11-01`, y: 1.05, xref: 'x', yref: 'paper', text: '🌦️ Ptes Pluies', showarrow: false, font: {color: '#60a5fa', size: 10} });
 
-            const holidaysNames = {
-                '01-01': "Jour de l'An", '03-16': "Nuit du Destin", '03-20': "Fin du Ramadan",
-                '04-06': "Lundi de Pâques", '05-01': "Fête du Travail", '05-14': "Ascension",
-                '05-25': "Lundi de Pentecôte", '05-27': "Tabaski", '07-27': "Maouloud",
-                '08-07': "Indépendance", '08-15': "Assomption", '11-01': "Toussaint", 
-                '11-15': "Jour de la Paix", '12-25': "Noël"
-            };
-
+            const holidaysNames = { '01-01': "Jour de l'An", '03-16': "Nuit du Destin", '03-20': "Fin du Ramadan", '04-06': "Lundi de Pâques", '05-01': "Fête du Travail", '05-14': "Ascension", '05-25': "Lundi de Pentecôte", '05-27': "Tabaski", '07-27': "Maouloud", '08-07': "Indépendance", '08-15': "Assomption", '11-01': "Toussaint", '11-15': "Jour de la Paix", '12-25': "Noël" };
             holidaysList.forEach(dateStr => {
                 let hDate = `${yearForEvents}-${dateStr}`;
                 shapes.push({ type: 'line', xref: 'x', yref: 'paper', x0: hDate, y0: 0, x1: hDate, y1: 1, line: { color: 'rgba(239, 68, 68, 0.4)', width: 1, dash: 'dash' } });
@@ -1738,22 +1546,11 @@
             Object.values(monthlyTargets).forEach(mt => {
                 if (mt.ret + mt.ind > 10) { 
                     annotations.push({
-                        x: mt.midDate,
-                        y: 0.05, 
-                        xref: 'x',
-                        yref: 'paper',
-                        text: `<b>Obj. ${mt.label}</b><br><span style="color:#a855f7">R: ${(mt.ret/1000).toFixed(1)}k</span><br><span style="color:#10b981">I: ${(mt.ind/1000).toFixed(1)}k</span>`,
-                        showarrow: false,
-                        bgcolor: isDarkMode() ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-                        bordercolor: isDarkMode() ? '#475569' : '#cbd5e1',
-                        borderwidth: 1,
-                        font: { size: 10, color: isDarkMode() ? '#e2e8f0' : '#334155' },
-                        align: 'left',
-                        borderpad: 4
+                        x: mt.midDate, y: 0.05, xref: 'x', yref: 'paper', text: `<b>Obj. ${mt.label}</b><br><span style="color:#a855f7">R: ${(mt.ret/1000).toFixed(1)}k</span><br><span style="color:#10b981">I: ${(mt.ind/1000).toFixed(1)}k</span>`,
+                        showarrow: false, bgcolor: isDarkMode() ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)', bordercolor: isDarkMode() ? '#475569' : '#cbd5e1', borderwidth: 1, font: { size: 10, color: isDarkMode() ? '#e2e8f0' : '#334155' }, align: 'left', borderpad: 4
                     });
                 }
             });
-
             renderPlot('chartForecast', traces, { ...getPlotlyLayoutBase(), margin: { t: 40, r: 80, l: 50, b: 40 }, hovermode: 'x unified', legend: { orientation: 'h', y: 1.15 }, shapes: shapes, annotations: annotations, yaxis: { title: 'Volume Cumulé (Tonnes)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' } });
         }
 
@@ -1776,12 +1573,10 @@
             let sums = Object.keys(prodStats).map(k => ({name: k, val: prodStats[k].vol})).filter(s => s.val > 0).sort((a, b) => b.val - a.val);
             if(sums.length === 0) { Plotly.purge('chartPareto'); return; }
             
-            let total = sums.reduce((acc, s) => acc + s.val, 0);
-            let cumSum = 0;
+            let total = sums.reduce((acc, s) => acc + s.val, 0); let cumSum = 0;
             let cumPerc = sums.map(s => { cumSum += s.val; return (cumSum / total) * 100; });
             let traceBar = { x: sums.map(s=>s.name), y: sums.map(s=>s.val), type: 'bar', name: 'Volume', marker: { color: '#60a5fa' }};
             let traceLine = { x: sums.map(s=>s.name), y: cumPerc, type: 'scatter', mode: 'lines+markers', name: '% Cumulé', yaxis: 'y2', line: { color: '#f59e0b', width: 3 }};
-            
             renderPlot('chartPareto', [traceBar, traceLine], { ...getPlotlyLayoutBase(), yaxis2: { title: '% Cumul', overlaying: 'y', side: 'right', range: [0, 105], gridcolor: 'transparent' }, showlegend: false });
         }
 
@@ -1817,7 +1612,6 @@
         function generateExecutiveSummary() {
             if (State.filtered.length === 0) { document.getElementById('executiveSummary').innerHTML = "<p>Aucune donnée correspondante.</p>"; return; }
             let kpis = State._aggregatesVentes.kpis;
-            
             let perf = kpis.totalObj > 0 ? (kpis.totalVentes / kpis.totalObj * 100) : 0;
             let leadSegment = Object.entries({Retail: kpis.totalRetail, Indus: kpis.totalIndus}).sort((a,b)=>b[1]-a[1])[0];
             let html = `<ul class="list-disc pl-5 space-y-2">
@@ -1827,12 +1621,9 @@
             document.getElementById('executiveSummary').innerHTML = html;
         }
 
-        // =======================================================================================
-        // RENDERERS PRODUCTION (Avec chargement progressif async)
-        // =======================================================================================
         async function progressiveRenderProd() {
+            computeAggregatesProd();
             updateKPIsProd();
-            // Utilisation d'un Timeout court pour rendre l'UI réactive (non bloquante)
             await new Promise(r => setTimeout(r, 0)); renderChartProdTrend();
             await new Promise(r => setTimeout(r, 0)); renderChartProdMargeTime();     
             await new Promise(r => setTimeout(r, 0)); renderChartProdMix();
@@ -1843,31 +1634,13 @@
         }
 
         function updateKPIsProd() {
-            let totQtte = 0, totMarge = 0, totEcart = 0, avgDebitSum = 0;
-            let sumCoutMP = 0, sumCoutMPTarget = 0;
-            let compSums = {};
-            State.matiereCols.forEach(mp => compSums[mp] = 0);
-
-            State.filteredProd.forEach(r => {
-                totQtte += r.Qtte;
-                totMarge += r.MargeTotale;
-                totEcart += r.EcartMargeTotale;
-                avgDebitSum += (r.Debit * r.Qtte); 
-                
-                sumCoutMP += (r.CoutMPUnit * r.Qtte);
-                sumCoutMPTarget += (r.CoutMPTargetUnit * r.Qtte);
-
-                State.matiereCols.forEach(mp => {
-                    compSums[mp] += (r.Qtte * (r[mp] || 0)) / 100;
-                });
-            });
-
-            document.getElementById('kpiProdVol').innerText = formatVal(totQtte);
-            let debitMoy = totQtte > 0 ? (avgDebitSum / totQtte) : 0;
+            let kpis = State._aggregatesProd.kpis;
+            document.getElementById('kpiProdVol').innerText = formatVal(kpis.totQtte);
+            let debitMoy = kpis.totQtte > 0 ? (kpis.avgDebitSum / kpis.totQtte) : 0;
             document.getElementById('kpiProdDebit').innerText = debitMoy.toFixed(1);
             
-            let coutMoyen = totQtte > 0 ? (sumCoutMP / totQtte) : 0;
-            let coutTargetMoyen = totQtte > 0 ? (sumCoutMPTarget / totQtte) : 0;
+            let coutMoyen = kpis.totQtte > 0 ? (kpis.sumCoutMP / kpis.totQtte) : 0;
+            let coutTargetMoyen = kpis.totQtte > 0 ? (kpis.sumCoutMPTarget / kpis.totQtte) : 0;
             let ecartCoutMPMoyen = coutMoyen - coutTargetMoyen;
             
             document.getElementById('kpiProdCoutMP').innerText = formatVal(coutMoyen);
@@ -1876,23 +1649,23 @@
             elEcartCout.className = `font-bold ${ecartCoutMPMoyen > 0 ? 'text-danger' : 'text-accent'}`;
             
             let elMarge = document.getElementById('kpiProdMarge');
-            elMarge.innerText = formatVal(totMarge);
-            elMarge.className = `text-3xl font-bold ${totMarge >= 0 ? 'text-accent' : 'text-danger'}`;
+            elMarge.innerText = formatVal(kpis.totMarge);
+            elMarge.className = `text-3xl font-bold ${kpis.totMarge >= 0 ? 'text-accent' : 'text-danger'}`;
             
-            let margeUnitaireMoy = totQtte > 0 ? (totMarge / totQtte) : 0;
+            let margeUnitaireMoy = kpis.totQtte > 0 ? (kpis.totMarge / kpis.totQtte) : 0;
             document.getElementById('kpiProdMargeUnit').innerText = formatVal(margeUnitaireMoy);
 
             let elEcart = document.getElementById('kpiProdEcart');
-            elEcart.innerText = formatVal(totEcart);
-            elEcart.className = `text-3xl font-bold ${totEcart > 0 ? 'text-danger' : 'text-accent'}`;
+            elEcart.innerText = formatVal(kpis.totEcart);
+            elEcart.className = `text-3xl font-bold ${kpis.totEcart > 0 ? 'text-danger' : 'text-accent'}`;
 
             let compHtml = '';
             State.matiereCols.forEach(mp => {
-                if (compSums[mp] > 0) {
+                if (kpis.compSums[mp] > 0) {
                     compHtml += `
                     <div class="glass-panel px-3 py-1.5 rounded-lg flex flex-col border-l-2 border-prod min-w-[120px] shadow-sm">
                         <span class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">${mp}</span>
-                        <span class="text-sm font-bold text-gray-800 dark:text-white">${formatVal(compSums[mp])} <span class="text-[10px] font-normal text-gray-500">T</span></span>
+                        <span class="text-sm font-bold text-gray-800 dark:text-white">${formatVal(kpis.compSums[mp])} <span class="text-[10px] font-normal text-gray-500">T</span></span>
                     </div>`;
                 }
             });
@@ -1901,19 +1674,7 @@
 
         function renderChartProdTrend() {
             let timeView = document.getElementById('filterProdTimeView').value;
-            let bucketData = {};
-            
-            State.filteredProd.forEach(r => {
-                let exactDate = getPlotlyDate(r, true);
-                if (!exactDate || exactDate === 'Inconnu') return;
-                
-                let bucket = getBucketDate(exactDate, timeView);
-                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), qtte: 0, debitSum: 0 };
-                
-                bucketData[bucket].qtte += r.Qtte;
-                bucketData[bucket].debitSum += (r.Debit * r.Qtte);
-            });
-
+            let bucketData = State._aggregatesProd.timeBuckets;
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartProdTrend'); return; }
 
@@ -1933,61 +1694,24 @@
 
         function renderChartProdMargeTime() {
             let timeView = document.getElementById('filterProdTimeView').value;
-            let bucketData = {};
-            let allProds = new Set();
-            
-            State.filteredProd.forEach(r => {
-                let exactDate = getPlotlyDate(r, true);
-                if (!exactDate || exactDate === 'Inconnu') return;
-                let bucket = getBucketDate(exactDate, timeView);
-                
-                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), prods: {} };
-                if (!bucketData[bucket].prods[r.Produit]) bucketData[bucket].prods[r.Produit] = 0;
-                
-                bucketData[bucket].prods[r.Produit] += r.MargeTotale;
-                allProds.add(r.Produit);
-            });
-
+            let bucketData = State._aggregatesProd.timeBuckets;
+            let allProds = Object.keys(State._aggregatesProd.prods);
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartProdMargeTime'); return; }
 
             let traces = [];
-            Array.from(allProds).forEach(prod => {
-                let yVals = sortedDates.map(d => bucketData[d].prods[prod] || 0);
+            allProds.forEach(prod => {
+                let yVals = sortedDates.map(d => bucketData[d].prods[prod] ? bucketData[d].prods[prod].marge : 0);
                 if (yVals.some(v => v !== 0)) {
-                    traces.push({
-                        x: sortedDates, 
-                        y: yVals, 
-                        type: timeView==='day'?'scatter':'bar', 
-                        mode: 'lines', 
-                        name: prod, 
-                        stackgroup: timeView==='day'?'one':null
-                    });
+                    traces.push({ x: sortedDates, y: yVals, type: timeView==='day'?'scatter':'bar', mode: 'lines', name: prod, stackgroup: timeView==='day'?'one':null });
                 }
             });
-
             renderPlot('chartProdMargeTime', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Marge Totale (€)', tickformat: ',.0f' } });
         }
 
         function renderChartProdMix() {
             let timeView = document.getElementById('filterProdTimeView').value;
-            let bucketData = {};
-            
-            State.filteredProd.forEach(r => {
-                let exactDate = getPlotlyDate(r, true);
-                if (!exactDate || exactDate === 'Inconnu') return;
-                let bucket = getBucketDate(exactDate, timeView);
-                
-                if (!bucketData[bucket]) {
-                    bucketData[bucket] = { sort: new Date(bucket).getTime(), vals: {} };
-                    State.matiereCols.forEach(mp => bucketData[bucket].vals[mp] = 0);
-                }
-                
-                State.matiereCols.forEach(mp => {
-                    bucketData[bucket].vals[mp] += (r.Qtte * (r[mp] || 0)) / 100;
-                });
-            });
-
+            let bucketData = State._aggregatesProd.timeBuckets;
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartProdMix'); return; }
 
@@ -2004,109 +1728,37 @@
                     });
                 }
             });
-
             renderPlot('chartProdMix', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Tonnes (T)' } });
         }
 
         function renderChartProdClinkerFactor() {
             let timeView = document.getElementById('filterProdTimeView').value;
-            let bucketData = {};
-            let allProds = new Set();
-            
-            State.filteredProd.forEach(r => {
-                let exactDate = getPlotlyDate(r, true);
-                if (!exactDate || exactDate === 'Inconnu') return;
-                let bucket = getBucketDate(exactDate, timeView);
-                
-                if (!bucketData[bucket]) {
-                    bucketData[bucket] = { sort: new Date(bucket).getTime(), globalClinker: 0, globalCement: 0, prods: {} };
-                }
-                
-                let clinkerRatio = (r['Clinker Gris'] || 0) + (r['Clinker Blanc'] || 0);
-                let clinkerT = r.Qtte * (clinkerRatio / 100);
-                
-                bucketData[bucket].globalClinker += clinkerT;
-                bucketData[bucket].globalCement += r.Qtte;
-                
-                if (!bucketData[bucket].prods[r.Produit]) {
-                    bucketData[bucket].prods[r.Produit] = { clinker: 0, cement: 0 };
-                }
-                bucketData[bucket].prods[r.Produit].clinker += clinkerT;
-                bucketData[bucket].prods[r.Produit].cement += r.Qtte;
-                
-                allProds.add(r.Produit);
-            });
-
+            let bucketData = State._aggregatesProd.timeBuckets;
+            let allProds = Object.keys(State._aggregatesProd.prods);
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartProdClinkerFactor'); return; }
 
             let traces = [];
-            
-            Array.from(allProds).forEach(prod => {
-                let yVals = sortedDates.map(d => {
-                    let pData = bucketData[d].prods[prod];
-                    return pData && pData.cement > 0 ? (pData.clinker / pData.cement) * 100 : null;
-                });
-                
+            allProds.forEach(prod => {
+                let yVals = sortedDates.map(d => { let pData = bucketData[d].prods[prod]; return pData && pData.cement > 0 ? (pData.clinker / pData.cement) * 100 : null; });
                 if (yVals.some(v => v !== null)) {
-                    traces.push({
-                        x: sortedDates, 
-                        y: yVals, 
-                        type: 'scatter', 
-                        mode: timeView==='day'?'lines':'lines+markers', 
-                        name: prod, 
-                        line: {width: 1, dash: 'dot'},
-                        connectgaps: true
-                    });
+                    traces.push({ x: sortedDates, y: yVals, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: prod, line: {width: 1, dash: 'dot'}, connectgaps: true });
                 }
             });
 
-            let globalY = sortedDates.map(d => {
-                return bucketData[d].globalCement > 0 ? (bucketData[d].globalClinker / bucketData[d].globalCement) * 100 : null;
-            });
-            traces.push({
-                x: sortedDates, 
-                y: globalY, 
-                type: 'scatter', 
-                mode: timeView==='day'?'lines':'lines+markers', 
-                name: 'Global Pondéré', 
-                line: {color: '#f59e0b', width: 4}, 
-                connectgaps: true
-            });
+            let globalY = sortedDates.map(d => bucketData[d].globalCement > 0 ? (bucketData[d].globalClinker / bucketData[d].globalCement) * 100 : null);
+            traces.push({ x: sortedDates, y: globalY, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Global Pondéré', line: {color: '#f59e0b', width: 4}, connectgaps: true });
 
-            let layout = { 
-                ...getPlotlyLayoutBase(), 
-                hovermode: 'x unified', 
-                legend: { orientation: 'h', y: 1.15 }, 
-                yaxis: { title: 'Facteur Clinker (%)', tickformat: ',.1f', ticksuffix: '%' } 
-            };
-            renderPlot('chartProdClinkerFactor', traces, layout);
+            renderPlot('chartProdClinkerFactor', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Facteur Clinker (%)', tickformat: ',.1f', ticksuffix: '%' } });
         }
 
         function renderChartProdCostEvolution() {
             let timeView = document.getElementById('filterProdTimeView').value;
-            let bucketData = {};
-            
-            State.filteredProd.forEach(r => {
-                let exactDate = getPlotlyDate(r, true);
-                if (!exactDate || exactDate === 'Inconnu') return;
-                let bucket = getBucketDate(exactDate, timeView);
-                
-                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), calcSum: 0, targetSum: 0, totalSum: 0, pvSum: 0, margeSum: 0, qtte: 0 };
-                
-                bucketData[bucket].calcSum += (r.CoutMPUnit * r.Qtte);
-                bucketData[bucket].targetSum += (r.CoutMPTargetUnit * r.Qtte);
-                bucketData[bucket].totalSum += (r.CoutTotalUnit * r.Qtte);
-                bucketData[bucket].pvSum += (r.PrixVenteUnit * r.Qtte);
-                bucketData[bucket].margeSum += (r.MargeUnit * r.Qtte);
-                bucketData[bucket].qtte += r.Qtte;
-            });
-
+            let bucketData = State._aggregatesProd.timeBuckets;
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartProdCostEvolution'); return; }
 
             let modeType = timeView === 'day' ? 'lines' : 'lines+markers';
-            
             let arrCoutMPTarget = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].targetSum / bucketData[d].qtte : 0);
             let arrCoutMPCalc = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].calcSum / bucketData[d].qtte : 0);
             let arrCoutTotal = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].totalSum / bucketData[d].qtte : 0);
@@ -2115,99 +1767,45 @@
             
             let traceTarget = { x: sortedDates, y: arrCoutMPTarget, type: 'scatter', mode: modeType, name: 'Coût MP Target', line: {color: '#10b981', width: 2, dash: 'dot'} };
             let traceMPCalc = { x: sortedDates, y: arrCoutMPCalc, type: 'scatter', mode: modeType, name: 'Coût MP Calculé', line: {color: '#f59e0b', width: 2} };
-            
             let traceTotal = { x: sortedDates, y: arrCoutTotal, type: 'scatter', mode: modeType, name: 'Coût Total Calculé', line: {color: '#8b5cf6', width: 2} };
             let tracePV = { 
-                x: sortedDates, 
-                y: arrPrixVente, 
-                type: 'scatter', 
-                mode: modeType, 
-                name: 'Prix de Vente (Haut de la bande Marge)', 
-                line: {color: '#3b82f6', width: 2},
-                fill: 'tonexty', 
-                fillcolor: 'rgba(16, 185, 129, 0.15)', 
-                text: arrMarge.map(m => `Marge nette: ${formatVal(m)} €/t`),
-                hovertemplate: '%{y:.1f} €/t<br>%{text}<extra></extra>'
+                x: sortedDates, y: arrPrixVente, type: 'scatter', mode: modeType, name: 'Prix de Vente (Haut bande Marge)', line: {color: '#3b82f6', width: 2},
+                fill: 'tonexty', fillcolor: 'rgba(16, 185, 129, 0.15)', text: arrMarge.map(m => `Marge nette: ${formatVal(m)} €/t`), hovertemplate: '%{y:.1f} €/t<br>%{text}<extra></extra>'
             };
 
-            let layout = { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Euros (€/t)', tickformat: ',.1f' } };
-            renderPlot('chartProdCostEvolution', [traceTarget, traceMPCalc, traceTotal, tracePV], layout);
+            renderPlot('chartProdCostEvolution', [traceTarget, traceMPCalc, traceTotal, tracePV], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Euros (€/t)', tickformat: ',.1f' } });
         }
 
         function renderChartProdEcartTime() {
-            let timeView = document.getElementById('filterProdTimeView').value;
-            let bucketData = {};
-            
-            State.filteredProd.forEach(r => {
-                let exactDate = getPlotlyDate(r, true);
-                if (!exactDate || exactDate === 'Inconnu') return;
-                let bucket = getBucketDate(exactDate, timeView);
-                
-                if (!bucketData[bucket]) bucketData[bucket] = { sort: new Date(bucket).getTime(), ecart: 0 };
-                bucketData[bucket].ecart += r.EcartMargeTotale;
-            });
-
+            let bucketData = State._aggregatesProd.timeBuckets;
             let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
             if(sortedDates.length === 0) { Plotly.purge('chartProdEcartTime'); return; }
 
             let yVals = sortedDates.map(d => bucketData[d].ecart);
-            let colors = yVals.map(v => v > 0 ? '#ef4444' : '#10b981'); // Positif = Mauvais = Rouge
+            let colors = yVals.map(v => v > 0 ? '#ef4444' : '#10b981'); 
 
             let trace1 = { x: sortedDates, y: yVals, type: 'bar', name: 'Écart de Marge', marker: { color: colors } };
-
-            let layout = { ...getPlotlyLayoutBase(), hovermode: 'x unified', showlegend: false, yaxis: { title: 'Écart Marge (€)', tickformat: ',.0f' } };
-            renderPlot('chartProdEcartTime', [trace1], layout);
+            renderPlot('chartProdEcartTime', [trace1], { ...getPlotlyLayoutBase(), hovermode: 'x unified', showlegend: false, yaxis: { title: 'Écart Marge (€)', tickformat: ',.0f' } });
         }
 
         function renderChartProdCost() {
-            let prods = {};
-            State.filteredProd.forEach(r => {
-                if (!prods[r.Produit]) prods[r.Produit] = { qtte: 0, marge: 0, ecart: 0 };
-                prods[r.Produit].qtte += r.Qtte;
-                prods[r.Produit].marge += r.MargeTotale;
-                prods[r.Produit].ecart += r.EcartMargeTotale;
-            });
-
+            let prods = State._aggregatesProd.prods;
             let sortedProds = Object.keys(prods).filter(p => prods[p].qtte > 0).sort((a,b) => prods[a].marge - prods[b].marge);
             if (sortedProds.length === 0) { Plotly.purge('chartProdCost'); return; }
 
             let ecarts = sortedProds.map(p => prods[p].ecart);
-            let ecartColors = ecarts.map(v => v > 0 ? '#ef4444' : '#10b981'); // Positif = Mauvais = Rouge
+            let ecartColors = ecarts.map(v => v > 0 ? '#ef4444' : '#10b981'); 
 
             let trace1 = { 
-                y: sortedProds, 
-                x: sortedProds.map(p => prods[p].marge), 
-                type: 'bar', 
-                orientation: 'h',
-                name: 'Marge Globale (€)', 
-                marker: { color: '#3b82f6' },
-                text: sortedProds.map(p => formatVal(prods[p].marge) + " €  (" + formatVal(prods[p].marge / prods[p].qtte) + " €/t)"),
-                textposition: 'auto',
-                insidetextanchor: 'middle',
-                textfont: {color: '#ffffff'}
+                y: sortedProds, x: sortedProds.map(p => prods[p].marge), type: 'bar', orientation: 'h', name: 'Marge Globale (€)', marker: { color: '#3b82f6' },
+                text: sortedProds.map(p => formatVal(prods[p].marge) + " €  (" + formatVal(prods[p].marge / prods[p].qtte) + " €/t)"), textposition: 'auto', insidetextanchor: 'middle', textfont: {color: '#ffffff'}
             };
-            
             let trace2 = { 
-                y: sortedProds, 
-                x: ecarts, 
-                type: 'bar', 
-                orientation: 'h',
-                name: 'Écart vs Target (€)', 
-                marker: { color: ecartColors },
-                text: ecarts.map((v, i) => formatVal(v) + " €  (" + formatVal(v / sortedProds.map(p => prods[p].qtte)[i]) + " €/t)"),
-                textposition: 'auto',
-                insidetextanchor: 'middle'
+                y: sortedProds, x: ecarts, type: 'bar', orientation: 'h', name: 'Écart vs Target (€)', marker: { color: ecartColors },
+                text: ecarts.map((v, i) => formatVal(v) + " €  (" + formatVal(v / sortedProds.map(p => prods[p].qtte)[i]) + " €/t)"), textposition: 'auto', insidetextanchor: 'middle'
             };
 
-            let layout = { 
-                ...getPlotlyLayoutBase(), 
-                barmode: 'group', 
-                hovermode: 'y unified', 
-                legend: { orientation: 'h', y: 1.1 },
-                margin: { l: 150, r: 20, t: 40, b: 40 }, 
-                xaxis: { title: 'Euros (€)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', tickformat: ',.0f' } 
-            };
-            renderPlot('chartProdCost', [trace1, trace2], layout);
+            renderPlot('chartProdCost', [trace1, trace2], { ...getPlotlyLayoutBase(), barmode: 'group', hovermode: 'y unified', legend: { orientation: 'h', y: 1.1 }, margin: { l: 150, r: 20, t: 40, b: 40 }, xaxis: { title: 'Euros (€)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', tickformat: ',.0f' } });
         }
 
     </script>
