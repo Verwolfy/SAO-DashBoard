@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Dev. Dashboard | Commercial & Production</title>
     
-    <!-- Librairies (CDN RESTAURÉ) -->
+    <!-- Librairies (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -257,6 +257,8 @@
                 <div class="col-span-2 md:col-span-2 lg:col-span-2">
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Vol. Min/Jour : <span id="volVal" class="text-brand">0</span></label>
                     <input type="range" id="filterVolume" min="0" max="10000" value="0" class="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer mt-2">
+                    <!-- NOUVELLE DONNÉE : JOURS AU DESSUS DU SEUIL -->
+                    <div class="text-[10px] text-gray-500 mt-1 font-medium">Jours qualifiés : <span id="daysAboveThreshold" class="font-bold text-brand">0</span></div>
                 </div>
                 <div class="col-span-2 md:col-span-2 lg:col-span-2 flex items-end gap-2">
                     <div class="flex-1">
@@ -837,7 +839,7 @@
             filtersProd: {
                 annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL', datestart: '', dateend: ''
             },
-            _aggregatesProd: null, // NOUVEAU
+            _aggregatesProd: null, 
             dimMapping: [], 
             matiereCols: ['Clinker Gris', 'Clinker Blanc', 'Gypse', 'Granit', 'Laitier', 'Calcaire', 'Pouzzolane', 'Marbre', 'Carbonate'],
             users: [], 
@@ -1068,12 +1070,11 @@
                 if (upperCol.includes('ABIDJAN')) meta.region = 'ABIDJAN';
                 if (upperCol.includes('BOUAKE') || upperCol.includes('BKE')) meta.region = 'BOUAKE';
                 
-                // --- CORRECTION DU BUG "SACS" ---
                 let isBB = upperCol.includes('BIG-BAG') || upperCol.includes('BIG BAG') || upperCol.includes('BB');
                 let isVrac = upperCol.includes('VRAC');
                 if (isBB) meta.cond = 'BIG-BAG';
                 else if (isVrac) meta.cond = 'VRAC';
-                else meta.cond = 'SAC'; // Déduction implicite
+                else meta.cond = 'SAC'; 
                 
                 if(meta.product || meta.segment || meta.cond) {
                     State.colMeta[col] = meta;
@@ -1167,18 +1168,44 @@
             const getUniques = (arr, key) => [...new Set(arr.map(d => d[key]).filter(Boolean))].sort((a, b) => { if(!isNaN(a) && !isNaN(b)) return a - b; return String(a).localeCompare(String(b)); });
             const populate = (id, values, allLabel) => { let sel = document.getElementById(id); if(!sel) return; sel.innerHTML = `<option value="ALL">${allLabel}</option>`; values.forEach(v => { let o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); }); };
 
-            populate('filterAnnee', getUniques(State.raw, 'Année'), 'Toutes'); populate('filterMois', getUniques(State.raw, 'Mois'), 'Tous'); populate('filterSemaine', getUniques(State.raw, 'Semaine'), 'Toutes');
+            populate('filterAnnee', getUniques(State.raw, 'Année'), 'Toutes'); 
+            // NOTE: 'Mois' et 'Semaine' sont désormais générés dynamiquement par applyFilters()
+            
             let maxVol = 0; State.raw.forEach(r => { let sum = 0; Object.keys(State.colMeta).forEach(c => { if(State.colMeta[c].isData) sum += (r[c]||0); }); if(sum > maxVol) maxVol = sum; });
             let vF = document.getElementById('filterVolume'); if(vF) { vF.max = Math.ceil(maxVol); vF.value = 0; UI.volValDisplay.innerText = 0; }
 
-            populate('filterProdAnnee', getUniques(State.rawProd, 'Année'), 'Toutes'); populate('filterProdMois', getUniques(State.rawProd, 'Mois'), 'Tous'); populate('filterProdSemaine', getUniques(State.rawProd, 'Semaine'), 'Toutes');
-            populate('filterProdProduit', getUniques(State.rawProd, 'Produit'), 'Tous'); populate('filterProdBK', getUniques(State.rawProd, 'BK'), 'Tous');
+            populate('filterProdAnnee', getUniques(State.rawProd, 'Année'), 'Toutes'); 
+            // NOTE: 'Mois' et 'Semaine' sont désormais générés dynamiquement par applyFiltersProd()
+            populate('filterProdProduit', getUniques(State.rawProd, 'Produit'), 'Tous'); 
+            populate('filterProdBK', getUniques(State.rawProd, 'BK'), 'Tous');
         }
 
         const debouncedUpdateVentes = debounce(updateDashboard, 150);
         const debouncedUpdateProd = debounce(progressiveRenderProd, 150);
 
         function applyFilters() {
+            // --- SYNC DES DROPDOWNS DÉPENDANTS (MOIS / SEMAINE) ---
+            let validDataForMonths = State.raw;
+            if (State.filters.annee !== 'ALL') validDataForMonths = validDataForMonths.filter(r => String(r['Année']) === State.filters.annee);
+            let validDataForWeeks = validDataForMonths;
+            if (State.filters.mois !== 'ALL') validDataForWeeks = validDataForWeeks.filter(r => String(r['Mois']) === State.filters.mois);
+
+            const getUniques = (arr, key) => [...new Set(arr.map(d => d[key]).filter(Boolean))].sort((a, b) => { if(!isNaN(a) && !isNaN(b)) return a - b; return String(a).localeCompare(String(b)); });
+            let availableMonths = getUniques(validDataForMonths, 'Mois');
+            let availableWeeks = getUniques(validDataForWeeks, 'Semaine');
+
+            const syncDropdown = (id, values, stateKey, allLabel) => {
+                let sel = document.getElementById(id); if(!sel) return;
+                let val = State.filters[stateKey];
+                sel.innerHTML = `<option value="ALL">${allLabel}</option>`;
+                values.forEach(v => { let o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+                if (val !== 'ALL' && !values.includes(val)) { State.filters[stateKey] = 'ALL'; sel.value = 'ALL'; }
+                else sel.value = val;
+            };
+            syncDropdown('filterMois', availableMonths, 'mois', 'Tous');
+            syncDropdown('filterSemaine', availableWeeks, 'semaine', 'Toutes');
+            // ------------------------------------------------------
+
             State.activeCols = Object.keys(State.colMeta).filter(col => {
                 let m = State.colMeta[col];
                 if (!m.isData) return false;
@@ -1225,6 +1252,28 @@
         }
 
         function applyFiltersProd() {
+            // --- SYNC DES DROPDOWNS DÉPENDANTS (MOIS / SEMAINE) ---
+            let validDataForMonths = State.rawProd;
+            if (State.filtersProd.annee !== 'ALL') validDataForMonths = validDataForMonths.filter(r => String(r['Année']) === State.filtersProd.annee);
+            let validDataForWeeks = validDataForMonths;
+            if (State.filtersProd.mois !== 'ALL') validDataForWeeks = validDataForWeeks.filter(r => String(r['Mois']) === State.filtersProd.mois);
+
+            const getUniques = (arr, key) => [...new Set(arr.map(d => d[key]).filter(Boolean))].sort((a, b) => { if(!isNaN(a) && !isNaN(b)) return a - b; return String(a).localeCompare(String(b)); });
+            let availableMonths = getUniques(validDataForMonths, 'Mois');
+            let availableWeeks = getUniques(validDataForWeeks, 'Semaine');
+
+            const syncDropdown = (id, values, stateKey, allLabel) => {
+                let sel = document.getElementById(id); if(!sel) return;
+                let val = State.filtersProd[stateKey];
+                sel.innerHTML = `<option value="ALL">${allLabel}</option>`;
+                values.forEach(v => { let o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+                if (val !== 'ALL' && !values.includes(val)) { State.filtersProd[stateKey] = 'ALL'; sel.value = 'ALL'; }
+                else sel.value = val;
+            };
+            syncDropdown('filterProdMois', availableMonths, 'mois', 'Tous');
+            syncDropdown('filterProdSemaine', availableWeeks, 'semaine', 'Toutes');
+            // ------------------------------------------------------
+
             State.filteredProd = State.rawProd.map(row => {
                 if (State.filtersProd.annee !== 'ALL' && String(row['Année']) !== State.filtersProd.annee) return null;
                 if (State.filtersProd.mois !== 'ALL' && String(row['Mois']) !== State.filtersProd.mois) return null;
@@ -1232,7 +1281,6 @@
                 if (State.filtersProd.produit !== 'ALL' && row['Produit'] !== State.filtersProd.produit) return null;
                 if (State.filtersProd.bk !== 'ALL' && String(row['BK']) !== State.filtersProd.bk) return null;
                 
-                // NOUVEAUX FILTRES DATES POUR PRODUCTION
                 if (State.filtersProd.datestart || State.filtersProd.dateend) {
                     let rowTime = row._DATE_SORT;
                     if (rowTime > 0) {
@@ -1273,13 +1321,18 @@
 
         function computeAggregatesVentes() {
             let timeView = document.getElementById('filterTimeView').value;
-            let agg = { kpis: { totalVentes: 0, totalObj: 0, totalRetours: 0, totalRetail: 0, totalIndus: 0, totalCPA: 0, totalDDP: 0 }, prodStats: {}, timeBuckets: {} };
+            let agg = { kpis: { totalVentes: 0, totalObj: 0, totalRetours: 0, totalRetail: 0, totalIndus: 0, totalCPA: 0, totalDDP: 0, uniqueDays: 0 }, prodStats: {}, timeBuckets: {} };
+
+            let uniqueDaysSet = new Set();
 
             State.filtered.forEach(r => {
                 agg.kpis.totalVentes += r._DYN_VENTES; agg.kpis.totalObj += (r['Objectif fixé'] || 0); agg.kpis.totalRetours += (r['RETOUR PRODUIT'] || 0);
                 agg.kpis.totalRetail += r._DYN_RETAIL || 0; agg.kpis.totalIndus += r._DYN_INDUS || 0;
 
-                let exactDate = getPlotlyDate(r); let bucket = 'Inconnu';
+                let exactDate = getPlotlyDate(r); 
+                if (exactDate && exactDate !== 'Inconnu') uniqueDaysSet.add(exactDate);
+
+                let bucket = 'Inconnu';
                 if (exactDate && exactDate !== 'Inconnu') bucket = getBucketDate(exactDate, timeView);
 
                 if (!agg.timeBuckets[bucket]) { agg.timeBuckets[bucket] = { sort: new Date(bucket).getTime() || 0, ventes: 0, obj: 0, totalVol: 0, ddpVol: 0, cpaVol: 0, s: 0, v: 0, b: 0, r_seg: 0, i_seg: 0 }; }
@@ -1303,10 +1356,10 @@
                     }
                 });
             });
+            agg.kpis.uniqueDays = uniqueDaysSet.size;
             State._aggregatesVentes = agg;
         }
 
-        // --- NOUVEAU: MOTEUR D'AGREGATION PRODUCTION (O(N) unique) ---
         function computeAggregatesProd() {
             let timeView = document.getElementById('filterProdTimeView').value;
             let agg = {
@@ -1379,6 +1432,9 @@
             
             document.getElementById('kpiRatioCPA').innerText = (totalVentes > 0 ? (kpis.totalCPA / totalVentes) * 100 : 0).toFixed(1) + '%';
             document.getElementById('kpiRatioDDP').innerText = (totalVentes > 0 ? (kpis.totalDDP / totalVentes) * 100 : 0).toFixed(1) + '%';
+
+            let daysAboveEl = document.getElementById('daysAboveThreshold');
+            if(daysAboveEl) daysAboveEl.innerText = kpis.uniqueDays;
         }
 
         function renderVentesTable() {
