@@ -266,16 +266,19 @@
                     <!-- NOUVELLE DONNÉE : JOURS AU DESSUS DU SEUIL -->
                     <div class="text-[10px] text-gray-500 mt-1 font-medium">Jours qualifiés : <span id="daysAboveThreshold" class="font-bold text-brand">0</span></div>
                 </div>
-                <div class="col-span-2 md:col-span-2 lg:col-span-2 flex items-end gap-2">
-                    <div class="flex-1">
-                        <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Marge Min.</label>
-                        <select id="filterMargin" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
-                            <option value="0">Toutes</option>
-                            <option value="90">> 90%</option>
-                            <option value="95">> 95%</option>
-                        </select>
+                <div class="col-span-2 md:col-span-2 lg:col-span-2 flex flex-col gap-2 justify-end">
+                    <div class="flex items-center justify-between bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 p-2 rounded border border-blue-200 dark:border-blue-800 shadow-sm">
+                        <div class="flex-1">
+                            <div class="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter" title="Basé sur la cadence actuelle du mois">Atter. Mois</div>
+                            <div id="landingMonthVal" class="text-sm font-bold text-brand leading-tight">0 T</div>
+                        </div>
+                        <div class="w-px h-6 bg-blue-200 dark:bg-blue-800 mx-2"></div>
+                        <div class="flex-1 text-right">
+                            <div class="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter" title="Basé sur la cadence YTD, ajusté météo & fériés">Atter. Année</div>
+                            <div id="landingYearVal" class="text-sm font-bold text-accent leading-tight">0 T</div>
+                        </div>
                     </div>
-                    <button id="resetFilters" class="px-4 py-1.5 h-[34px] bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded-md text-gray-800 dark:text-white text-sm transition font-medium">Reset</button>
+                    <button id="resetFilters" class="px-4 py-1.5 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 rounded text-gray-800 dark:text-white text-xs transition font-bold shadow-sm w-full">Réinitialiser les Filtres</button>
                 </div>
             </section>
 
@@ -839,7 +842,7 @@
             activeCols: [],
             targetLanding: 1340000,
             filters: {
-                annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: ''
+                annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, datestart: '', dateend: ''
             },
             _aggregatesVentes: null,
             rawProd: [], 
@@ -1307,8 +1310,8 @@
                 let obj = row['Objectif fixé'] || 0, retours = row['RETOUR PRODUIT'] || 0;
                 if (dynVentes === 0 && obj === 0 && retours === 0) return null;
                 if (dynVentes < State.filters.minVolume) return null;
+                
                 let netRatio = dynVentes > 0 ? ((dynVentes - retours) / dynVentes) * 100 : 0;
-                if (netRatio < State.filters.minMargin) return null;
 
                 return { ...row, _DYN_VENTES: dynVentes, _DYN_RETAIL: dynRetail, _DYN_INDUS: dynIndus, _DYN_NET_RATIO: netRatio };
             }).filter(Boolean);
@@ -1360,7 +1363,6 @@
         }
 
         ['Annee', 'Mois', 'Semaine', 'Segment', 'Produit', 'Cond', 'Transport', 'Region', 'DateStart', 'DateEnd'].forEach(id => { bindFilter(`filter${id}`, State.filters, id.toLowerCase(), applyFilters); });
-        bindFilter('filterMargin', State.filters, 'minMargin', applyFilters);
         
         document.getElementById('inputCibleAnnuelle').addEventListener('input', debounce((e) => { State.targetLanding = parseFloat(e.target.value) || 0; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
         document.getElementById('filterVolume').addEventListener('input', (e) => { State.filters.minVolume = parseFloat(e.target.value); UI.volValDisplay.innerText = formatVal(State.filters.minVolume); });
@@ -1376,10 +1378,10 @@
             document.getElementById('filterAnnee').value = defaultYear;
 
             document.getElementById('filterDateStart').value = ''; document.getElementById('filterDateEnd').value = '';
-            document.getElementById('filterTimeView').value = 'day'; document.getElementById('filterMargin').value = '0';
+            document.getElementById('filterTimeView').value = 'day'; 
             document.getElementById('filterVolume').value = 0; UI.volValDisplay.innerText = "0";
             
-            Object.assign(State.filters, { annee: defaultYear, mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: '' });
+            Object.assign(State.filters, { annee: defaultYear, mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, datestart: '', dateend: '' });
             applyFilters();
         });
 
@@ -1485,8 +1487,75 @@
             State._aggregatesProd = agg;
         }
 
+        function updateLandingKPIs() {
+            let maxDate = 0;
+            State.raw.forEach(r => { if (r._DATE_SORT > maxDate) maxDate = r._DATE_SORT; });
+            if (maxDate === 0) return;
+
+            let currentDate = new Date(maxDate);
+            let currentYear = currentDate.getFullYear();
+            let currentMonth = currentDate.getMonth();
+
+            let ytdVolume = 0;
+            let mtdVolume = 0;
+
+            const holidaysList = [ '01-01', '03-16', '03-20', '04-06', '05-01', '05-14', '05-25', '05-27', '07-27', '08-07', '08-15', '11-01', '11-15', '12-25' ];
+            const getDayWeight = (dObj) => {
+                let md = `${String(dObj.getMonth() + 1).padStart(2, '0')}-${String(dObj.getDate()).padStart(2, '0')}`;
+                if (holidaysList.includes(md)) return 0.1;
+                let m = dObj.getMonth() + 1, d = dObj.getDate();
+                if ((m === 5 && d >= 15) || m === 6 || (m === 7 && d <= 15)) return 0.6;
+                if (m === 10 || m === 11) return 0.8;
+                return 1.0;
+            };
+
+            let ytdWeight = 0, mtdWeight = 0;
+            for(let d = new Date(currentYear, 0, 1); d <= currentDate; d.setDate(d.getDate() + 1)) {
+                let w = getDayWeight(d);
+                ytdWeight += w;
+                if (d.getMonth() === currentMonth) mtdWeight += w;
+            }
+
+            let remYearWeight = 0, remMonthWeight = 0;
+            let endOfYear = new Date(currentYear, 11, 31);
+            
+            let tomorrow = new Date(currentDate);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+
+            for(let d = new Date(tomorrow); d <= endOfYear; d.setDate(d.getDate() + 1)) {
+                let w = getDayWeight(d);
+                remYearWeight += w;
+                if (d.getMonth() === currentMonth) remMonthWeight += w;
+            }
+
+            State.raw.forEach(row => {
+                if (row._DATE_SORT <= 0) return;
+                let rDate = new Date(row._DATE_SORT);
+                if (rDate.getFullYear() !== currentYear) return;
+
+                let dynVentes = 0;
+                State.activeCols.forEach(col => { dynVentes += (row[col] || 0); });
+                if (dynVentes === 0 || dynVentes < State.filters.minVolume) return;
+
+                ytdVolume += dynVentes;
+                if (rDate.getMonth() === currentMonth) mtdVolume += dynVentes;
+            });
+
+            let dailyRunRateYear = ytdWeight > 0 ? ytdVolume / ytdWeight : 0;
+            let dailyRunRateMonth = mtdWeight > 0 ? mtdVolume / mtdWeight : 0;
+
+            let yearLanding = ytdVolume + (dailyRunRateYear * remYearWeight);
+            let monthLanding = mtdVolume + (dailyRunRateMonth * remMonthWeight);
+
+            let landingMonthEl = document.getElementById('landingMonthVal');
+            let landingYearEl = document.getElementById('landingYearVal');
+            if(landingMonthEl) landingMonthEl.innerText = formatVal(monthLanding) + ' T';
+            if(landingYearEl) landingYearEl.innerText = formatVal(yearLanding) + ' T';
+        }
+
         function updateDashboard() {
             computeAggregatesVentes();
+            updateLandingKPIs();
             updateKPIs(); renderVentesTable(); renderChartTrend(); renderChartRatios(); renderChartForecast(); renderChartWaterfall(); renderChartPareto(); renderChartVracSac(); renderChartRetInd(); generateExecutiveSummary();
         }
 
@@ -1624,7 +1693,7 @@
             let lastTs = dailyData[sortedDates[sortedDates.length-1]].sort;
             let endOfYear = new Date(targetYear, 11, 31).getTime();
             let targetTotalLanding = State.targetLanding;
-            document.getElementById('titleForecast').innerText = `Prévisions (Objectif ${(targetTotalLanding / 1000000).toFixed(2).replace('.', ',')}M) : Retail vs Industrial (Année en cours)`;
+            document.getElementById('titleForecast').innerText = `Prévisions (Chemin vers Obj. ${(targetTotalLanding / 1000000).toFixed(2).replace('.', ',')}M) : Retail vs Industrial`;
             
             let currentTotal = totalRet + totalInd;
             let requiredRemainingVol = Math.max(0, targetTotalLanding - currentTotal);
@@ -1642,21 +1711,28 @@
             };
 
             let futureX = [], futRet = [], futInd = [], monthlyTargets = {}, totalWeight = 0, futureDays = [];
-            for(let tempTs = lastTs + 86400000; tempTs <= endOfYear; tempTs += 86400000) { let w = getDayWeight(new Date(tempTs)); totalWeight += w; futureDays.push({ ts: tempTs, weight: w }); }
+            for(let tempTs = lastTs + 86400000; tempTs <= endOfYear; tempTs += 86400000) { 
+                let w = getDayWeight(new Date(tempTs)); 
+                totalWeight += w; 
+                futureDays.push({ ts: tempTs, weight: w }); 
+            }
 
             let currentCumRet = totalRet, currentCumInd = totalInd, landingRet = totalRet, landingInd = totalInd;
             futureDays.forEach(day => {
                 let dObj = new Date(day.ts); futureX.push(dObj.toISOString().split('T')[0]);
                 let dayVol = totalWeight > 0 ? (requiredRemainingVol * (day.weight / totalWeight)) : 0;
-                currentCumRet += dayVol * mixRet; currentCumInd += dayVol * mixInd;
+                let dayVolRet = dayVol * mixRet;
+                let dayVolInd = dayVol * mixInd;
+                
+                currentCumRet += dayVolRet; currentCumInd += dayVolInd;
                 futRet.push(currentCumRet); futInd.push(currentCumInd);
                 landingRet = currentCumRet; landingInd = currentCumInd;
                 
                 let mKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
                 if (!monthlyTargets[mKey]) {
-                    monthlyTargets[mKey] = { label: ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"][dObj.getMonth()], midDate: new Date(dObj.getFullYear(), dObj.getMonth(), 15).toISOString().split('T')[0], ret: monthlyActuals[mKey] ? monthlyActuals[mKey].ret : 0, ind: monthlyActuals[mKey] ? monthlyActuals[mKey].ind : 0 };
+                    monthlyTargets[mKey] = { label: ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"][dObj.getMonth()], midDate: new Date(dObj.getFullYear(), dObj.getMonth(), 15).toISOString().split('T')[0], ret: 0, ind: 0 };
                 }
-                monthlyTargets[mKey].ret += dayVol * mixRet; monthlyTargets[mKey].ind += dayVol * mixInd;
+                monthlyTargets[mKey].ret += dayVolRet; monthlyTargets[mKey].ind += dayVolInd;
             });
 
             if (futureX.length > 0) { futureX.unshift(histX[histX.length-1]); futRet.unshift(cumRet[cumRet.length-1]); futInd.unshift(cumInd[cumInd.length-1]); }
@@ -1664,8 +1740,8 @@
             let traces = [
                 { x: histX, y: cumRet, type: 'scatter', mode: 'lines', name: 'Retail (YTD)', line: {color: '#a855f7', width: 3} },
                 { x: histX, y: cumInd, type: 'scatter', mode: 'lines', name: 'Industrial (YTD)', line: {color: '#10b981', width: 3} },
-                { x: futureX, y: futRet, type: 'scatter', mode: 'lines', name: 'Retail (Atterrissage)', line: {color: '#a855f7', width: 2, dash: 'dot'} },
-                { x: futureX, y: futInd, type: 'scatter', mode: 'lines', name: 'Industrial (Atterrissage)', line: {color: '#10b981', width: 2, dash: 'dot'} }
+                { x: futureX, y: futRet, type: 'scatter', mode: 'lines', name: 'Retail (Chemin Cible)', line: {color: '#a855f7', width: 2, dash: 'dot'} },
+                { x: futureX, y: futInd, type: 'scatter', mode: 'lines', name: 'Industrial (Chemin Cible)', line: {color: '#10b981', width: 2, dash: 'dot'} }
             ];
 
             let shapes = [], annotations = [], yearForEvents = targetYear;
@@ -1673,6 +1749,10 @@
             annotations.push({ x: `${yearForEvents}-06-15`, y: 1.05, xref: 'x', yref: 'paper', text: '🌧️ Gdes Pluies', showarrow: false, font: {color: '#60a5fa', size: 10} });
             shapes.push({ type: 'rect', xref: 'x', yref: 'paper', x0: `${yearForEvents}-10-01`, y0: 0, x1: `${yearForEvents}-11-30`, y1: 1, fillcolor: 'rgba(59, 130, 246, 0.08)', line: { width: 0 }, layer: 'below' });
             annotations.push({ x: `${yearForEvents}-11-01`, y: 1.05, xref: 'x', yref: 'paper', text: '🌦️ Ptes Pluies', showarrow: false, font: {color: '#60a5fa', size: 10} });
+
+            // Ajout de la ligne d'objectif annuel
+            shapes.push({ type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: targetTotalLanding, y1: targetTotalLanding, line: { color: '#ef4444', width: 2, dash: 'dot' } });
+            annotations.push({ x: 1, y: targetTotalLanding, xref: 'paper', yref: 'y', text: '🎯 Cible Annuelle', showarrow: false, xanchor: 'right', yanchor: 'bottom', font: {color: '#ef4444', size: 10} });
 
             const holidaysNames = { '01-01': "Jour de l'An", '03-16': "Nuit du Destin", '03-20': "Fin du Ramadan", '04-06': "Lundi de Pâques", '05-01': "Fête du Travail", '05-14': "Ascension", '05-25': "Lundi de Pentecôte", '05-27': "Tabaski", '07-27': "Maouloud", '08-07': "Indépendance", '08-15': "Assomption", '11-01': "Toussaint", '11-15': "Jour de la Paix", '12-25': "Noël" };
             holidaysList.forEach(dateStr => {
@@ -1683,8 +1763,8 @@
 
             if(futureX.length > 0) {
                 let lastDateStr = futureX[futureX.length-1];
-                annotations.push({ x: lastDateStr, y: landingRet, xref: 'x', yref: 'y', text: `🎯 ${formatVal(landingRet, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#a855f7', size: 11} });
-                annotations.push({ x: lastDateStr, y: landingInd, xref: 'x', yref: 'y', text: `🎯 ${formatVal(landingInd, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#10b981', size: 11} });
+                annotations.push({ x: lastDateStr, y: landingRet, xref: 'x', yref: 'y', text: ` ${formatVal(landingRet, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#a855f7', size: 11} });
+                annotations.push({ x: lastDateStr, y: landingInd, xref: 'x', yref: 'y', text: ` ${formatVal(landingInd, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#10b981', size: 11} });
             }
 
             Object.values(monthlyTargets).forEach(mt => {
