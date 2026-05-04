@@ -350,6 +350,8 @@
                                 <th class="p-4 font-bold">Produit</th>
                                 <th class="p-4 font-bold text-right">Volume Filtré (T)</th>
                                 <th class="p-4 font-bold text-right">Poids dans le Mix (%)</th>
+                                <th class="p-4 font-bold text-right">Ratio Vrac (%)</th>
+                                <th class="p-4 font-bold text-right">Ratio DDP (%)</th>
                                 <th class="p-4 font-bold text-right">Part Retail (T)</th>
                                 <th class="p-4 font-bold text-right">Part Indus. (T)</th>
                             </tr>
@@ -1346,10 +1348,12 @@
                         if (meta.transport === 'DDP') { agg.kpis.totalDDP += val; b.ddpVol += val; }
                         if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') { agg.kpis.totalCPA += val; b.cpaVol += val; }
                         let pName = meta.product || 'Divers';
-                        if (!agg.prodStats[pName]) agg.prodStats[pName] = { vol: 0, retail: 0, indus: 0 };
+                        if (!agg.prodStats[pName]) agg.prodStats[pName] = { vol: 0, retail: 0, indus: 0, vrac: 0, ddp: 0 };
                         agg.prodStats[pName].vol += val;
                         if (meta.segment === 'RETAIL') agg.prodStats[pName].retail += val;
                         if (meta.segment === 'INDUSTRIAL') agg.prodStats[pName].indus += val;
+                        if (meta.cond === 'VRAC') agg.prodStats[pName].vrac += val;
+                        if (meta.transport === 'DDP') agg.prodStats[pName].ddp += val;
 
                         if (meta.cond === 'SAC') b.s += val; if (meta.cond === 'VRAC') b.v += val; if (meta.cond === 'BIG-BAG') b.b += val;
                         if (meta.segment === 'RETAIL') b.r_seg += val; if (meta.segment === 'INDUSTRIAL') b.i_seg += val;
@@ -1443,11 +1447,14 @@
             let totalVol = State._aggregatesVentes.kpis.totalVentes;
 
             let sortedProds = Object.keys(prodStats).map(k => ({ name: k, ...prodStats[k] })).sort((a, b) => b.vol - a.vol);
-            if (sortedProds.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-gray-500 dark:text-gray-400 italic">Aucune donnée de vente pour cette sélection.</td></tr>`; return; }
+            if (sortedProds.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-gray-500 dark:text-gray-400 italic">Aucune donnée de vente pour cette sélection.</td></tr>`; return; }
 
             let html = '';
             sortedProds.forEach(p => {
                 let mix = totalVol > 0 ? (p.vol / totalVol) * 100 : 0;
+                let ratioVrac = p.vol > 0 ? (p.vrac / p.vol) * 100 : 0;
+                let ratioDDP = p.vol > 0 ? (p.ddp / p.vol) * 100 : 0;
+                
                 html += `
                     <tr class="hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors group">
                         <td class="p-4 font-semibold text-gray-900 dark:text-white flex items-center gap-3">
@@ -1460,15 +1467,25 @@
                                 <div class="w-24 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden"><div class="h-full bg-brand rounded-full" style="width: ${mix}%"></div></div>
                             </div>
                         </td>
+                        <td class="p-4 text-right font-medium text-orange-500 dark:text-orange-400">${ratioVrac.toFixed(1)}%</td>
+                        <td class="p-4 text-right font-medium text-blue-600 dark:text-blue-400">${ratioDDP.toFixed(1)}%</td>
                         <td class="p-4 text-right font-medium text-purple-600 dark:text-purple-400">${p.retail > 0 ? formatVal(p.retail) : '-'}</td>
                         <td class="p-4 text-right font-medium text-accent">${p.indus > 0 ? formatVal(p.indus) : '-'}</td>
                     </tr>`;
             });
+            
+            let totalVrac = sortedProds.reduce((sum, p) => sum + p.vrac, 0);
+            let totalDDP = sortedProds.reduce((sum, p) => sum + p.ddp, 0);
+            let globalRatioVrac = totalVol > 0 ? (totalVrac / totalVol) * 100 : 0;
+            let globalRatioDDP = totalVol > 0 ? (totalDDP / totalVol) * 100 : 0;
+
             html += `
                 <tr class="bg-gray-50 dark:bg-gray-800/80 font-bold border-t-2 border-gray-200 dark:border-gray-700">
                     <td class="p-4 text-gray-900 dark:text-white">TOTAL SÉLECTION</td>
                     <td class="p-4 text-right text-brand">${formatVal(totalVol)} <span class="text-xs font-normal">T</span></td>
                     <td class="p-4 text-right">100%</td>
+                    <td class="p-4 text-right text-orange-500 dark:text-orange-400">${globalRatioVrac.toFixed(1)}%</td>
+                    <td class="p-4 text-right text-blue-600 dark:text-blue-400">${globalRatioDDP.toFixed(1)}%</td>
                     <td class="p-4 text-right text-purple-600 dark:text-purple-400">${formatVal(sortedProds.reduce((sum, p) => sum + p.retail, 0))}</td>
                     <td class="p-4 text-right text-accent">${formatVal(sortedProds.reduce((sum, p) => sum + p.indus, 0))}</td>
                 </tr>`;
