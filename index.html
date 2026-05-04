@@ -1170,8 +1170,22 @@
             const getUniques = (arr, key) => [...new Set(arr.map(d => d[key]).filter(Boolean))].sort((a, b) => { if(!isNaN(a) && !isNaN(b)) return a - b; return String(a).localeCompare(String(b)); });
             const populate = (id, values, allLabel) => { let sel = document.getElementById(id); if(!sel) return; sel.innerHTML = `<option value="ALL">${allLabel}</option>`; values.forEach(v => { let o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); }); };
 
-            populate('filterAnnee', getUniques(State.raw, 'Année'), 'Toutes'); 
-            // NOTE: 'Mois' et 'Semaine' sont désormais générés dynamiquement par applyFilters()
+            let anneesVentes = getUniques(State.raw, 'Année');
+            populate('filterAnnee', anneesVentes, 'Toutes'); 
+            
+            // --- NOUVEAU : Ouverture par défaut sur l'année en cours ---
+            let currentYear = new Date().getFullYear().toString();
+            let anneeSelect = document.getElementById('filterAnnee');
+            if (anneesVentes.some(a => String(a) === currentYear)) {
+                anneeSelect.value = currentYear;
+                State.filters.annee = currentYear;
+            } else if (anneesVentes.length > 0) {
+                // Si l'année en cours n'existe pas, on prend la dernière année dispo
+                let maxYear = Math.max(...anneesVentes.map(Number)).toString();
+                anneeSelect.value = maxYear;
+                State.filters.annee = maxYear;
+            }
+            // ------------------------------------------------------------
             
             let maxVol = 0; State.raw.forEach(r => { let sum = 0; Object.keys(State.colMeta).forEach(c => { if(State.colMeta[c].isData) sum += (r[c]||0); }); if(sum > maxVol) maxVol = sum; });
             let vF = document.getElementById('filterVolume'); if(vF) { vF.max = Math.ceil(maxVol); vF.value = 0; UI.volValDisplay.innerText = 0; }
@@ -1304,11 +1318,19 @@
         document.getElementById('filterVolume').addEventListener('change', () => applyFilters());
         document.getElementById('filterTimeView').addEventListener('change', () => { if(currentTab === 'VENTES') debouncedUpdateVentes(); });
         document.getElementById('resetFilters').addEventListener('click', () => {
-            ['filterAnnee', 'filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => { document.getElementById(id).value = 'ALL'; });
+            ['filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => { document.getElementById(id).value = 'ALL'; });
+            
+            // Le reset ramène aussi à l'année en cours
+            let currentYear = new Date().getFullYear().toString();
+            let anneesVentes = [...new Set(State.raw.map(d => d['Année']).filter(Boolean))];
+            let defaultYear = anneesVentes.some(a => String(a) === currentYear) ? currentYear : (anneesVentes.length > 0 ? Math.max(...anneesVentes.map(Number)).toString() : 'ALL');
+            document.getElementById('filterAnnee').value = defaultYear;
+
             document.getElementById('filterDateStart').value = ''; document.getElementById('filterDateEnd').value = '';
             document.getElementById('filterTimeView').value = 'day'; document.getElementById('filterMargin').value = '0';
             document.getElementById('filterVolume').value = 0; UI.volValDisplay.innerText = "0";
-            Object.assign(State.filters, { annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: '' });
+            
+            Object.assign(State.filters, { annee: defaultYear, mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, minMargin: 0, datestart: '', dateend: '' });
             applyFilters();
         });
 
