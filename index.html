@@ -83,9 +83,15 @@
                         <p class="text-xs text-gray-500 dark:text-gray-400">Finance & Operations</p>
                     </div>
                 </div>
-                <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition shadow-sm border border-gray-300 dark:border-gray-700">
-                    <i id="themeIcon" class="fa-solid fa-sun text-yellow-500 dark:text-gray-300 text-lg"></i>
-                </button>
+                <div class="flex items-center gap-3">
+                    <div id="sessionTimerContainer" class="hidden flex items-center gap-2 px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-md border border-red-200 dark:border-red-800 shadow-sm" title="Temps restant avant reconnexion (Mise à jour des données)">
+                        <i class="fa-solid fa-clock animate-pulse"></i>
+                        <span id="sessionTimerText" class="text-sm font-bold tracking-wider">60:00</span>
+                    </div>
+                    <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition shadow-sm border border-gray-300 dark:border-gray-700">
+                        <i id="themeIcon" class="fa-solid fa-sun text-yellow-500 dark:text-gray-300 text-lg"></i>
+                    </button>
+                </div>
             </div>
             
             <!-- ONGLETS DE NAVIGATION -->
@@ -861,8 +867,47 @@
             loginForm: document.getElementById('loginForm'),
             loginInput: document.getElementById('loginInput'),
             pwdInput: document.getElementById('pwdInput'),
-            loginError: document.getElementById('loginError')
+            loginError: document.getElementById('loginError'),
+            sessionTimerContainer: document.getElementById('sessionTimerContainer'),
+            sessionTimerText: document.getElementById('sessionTimerText')
         };
+
+        let sessionInterval = null;
+
+        function startSessionTimer(minutes) {
+            if (sessionInterval) clearInterval(sessionInterval);
+            let timeRemaining = minutes * 60;
+            
+            UI.sessionTimerContainer.classList.remove('hidden');
+            UI.sessionTimerText.innerText = `${String(minutes).padStart(2, '0')}:00`;
+            
+            sessionInterval = setInterval(() => {
+                timeRemaining--;
+                let m = Math.floor(timeRemaining / 60);
+                let s = timeRemaining % 60;
+                UI.sessionTimerText.innerText = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(sessionInterval);
+                    UI.sessionTimerContainer.classList.add('hidden');
+                    forceLogout();
+                }
+            }, 1000);
+        }
+
+        function forceLogout() {
+            State.currentUser = null;
+            UI.dashboardContent.classList.add('hidden');
+            UI.loginError.innerText = "Session expirée. Rafraîchissement des données en cours...";
+            UI.loginError.classList.remove('hidden');
+            
+            // Relancer le téléchargement pour forcer l'obtention des nouvelles données
+            if (UI.gsheetUrl.value.trim() !== '') {
+                handleUrl();
+            } else {
+                UI.loginModal.classList.remove('hidden');
+            }
+        }
 
         async function hashPassword(password) {
             const msgBuffer = new TextEncoder().encode(password);
@@ -991,6 +1036,9 @@
                 UI.loginModal.classList.add('hidden');
                 UI.dashboardContent.classList.remove('hidden');
 
+                // Démarrage du compteur de session de 60 minutes
+                startSessionTimer(60);
+
                 if (role === 'commercial' || role === 'marketing') {
                     tabProd.style.display = 'none';
                     switchTab('VENTES');
@@ -1001,6 +1049,7 @@
                     switchTab('VENTES');
                 }
             } else {
+                UI.loginError.innerText = "Identifiants incorrects ou rôle non défini.";
                 UI.loginError.classList.remove('hidden');
             }
         });
