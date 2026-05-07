@@ -1153,14 +1153,11 @@
         async function processDataRaw(rawArray) {
             if (!rawArray || rawArray.length < 2) { showLoading(false); showError("Le fichier CSV est vide."); return; }
             let headers = rawArray[0];
-            if (headers.length < 10) { showLoading(false); showError("Structure du CSV non reconnue."); return; } // Limite abaissée pour plus de robustesse
+            if (headers.length < 10) { showLoading(false); showError("Structure du CSV non reconnue."); return; }
             
-            // --- NOUVEAU : Indexation dynamique des colonnes avec fallback ---
-            let prodStartIndex = headers.findIndex(h => {
-                let u = String(h).toUpperCase().trim();
-                return u === 'PRODUIT PRODUCTION' || u === 'PRODUIT PODUCTION' || u === 'PRODUIT';
-            });
-            if (prodStartIndex === -1 || prodStartIndex < 5) prodStartIndex = 52;
+            // --- CORRECTION : Fixation stricte de l'index de la partie Production ---
+            // La colonne BA (où se trouve la Date de prod) correspond exactement à l'index 52
+            let prodStartIndex = 52; 
             
             let dimStartIndex = 84; 
             if (headers.length <= dimStartIndex) dimStartIndex = headers.length; // Sécurité si CSV plus court
@@ -1250,10 +1247,26 @@
                 }
             });
 
+            // --- NOUVEAU : Extracteur robuste insensible à la casse et aux espaces ---
+            const getValCaseInsensitive = (obj, searchTerms) => {
+                let keys = Object.keys(obj);
+                for(let term of searchTerms) {
+                    let termUpper = term.toUpperCase();
+                    let foundKey = keys.find(k => String(k).toUpperCase().trim() === termUpper);
+                    if (foundKey && obj[foundKey] !== undefined && obj[foundKey] !== '') return obj[foundKey];
+                }
+                return '';
+            };
+            // -------------------------------------------------------------------------
+
             State.raw = ventesData.map(row => {
                 let cleanRow = {};
-                let dStr = row['DATE'] || row['Date'] || '';
-                let mStr = row['Mois'] || ''; let yStr = row['Année'] || ''; let sStr = row['Semaine'] || '';
+                
+                // Utilisation de l'extracteur robuste
+                let dStr = getValCaseInsensitive(row, ['DATE']);
+                let mStr = getValCaseInsensitive(row, ['MOIS']);
+                let yStr = getValCaseInsensitive(row, ['ANNÉE', 'ANNEE']);
+                let sStr = getValCaseInsensitive(row, ['SEMAINE']);
 
                 cleanRow['DATE'] = dStr; cleanRow['Mois'] = mStr; cleanRow['Année'] = yStr; cleanRow['Semaine'] = sStr;
                 cleanRow['Objectif fixé'] = cleanNumber(row['Objectif fixé']);
@@ -1289,11 +1302,18 @@
 
             State.rawProd = [];
             prodData.forEach(row => {
-                let prodName = row['Produit Poduction'] || row['Produit Production'] || row['Produit'];
+                let prodName = getValCaseInsensitive(row, ['PRODUIT PODUCTION', 'PRODUIT PRODUCTION', 'PRODUIT']);
+                
                 if (prodName && prodName.trim() !== '') {
-                    let dStr = row['Date'] || row['DATE'] || '';
+                    // Extraction des dates et dimensions de prod de manière robuste
+                    let dStr = getValCaseInsensitive(row, ['DATE']);
+                    let mStr = getValCaseInsensitive(row, ['MOIS']);
+                    let yStr = getValCaseInsensitive(row, ['ANNÉE', 'ANNEE']);
+                    let sStr = getValCaseInsensitive(row, ['SEMAINE']);
+                    let bkStr = getValCaseInsensitive(row, ['BK', 'BROYEUR']);
+                    
                     let pRow = {
-                        Date: dStr, Semaine: row['Semaine'], Mois: row['Mois'], Année: row['Année'], Produit: String(prodName).toUpperCase().trim(), BK: row['BK'],
+                        Date: dStr, Semaine: sStr, Mois: mStr, Année: yStr, Produit: String(prodName).toUpperCase().trim(), BK: bkStr,
                         Refus45: cleanNumber(row['Refus 45 (%)']), Debit: cleanNumber(row['Débit (t/h)']), Qtte: cleanNumber(row['Qtte (t)']),
                         CoutMPUnit: getColRobust(row, ['Coût Matère Première Calculé', 'Coût Matière Première Calculé', 'Coût MP Calculé'], ['Ecart', 'Target', 'Total']),
                         CoutMPTargetUnit: getColRobust(row, ['Coût Matère Première Target', 'Coût Matière Première Target', 'Coût MP Target'], ['Ecart', 'Total']),
@@ -1303,6 +1323,18 @@
                         EcartMargeUnit: getColRobust(row, ['Ecart Vs Target Marge', 'Ecart Marge'], ['Total']),
                         _DATE_SORT: parseDateToTimestamp(dStr)
                     };
+
+                    // FALLBACK: Si pas de date exacte valide, on utilise le Mois et l'Année
+                    if (pRow._DATE_SORT === 0 && pRow.Année && pRow.Mois) {
+                        let y = parseInt(pRow.Année); let mNum = 1; let parsedM = parseInt(pRow.Mois);
+                        if (!isNaN(parsedM) && parsedM >= 1 && parsedM <= 12) mNum = parsedM;
+                        else {
+                            const mMap = { 'jan':1, 'fév':2, 'fev':2, 'mar':3, 'avr':4, 'mai':5, 'juin':6, 'juil':7, 'aoû':8, 'aou':8, 'sep':9, 'oct':10, 'nov':11, 'déc':12, 'dec':12 };
+                            for (let k in mMap) { if (String(pRow.Mois).toLowerCase().includes(k)) { mNum = mMap[k]; break; } }
+                        }
+                        if (!isNaN(y) && y > 2000) pRow._DATE_SORT = new Date(y, mNum - 1, 28).getTime(); 
+                    }
+
                     pRow.MargeTotale = pRow.MargeUnit * pRow.Qtte; pRow.EcartMargeTotale = pRow.EcartMargeUnit * pRow.Qtte;
                     if(!pRow.Année && pRow._DATE_SORT > 0) pRow.Année = new Date(pRow._DATE_SORT).getFullYear();
                     State.matiereCols.forEach(mp => { pRow[mp] = cleanNumber(row[mp]); });
