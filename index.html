@@ -1137,6 +1137,9 @@
                 } else if (role === 'industriel') {
                     tabVentes.style.display = 'none';
                     switchTab('PROD');
+                } else if (role === 'dg' || role === 'admin') { 
+                    // DG et Admin ont accès aux deux onglets sans restriction
+                    switchTab('VENTES');
                 } else { 
                     switchTab('VENTES');
                 }
@@ -1192,7 +1195,8 @@
             }
             State.users = await Promise.all(userPromises);
             
-            if(State.users.length === 0) State.users.push({ login: 'admin', role: 'admin', passwordHash: await hashPassword('admin') });
+            // Compte virtuel de secours (uniquement si le CSV est vide de comptes)
+            if(State.users.length === 0) State.users.push({ login: 'Sofiane', role: 'admin', passwordHash: await hashPassword('So@15') });
 
             let dataVentes = [], dataProd = [], dataDim = [];
             for (let i = 1; i < rawArray.length; i++) {
