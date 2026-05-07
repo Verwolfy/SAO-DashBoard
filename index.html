@@ -84,6 +84,20 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
+                    <!-- NOUVEAU : Indicateur de présence en ligne -->
+                    <div id="presenceContainer" class="hidden relative group cursor-pointer flex items-center gap-2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-md border border-indigo-200 dark:border-indigo-800 shadow-sm" title="Utilisateurs connectés">
+                        <i class="fa-solid fa-users"></i>
+                        <span id="presenceCount" class="text-sm font-bold">0</span>
+                        
+                        <!-- Tooltip affichant la liste des utilisateurs -->
+                        <div id="presenceList" class="hidden absolute top-full right-0 mt-2 w-48 bg-white dark:bg-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-2 z-[400] group-hover:block">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800 pb-1 mb-1">En ligne</h4>
+                            <ul id="presenceUl" class="text-sm space-y-1">
+                                <!-- Injecté par JS -->
+                            </ul>
+                        </div>
+                    </div>
+
                     <div id="sessionTimerContainer" class="hidden flex items-center gap-2 px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-md border border-red-200 dark:border-red-800 shadow-sm" title="Temps restant avant reconnexion (Mise à jour des données)">
                         <i class="fa-solid fa-clock animate-pulse"></i>
                         <span id="sessionTimerText" class="text-sm font-bold tracking-wider">60:00</span>
@@ -220,15 +234,7 @@
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Produit</label>
                     <select id="filterProduit" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
                         <option value="ALL">Tous</option>
-                        <option value="FANGAH">Fangah</option>
-                        <option value="EXTRA">Extra</option>
-                        <option value="SUPERPRO">Superpro</option>
-                        <option value="SUPERBRIC">Superbric</option>
-                        <option value="BLANC">Blanc</option>
-                        <option value="ZEBDA">Zebda</option>
-                        <option value="CHF">CHF</option>
-                        <option value="CPA">CPA</option>
-                        <option value="MINIER">Minier</option>
+                        <!-- Options générées dynamiquement par le JS -->
                     </select>
                 </div>
                 <div>
@@ -872,8 +878,91 @@
             pwdInput: document.getElementById('pwdInput'),
             loginError: document.getElementById('loginError'),
             sessionTimerContainer: document.getElementById('sessionTimerContainer'),
-            sessionTimerText: document.getElementById('sessionTimerText')
+            sessionTimerText: document.getElementById('sessionTimerText'),
+            presenceContainer: document.getElementById('presenceContainer'),
+            presenceCount: document.getElementById('presenceCount'),
+            presenceUl: document.getElementById('presenceUl')
         };
+
+        // --- FIREBASE PRESENCE SYSTEM (Temps Réel) ---
+        let fbDb = null, fbDoc = null, fbSetDoc = null, fbDeleteDoc = null;
+        let firebaseUserId = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        async function initFirebase() {
+            if (typeof __firebase_config === 'undefined') return;
+            try {
+                // Import dynamique des modules Firebase pour ne pas bloquer le Vanilla JS
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js');
+                const { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
+                const { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
+
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
+                fbDb = getFirestore(app);
+                fbDoc = doc; fbSetDoc = setDoc; fbDeleteDoc = deleteDoc;
+
+                // Authentification sécurisée exigée par l'environnement Canvas
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        firebaseUserId = user.uid;
+                        const presenceRef = collection(fbDb, 'artifacts', appId, 'public', 'data', 'presence');
+                        
+                        // Ecoute en temps réel de la collection "presence"
+                        onSnapshot(presenceRef, (snapshot) => {
+                            const activeUsers = [];
+                            snapshot.forEach(d => activeUsers.push(d.data()));
+                            updatePresenceUI(activeUsers);
+                        }, (err) => console.error("Erreur de synchronisation Présence", err));
+                    }
+                });
+            } catch (e) { console.warn("Service Cloud non disponible :", e); }
+        }
+
+        function updatePresenceUI(users) {
+            if (!State.currentUser) return;
+            UI.presenceContainer.classList.remove('hidden');
+            UI.presenceCount.innerText = users.length;
+            
+            if (users.length === 0) {
+                UI.presenceUl.innerHTML = '<li class="text-xs text-gray-500 italic">Personne en ligne</li>';
+                return;
+            }
+
+            UI.presenceUl.innerHTML = users.map(u => `
+                <li class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                    <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_rgba(34,197,94,0.8)]"></div>
+                    <span class="font-medium">${u.login}</span>
+                    <span class="text-[10px] text-gray-400 capitalize">(${u.role})</span>
+                </li>
+            `).join('');
+        }
+
+        async function setPresenceStatus(status) {
+            if (!fbDb || !firebaseUserId || !State.currentUser) return;
+            const ref = fbDoc(fbDb, 'artifacts', appId, 'public', 'data', 'presence', firebaseUserId);
+            try {
+                if (status === 'online') {
+                    await fbSetDoc(ref, { login: State.currentUser.login, role: State.currentUser.role, timestamp: Date.now() });
+                } else {
+                    await fbDeleteDoc(ref);
+                }
+            } catch (e) { console.warn("Erreur mise à jour du statut", e); }
+        }
+
+        // Nettoyage lors de la fermeture de l'onglet ou du rafraichissement
+        window.addEventListener('beforeunload', () => setPresenceStatus('offline'));
+        
+        // Démarrage du sous-système Cloud
+        initFirebase();
+        // ---------------------------------------------
 
         let sessionInterval = null;
 
@@ -899,12 +988,13 @@
         }
 
         function forceLogout() {
+            setPresenceStatus('offline'); // Retirer de la liste en ligne
             State.currentUser = null;
+            UI.presenceContainer.classList.add('hidden');
             UI.dashboardContent.classList.add('hidden');
             UI.loginError.innerText = "Session expirée. Rafraîchissement des données en cours...";
             UI.loginError.classList.remove('hidden');
             
-            // Relancer le téléchargement pour forcer l'obtention des nouvelles données
             if (UI.gsheetUrl.value.trim() !== '') {
                 handleUrl();
             } else {
@@ -1039,7 +1129,6 @@
                 UI.loginModal.classList.add('hidden');
                 UI.dashboardContent.classList.remove('hidden');
 
-                // Démarrage du compteur de session de 60 minutes
                 startSessionTimer(60);
 
                 if (role === 'commercial' || role === 'marketing') {
@@ -1051,6 +1140,10 @@
                 } else { 
                     switchTab('VENTES');
                 }
+                
+                // Mettre l'utilisateur "En Ligne"
+                setPresenceStatus('online');
+                
             } else {
                 UI.loginError.innerText = "Identifiants incorrects ou rôle non défini.";
                 UI.loginError.classList.remove('hidden');
@@ -1060,26 +1153,48 @@
         async function processDataRaw(rawArray) {
             if (!rawArray || rawArray.length < 2) { showLoading(false); showError("Le fichier CSV est vide."); return; }
             let headers = rawArray[0];
-            if (headers.length < 60) { showLoading(false); showError("Structure du CSV non reconnue."); return; }
+            if (headers.length < 10) { showLoading(false); showError("Structure du CSV non reconnue."); return; } // Limite abaissée pour plus de robustesse
             
-            let prodStartIndex = 52, dimStartIndex = 84;
-            let ventesFields = headers.slice(0, prodStartIndex), prodFields = headers.slice(prodStartIndex, dimStartIndex), dimFields = headers.slice(dimStartIndex);
-            let loginIdx = 98, roleIdx = 99, pwdIdx = 100;
-            
-            headers.forEach((h, j) => {
-                let upperH = String(h).toUpperCase().trim();
-                if (upperH === 'LOGIN') loginIdx = j;
-                if (upperH === 'ROLE' || upperH === 'RÔLE') roleIdx = j;
-                if (upperH === 'MOT DE PASSE') pwdIdx = j;
+            // --- NOUVEAU : Indexation dynamique des colonnes avec fallback ---
+            let prodStartIndex = headers.findIndex(h => {
+                let u = String(h).toUpperCase().trim();
+                return u === 'PRODUIT PRODUCTION' || u === 'PRODUIT PODUCTION' || u === 'PRODUIT';
             });
+            if (prodStartIndex === -1 || prodStartIndex < 5) prodStartIndex = 52;
+            
+            let dimStartIndex = 84; 
+            if (headers.length <= dimStartIndex) dimStartIndex = headers.length; // Sécurité si CSV plus court
 
-            State.users = [];
+            let ventesFields = headers.slice(0, prodStartIndex), prodFields = headers.slice(prodStartIndex, dimStartIndex), dimFields = headers.slice(dimStartIndex);
+            
+            let loginIdx = headers.findIndex(h => String(h).toUpperCase().trim() === 'LOGIN');
+            let roleIdx = headers.findIndex(h => String(h).toUpperCase().trim() === 'ROLE' || String(h).toUpperCase().trim() === 'RÔLE');
+            let pwdIdx = headers.findIndex(h => String(h).toUpperCase().trim() === 'MOT DE PASSE' || String(h).toUpperCase().trim() === 'HASH' || String(h).toUpperCase().trim() === 'PWD');
+            
+            if (loginIdx === -1) loginIdx = 98;
+            if (roleIdx === -1) roleIdx = 99;
+            if (pwdIdx === -1) pwdIdx = 100;
+            // -----------------------------------------------------------------
+
+            // Rétrocompatibilité Intelligente : Gère les mots de passe en clair ET les hashs
+            let userPromises = [];
             for (let i = 1; i < rawArray.length; i++) {
                 let login = rawArray[i][loginIdx], role = rawArray[i][roleIdx], pwd = rawArray[i][pwdIdx];
                 if (login && pwd && role) {
-                    State.users.push({ login: String(login).trim(), role: String(role).trim().toLowerCase(), passwordHash: await hashPassword(String(pwd).trim()) });
+                    let rawPwd = String(pwd).trim();
+                    // Vérifie si c'est déjà un hash SHA-256 (64 caractères hexadécimaux)
+                    let isHash = /^[a-f0-9]{64}$/i.test(rawPwd);
+                    
+                    if (isHash) {
+                        userPromises.push(Promise.resolve({ login: String(login).trim(), role: String(role).trim().toLowerCase(), passwordHash: rawPwd }));
+                    } else {
+                        // Si c'est en clair, on le hache à la volée (optimisé avec Promise.all)
+                        userPromises.push(hashPassword(rawPwd).then(h => ({ login: String(login).trim(), role: String(role).trim().toLowerCase(), passwordHash: h })));
+                    }
                 }
             }
+            State.users = await Promise.all(userPromises);
+            
             if(State.users.length === 0) State.users.push({ login: 'admin', role: 'admin', passwordHash: await hashPassword('admin') });
 
             let dataVentes = [], dataProd = [], dataDim = [];
@@ -1225,25 +1340,26 @@
             let anneesVentes = getUniques(State.raw, 'Année');
             populate('filterAnnee', anneesVentes, 'Toutes'); 
             
-            // --- NOUVEAU : Ouverture par défaut sur l'année en cours ---
+            // --- NOUVEAU : Remplissage dynamique des produits de vente ---
+            let produitsVentes = [...new Set(Object.values(State.colMeta).map(m => m.product).filter(Boolean))].sort();
+            populate('filterProduit', produitsVentes, 'Tous');
+            // -------------------------------------------------------------
+            
             let currentYear = new Date().getFullYear().toString();
             let anneeSelect = document.getElementById('filterAnnee');
             if (anneesVentes.some(a => String(a) === currentYear)) {
                 anneeSelect.value = currentYear;
                 State.filters.annee = currentYear;
             } else if (anneesVentes.length > 0) {
-                // Si l'année en cours n'existe pas, on prend la dernière année dispo
                 let maxYear = Math.max(...anneesVentes.map(Number)).toString();
                 anneeSelect.value = maxYear;
                 State.filters.annee = maxYear;
             }
-            // ------------------------------------------------------------
             
             let maxVol = 0; State.raw.forEach(r => { let sum = 0; Object.keys(State.colMeta).forEach(c => { if(State.colMeta[c].isData) sum += (r[c]||0); }); if(sum > maxVol) maxVol = sum; });
             let vF = document.getElementById('filterVolume'); if(vF) { vF.max = Math.ceil(maxVol); vF.value = 0; UI.volValDisplay.innerText = 0; }
 
             populate('filterProdAnnee', getUniques(State.rawProd, 'Année'), 'Toutes'); 
-            // NOTE: 'Mois' et 'Semaine' sont désormais générés dynamiquement par applyFiltersProd()
             populate('filterProdProduit', getUniques(State.rawProd, 'Produit'), 'Tous'); 
             populate('filterProdBK', getUniques(State.rawProd, 'BK'), 'Tous');
         }
@@ -1252,7 +1368,6 @@
         const debouncedUpdateProd = debounce(progressiveRenderProd, 150);
 
         function applyFilters() {
-            // --- SYNC DES DROPDOWNS DÉPENDANTS (MOIS / SEMAINE) ---
             let validDataForMonths = State.raw;
             if (State.filters.annee !== 'ALL') validDataForMonths = validDataForMonths.filter(r => String(r['Année']) === State.filters.annee);
             let validDataForWeeks = validDataForMonths;
@@ -1272,7 +1387,6 @@
             };
             syncDropdown('filterMois', availableMonths, 'mois', 'Tous');
             syncDropdown('filterSemaine', availableWeeks, 'semaine', 'Toutes');
-            // ------------------------------------------------------
 
             State.activeCols = Object.keys(State.colMeta).filter(col => {
                 let m = State.colMeta[col];
@@ -1320,7 +1434,6 @@
         }
 
         function applyFiltersProd() {
-            // --- SYNC DES DROPDOWNS DÉPENDANTS (MOIS / SEMAINE) ---
             let validDataForMonths = State.rawProd;
             if (State.filtersProd.annee !== 'ALL') validDataForMonths = validDataForMonths.filter(r => String(r['Année']) === State.filtersProd.annee);
             let validDataForWeeks = validDataForMonths;
@@ -1340,7 +1453,6 @@
             };
             syncDropdown('filterProdMois', availableMonths, 'mois', 'Tous');
             syncDropdown('filterProdSemaine', availableWeeks, 'semaine', 'Toutes');
-            // ------------------------------------------------------
 
             State.filteredProd = State.rawProd.map(row => {
                 if (State.filtersProd.annee !== 'ALL' && String(row['Année']) !== State.filtersProd.annee) return null;
@@ -1371,7 +1483,6 @@
         document.getElementById('resetFilters').addEventListener('click', () => {
             ['filterMois', 'filterSemaine', 'filterSegment', 'filterProduit', 'filterCond', 'filterTransport', 'filterRegion'].forEach(id => { document.getElementById(id).value = 'ALL'; });
             
-            // Le reset ramène aussi à l'année en cours
             let currentYear = new Date().getFullYear().toString();
             let anneesVentes = [...new Set(State.raw.map(d => d['Année']).filter(Boolean))];
             let defaultYear = anneesVentes.some(a => String(a) === currentYear) ? currentYear : (anneesVentes.length > 0 ? Math.max(...anneesVentes.map(Number)).toString() : 'ALL');
@@ -1456,7 +1567,7 @@
 
                 State.matiereCols.forEach(mp => { agg.kpis.compSums[mp] += (r.Qtte * (r[mp] || 0)) / 100; });
 
-                let exactDate = getPlotlyDate(r, true);
+                let exactDate = getPlotlyDate(r); // CORRECTION : Argument 'true' retiré
                 let bucket = exactDate && exactDate !== 'Inconnu' ? getBucketDate(exactDate, timeView) : 'Inconnu';
 
                 if (!agg.timeBuckets[bucket]) {
