@@ -80,7 +80,7 @@
                     <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
                     <div>
                         <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev.</h1>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Ventes & Operations</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Finance & Operations</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -266,6 +266,14 @@
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Cible Annuelle (T)</label>
                     <input type="number" id="inputCibleAnnuelle" value="1340000" step="10000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
                 </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Prév. Min/Mois (T)</label>
+                    <input type="number" id="inputPrevMin" value="0" step="1000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Prév. Max/Mois (T)</label>
+                    <input type="number" id="inputPrevMax" value="500000" step="1000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                </div>
                 <div class="col-span-2 md:col-span-2 lg:col-span-2">
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Vol. Min/Jour : <span id="volVal" class="text-brand">0</span></label>
                     <input type="range" id="filterVolume" min="0" max="10000" value="0" class="w-full h-2 bg-gray-300 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer mt-2">
@@ -275,12 +283,12 @@
                 <div class="col-span-2 md:col-span-2 lg:col-span-2 flex flex-col gap-2 justify-end">
                     <div class="flex items-center justify-between bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 p-2 rounded border border-blue-200 dark:border-blue-800 shadow-sm">
                         <div class="flex-1">
-                            <div class="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter" title="Basé sur la cadence actuelle du mois">Atter.Mois.NonForcé</div>
+                            <div class="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter" title="Basé sur la cadence actuelle du mois">Atter. Mois</div>
                             <div id="landingMonthVal" class="text-sm font-bold text-brand leading-tight">0 T</div>
                         </div>
                         <div class="w-px h-6 bg-blue-200 dark:bg-blue-800 mx-2"></div>
                         <div class="flex-1 text-right">
-                            <div class="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter" title="Basé sur la cadence YTD, ajusté météo & fériés">Atter.Année.NonForcé</div>
+                            <div class="text-[9px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter" title="Basé sur la cadence YTD, ajusté météo & fériés">Atter. Année</div>
                             <div id="landingYearVal" class="text-sm font-bold text-accent leading-tight">0 T</div>
                         </div>
                     </div>
@@ -382,7 +390,7 @@
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartTrend', 'icon-chartTrend', 'chartTrend')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-brand"></i> Analyse de Tendance : Volumes Filtrés</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-brand"></i> Analyse de Tendance : Volumes Strictement Filtrés</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -847,6 +855,8 @@
             colMeta: {},
             activeCols: [],
             targetLanding: 1340000,
+            prevMin: 0,
+            prevMax: 500000,
             filters: {
                 annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, datestart: '', dateend: ''
             },
@@ -1513,6 +1523,8 @@
         ['Annee', 'Mois', 'Semaine', 'Segment', 'Produit', 'Cond', 'Transport', 'Region', 'DateStart', 'DateEnd'].forEach(id => { bindFilter(`filter${id}`, State.filters, id.toLowerCase(), applyFilters); });
         
         document.getElementById('inputCibleAnnuelle').addEventListener('input', debounce((e) => { State.targetLanding = parseFloat(e.target.value) || 0; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
+        document.getElementById('inputPrevMin').addEventListener('input', debounce((e) => { State.prevMin = parseFloat(e.target.value) || 0; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
+        document.getElementById('inputPrevMax').addEventListener('input', debounce((e) => { State.prevMax = parseFloat(e.target.value) || 0; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
         document.getElementById('filterVolume').addEventListener('input', (e) => { State.filters.minVolume = parseFloat(e.target.value); UI.volValDisplay.innerText = formatVal(State.filters.minVolume); });
         document.getElementById('filterVolume').addEventListener('change', () => applyFilters());
         document.getElementById('filterTimeView').addEventListener('change', () => { if(currentTab === 'VENTES') debouncedUpdateVentes(); });
@@ -1864,10 +1876,29 @@
                 futureDays.push({ ts: tempTs, weight: w }); 
             }
 
+            // --- NOUVEAU : Groupement des poids par mois pour appliquer les limites ---
+            let monthlyWeights = {};
+            futureDays.forEach(day => {
+                let mKey = new Date(day.ts).getMonth();
+                monthlyWeights[mKey] = (monthlyWeights[mKey] || 0) + day.weight;
+            });
+
             let currentCumRet = totalRet, currentCumInd = totalInd, landingRet = totalRet, landingInd = totalInd;
             futureDays.forEach(day => {
-                let dObj = new Date(day.ts); futureX.push(dObj.toISOString().split('T')[0]);
-                let dayVol = totalWeight > 0 ? (requiredRemainingVol * (day.weight / totalWeight)) : 0;
+                let dObj = new Date(day.ts);
+                let mKey = dObj.getMonth();
+                let monthWeight = monthlyWeights[mKey];
+                
+                // Calcul du volume mensuel naturel
+                let unconstrainedMonthVol = totalWeight > 0 ? (requiredRemainingVol * (monthWeight / totalWeight)) : 0;
+                
+                // Application de la limitation Min/Max
+                let maxL = State.prevMax > 0 ? State.prevMax : Infinity;
+                let clampedMonthVol = Math.max(State.prevMin, Math.min(unconstrainedMonthVol, maxL));
+                
+                // Redéploiement du volume mensuel plafonné/planché sur la journée
+                let dayVol = monthWeight > 0 ? (clampedMonthVol * (day.weight / monthWeight)) : 0;
+                
                 let dayVolRet = dayVol * mixRet;
                 let dayVolInd = dayVol * mixInd;
                 
@@ -1875,11 +1906,11 @@
                 futRet.push(currentCumRet); futInd.push(currentCumInd);
                 landingRet = currentCumRet; landingInd = currentCumInd;
                 
-                let mKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
-                if (!monthlyTargets[mKey]) {
-                    monthlyTargets[mKey] = { label: ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"][dObj.getMonth()], midDate: new Date(dObj.getFullYear(), dObj.getMonth(), 15).toISOString().split('T')[0], ret: 0, ind: 0 };
+                let mTargetKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthlyTargets[mTargetKey]) {
+                    monthlyTargets[mTargetKey] = { label: ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Aoû", "Sep", "Oct", "Nov", "Déc"][dObj.getMonth()], midDate: new Date(dObj.getFullYear(), dObj.getMonth(), 15).toISOString().split('T')[0], ret: 0, ind: 0 };
                 }
-                monthlyTargets[mKey].ret += dayVolRet; monthlyTargets[mKey].ind += dayVolInd;
+                monthlyTargets[mTargetKey].ret += dayVolRet; monthlyTargets[mTargetKey].ind += dayVolInd;
             });
 
             if (futureX.length > 0) { futureX.unshift(histX[histX.length-1]); futRet.unshift(cumRet[cumRet.length-1]); futInd.unshift(cumInd[cumInd.length-1]); }
