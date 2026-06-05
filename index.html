@@ -5,11 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Business Dev. Dashboard | Commercial & Production</title>
     
+    <!-- Librairies (CDN) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
+    <!-- Configuration Tailwind Dark Mode Corporate -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -64,11 +66,13 @@
 </head>
 <body class="min-h-screen flex flex-col custom-scrollbar bg-gray-50 dark:bg-[#0b0f19] text-gray-900 dark:text-[#f8fafc]">
 
+    <!-- ERROR BANNER -->
     <div id="globalError" class="hidden bg-red-600 text-white px-4 py-3 text-center font-medium shadow-md z-[300] sticky top-0 flex justify-between items-center">
         <span id="globalErrorText">Une erreur est survenue.</span>
         <button onclick="document.getElementById('globalError').classList.add('hidden')" class="text-white hover:text-red-200"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
+    <!-- Header & Ingestion Zone -->
     <header class="glass-panel sticky top-0 z-50 p-4 shadow-xl border-b border-gray-200 dark:border-gray-800">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
@@ -80,14 +84,17 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
+                    <!-- Indicateur de présence en ligne -->
                     <div id="presenceContainer" class="hidden relative group cursor-pointer flex items-center gap-2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-md border border-indigo-200 dark:border-indigo-800 shadow-sm" title="Utilisateurs connectés">
                         <i class="fa-solid fa-users"></i>
                         <span id="presenceCount" class="text-sm font-bold">0</span>
                         
+                        <!-- Tooltip affichant la liste des utilisateurs -->
                         <div id="presenceList" class="hidden absolute top-full right-0 mt-2 w-48 bg-white dark:bg-card border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-2 z-[400] group-hover:block">
                             <h4 class="text-xs font-bold text-gray-500 uppercase border-b border-gray-100 dark:border-gray-800 pb-1 mb-1">En ligne</h4>
                             <ul id="presenceUl" class="text-sm space-y-1">
-                                </ul>
+                                <!-- Injecté par JS -->
+                            </ul>
                         </div>
                     </div>
 
@@ -101,6 +108,7 @@
                 </div>
             </div>
             
+            <!-- ONGLETS DE NAVIGATION -->
             <div class="flex bg-gray-200 dark:bg-gray-800 rounded-lg p-1 shadow-inner overflow-hidden mx-auto md:mx-0">
                 <button onclick="switchTab('VENTES')" id="tabVentes" data-tab="VENTES" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-brand text-white flex flex-col items-start gap-0.5">
                     <div class="flex items-center gap-2"><i class="fa-solid fa-chart-pie"></i> Ventes & Marges</div>
@@ -132,11 +140,13 @@
         </div>
     </header>
 
+    <!-- LOADING OVERLAY -->
     <div id="loadingOverlay" class="hidden fixed inset-0 bg-white/90 dark:bg-darker/90 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
         <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand mb-4"></div>
         <p class="text-gray-900 dark:text-white text-lg font-medium">Analyse Multi-Dimensionnelle...</p>
     </div>
 
+    <!-- LOGIN MODAL -->
     <div id="loginModal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/d/1_mjRcYVTI7ycwpXZWOkvRFNEHCvLBtYP');">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
         <div class="glass-panel relative z-10 p-8 rounded-2xl w-full max-w-md border border-white/20 shadow-2xl mx-4">
@@ -174,9 +184,14 @@
         </div>
     </div>
 
+    <!-- MAIN CONTAINER -->
     <main id="dashboardContent" class="hidden flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 space-y-6">
         
+        <!-- ================================================================================================= -->
+        <!-- ONGLET 1 : VENTES & MARGES -->
+        <!-- ================================================================================================= -->
         <div id="viewVentes" class="space-y-6">
+            <!-- Interactive Filters -->
             <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 items-end">
                 <div>
                     <label class="block text-xs font-bold text-brand mb-1">Vue Graphiques</label>
@@ -219,7 +234,8 @@
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Produit</label>
                     <select id="filterProduit" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
                         <option value="ALL">Tous</option>
-                        </select>
+                        <!-- Options générées dynamiquement par le JS -->
+                    </select>
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Conditionnement</label>
@@ -252,11 +268,11 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Prév. Min/Mois (T)</label>
-                    <input type="number" id="inputPrevMin" value="105000" step="1000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                    <input type="number" id="inputPrevMin" value="0" step="1000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Prév. Max/Mois (T)</label>
-                    <input type="number" id="inputPrevMax" value="125000" step="1000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                    <input type="number" id="inputPrevMax" value="500000" step="1000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
                 </div>
                 <div class="col-span-2 md:col-span-2 lg:col-span-2">
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Vol. Min/Jour : <span id="volVal" class="text-brand">0</span></label>
@@ -279,6 +295,7 @@
                 </div>
             </section>
 
+            <!-- Top KPIs -->
             <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="glass-panel rounded-xl p-5 border-l-4 border-brand relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 text-brand opacity-10 text-7xl"><i class="fa-solid fa-coins"></i></div>
@@ -339,6 +356,7 @@
                 </div>
             </section>
 
+            <!-- Tableau des Ventes par Produit -->
             <section class="glass-panel rounded-xl p-0 overflow-hidden flex flex-col border-t-4 border-brand">
                 <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-dark/50 flex justify-between items-center">
                     <h3 class="text-lg font-bold text-gray-800 dark:text-white flex items-center gap-2">
@@ -361,11 +379,13 @@
                             </tr>
                         </thead>
                         <tbody id="tableVentesBody" class="divide-y divide-gray-100 dark:divide-gray-800 text-sm text-gray-800 dark:text-gray-200 bg-white/30 dark:bg-gray-900/30">
-                            </tbody>
+                            <!-- JS Inject -->
+                        </tbody>
                     </table>
                 </div>
             </section>
 
+            <!-- Charts Grid -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartTrend', 'icon-chartTrend', 'chartTrend')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
@@ -401,7 +421,7 @@
                     <button onclick="toggleSection('wrap-chartForecast', 'icon-chartForecast', 'chartForecast')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
                         <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2">
                             <i class="fa-solid fa-money-bill-trend-up text-brand"></i>
-                            <span id="titleForecast">Prévisions : Retail vs Industrial (Année en cours)</span>
+                            <span id="titleForecast">Prévisions : Retail vs Industrial</span>
                         </h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartForecast()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
@@ -411,7 +431,7 @@
                         </div>
                     </button>
                     <div id="wrap-chartForecast" class="hidden p-4 pt-0 border-t border-gray-100 dark:border-gray-800">
-                        <div id="chartForecast" class="w-full h-[300px]"></div>
+                        <div id="chartForecast" class="w-full h-[400px]"></div>
                     </div>
                 </div>
 
@@ -476,6 +496,7 @@
                 </div>
             </section>
 
+            <!-- Executive Summary Sales -->
             <section class="glass-panel rounded-xl p-6 border-t-4 border-brand_light mt-4 relative">
                 <div class="flex items-center gap-2 mb-4">
                     <i class="fa-solid fa-brain text-brand_light text-xl"></i>
@@ -485,8 +506,12 @@
             </section>
         </div>
 
+        <!-- ================================================================================================= -->
+        <!-- ONGLET 2 : PRODUCTION & COÛTS -->
+        <!-- ================================================================================================= -->
         <div id="viewProduction" class="space-y-6 hidden">
             
+            <!-- Interactive Filters (Prod) -->
             <section class="glass-panel rounded-xl p-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 items-end">
                 <div>
                     <label class="block text-xs font-bold text-prod mb-1">Vue Temporelle</label>
@@ -529,7 +554,9 @@
                 </div>
             </section>
 
+            <!-- Top KPIs Prod -->
             <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Volume Produit & Débit -->
                 <div class="glass-panel rounded-xl p-5 border-l-4 border-prod relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 text-prod opacity-10 text-7xl"><i class="fa-solid fa-industry"></i></div>
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Qtte Produite (T)</h3>
@@ -539,6 +566,7 @@
                     <div class="text-xs mt-2 text-gray-500 dark:text-gray-400 font-medium">Débit Moyen: <span id="kpiProdDebit" class="text-cyan-500 font-bold">0</span> t/h</div>
                 </div>
 
+                <!-- Coût MP Moyen (€/t) -->
                 <div class="glass-panel rounded-xl p-5 border-l-4 border-cyan-500 relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 text-cyan-500 opacity-10 text-7xl"><i class="fa-solid fa-file-invoice-dollar"></i></div>
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Coût MP Moyen</h3>
@@ -549,6 +577,7 @@
                     <div class="text-xs mt-2 text-gray-500 dark:text-gray-400 font-medium">Écart vs Target: <span id="kpiProdEcartMPUnit" class="font-bold">0</span> €/t</div>
                 </div>
 
+                <!-- Marge Globale (€) -->
                 <div class="glass-panel rounded-xl p-5 border-l-4 border-accent relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 text-accent opacity-10 text-7xl"><i class="fa-solid fa-sack-dollar"></i></div>
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Marge Globale Générée</h3>
@@ -559,6 +588,7 @@
                     <div class="text-xs mt-2 text-gray-500 dark:text-gray-400 font-medium">Marge Unitaire Moy: <span id="kpiProdMargeUnit" class="text-accent font-bold">0</span> €/t</div>
                 </div>
 
+                <!-- Ecart Marge vs Target (€) -->
                 <div class="glass-panel rounded-xl p-5 border-l-4 border-purple-500 relative overflow-hidden">
                     <div class="absolute -right-4 -top-4 text-purple-500 opacity-10 text-7xl"><i class="fa-solid fa-scale-unbalanced"></i></div>
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Ecart Marge vs Target</h3>
@@ -570,11 +600,13 @@
                 </div>
             </section>
 
+            <!-- Bandeau des Consommations de Matières Premières -->
             <div class="mb-2">
                 <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Composants Consommés (Tonnages Calculés)</h3>
                 <div id="prodComponentsSummary" class="flex flex-wrap gap-3"></div>
             </div>
 
+            <!-- Charts Grid Prod -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartProdTrend', 'icon-chartProdTrend', 'chartProdTrend')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
@@ -686,6 +718,7 @@
         <div class="h-10"></div>
     </main>
 
+    <!-- Scripts Core Logic -->
     <script>
         // --- UTILITAIRES GÉNÉRAUX & PERFORMANCE ---
         function toggleSection(wrapperId, iconId, chartId) {
@@ -868,7 +901,6 @@
         async function initFirebase() {
             if (typeof __firebase_config === 'undefined') return;
             try {
-                // Import dynamique des modules Firebase pour ne pas bloquer le Vanilla JS
                 const { initializeApp } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js');
                 const { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js');
                 const { getFirestore, doc, setDoc, deleteDoc, collection, onSnapshot } = await import('https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js');
@@ -879,7 +911,6 @@
                 fbDb = getFirestore(app);
                 fbDoc = doc; fbSetDoc = setDoc; fbDeleteDoc = deleteDoc;
 
-                // Authentification sécurisée exigée par l'environnement Canvas
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
@@ -891,7 +922,6 @@
                         firebaseUserId = user.uid;
                         const presenceRef = collection(fbDb, 'artifacts', appId, 'public', 'data', 'presence');
                         
-                        // Ecoute en temps réel de la collection "presence"
                         onSnapshot(presenceRef, (snapshot) => {
                             const activeUsers = [];
                             snapshot.forEach(d => activeUsers.push(d.data()));
@@ -933,10 +963,7 @@
             } catch (e) { console.warn("Erreur mise à jour du statut", e); }
         }
 
-        // Nettoyage lors de la fermeture de l'onglet ou du rafraichissement
         window.addEventListener('beforeunload', () => setPresenceStatus('offline'));
-        
-        // Démarrage du sous-système Cloud
         initFirebase();
         // ---------------------------------------------
 
@@ -964,7 +991,7 @@
         }
 
         function forceLogout() {
-            setPresenceStatus('offline'); // Retirer de la liste en ligne
+            setPresenceStatus('offline'); 
             State.currentUser = null;
             UI.presenceContainer.classList.add('hidden');
             UI.dashboardContent.classList.add('hidden');
@@ -1114,13 +1141,11 @@
                     tabVentes.style.display = 'none';
                     switchTab('PROD');
                 } else if (role === 'dg' || role === 'admin') { 
-                    // DG et Admin ont accès aux deux onglets sans restriction
                     switchTab('VENTES');
                 } else { 
                     switchTab('VENTES');
                 }
                 
-                // Mettre l'utilisateur "En Ligne"
                 setPresenceStatus('online');
                 
             } else {
@@ -1134,12 +1159,10 @@
             let headers = rawArray[0];
             if (headers.length < 10) { showLoading(false); showError("Structure du CSV non reconnue."); return; }
             
-            // --- CORRECTION : Fixation stricte de l'index de la partie Production ---
-            // La colonne BA (où se trouve la Date de prod) correspond exactement à l'index 52
             let prodStartIndex = 52; 
             
             let dimStartIndex = 84; 
-            if (headers.length <= dimStartIndex) dimStartIndex = headers.length; // Sécurité si CSV plus court
+            if (headers.length <= dimStartIndex) dimStartIndex = headers.length; 
 
             let ventesFields = headers.slice(0, prodStartIndex), prodFields = headers.slice(prodStartIndex, dimStartIndex), dimFields = headers.slice(dimStartIndex);
             
@@ -1150,28 +1173,23 @@
             if (loginIdx === -1) loginIdx = 98;
             if (roleIdx === -1) roleIdx = 99;
             if (pwdIdx === -1) pwdIdx = 100;
-            // -----------------------------------------------------------------
 
-            // Rétrocompatibilité Intelligente : Gère les mots de passe en clair ET les hashs
             let userPromises = [];
             for (let i = 1; i < rawArray.length; i++) {
                 let login = rawArray[i][loginIdx], role = rawArray[i][roleIdx], pwd = rawArray[i][pwdIdx];
                 if (login && pwd && role) {
                     let rawPwd = String(pwd).trim();
-                    // Vérifie si c'est déjà un hash SHA-256 (64 caractères hexadécimaux)
                     let isHash = /^[a-f0-9]{64}$/i.test(rawPwd);
                     
                     if (isHash) {
                         userPromises.push(Promise.resolve({ login: String(login).trim(), role: String(role).trim().toLowerCase(), passwordHash: rawPwd }));
                     } else {
-                        // Si c'est en clair, on le hache à la volée (optimisé avec Promise.all)
                         userPromises.push(hashPassword(rawPwd).then(h => ({ login: String(login).trim(), role: String(role).trim().toLowerCase(), passwordHash: h })));
                     }
                 }
             }
             State.users = await Promise.all(userPromises);
             
-            // Compte virtuel de secours (uniquement si le CSV est vide de comptes)
             if(State.users.length === 0) State.users.push({ login: 'Sofiane', role: 'admin', passwordHash: await hashPassword('So@15') });
 
             let dataVentes = [], dataProd = [], dataDim = [];
@@ -1227,7 +1245,6 @@
                 }
             });
 
-            // --- NOUVEAU : Extracteur robuste insensible à la casse et aux espaces ---
             const getValCaseInsensitive = (obj, searchTerms) => {
                 let keys = Object.keys(obj);
                 for(let term of searchTerms) {
@@ -1237,12 +1254,10 @@
                 }
                 return '';
             };
-            // -------------------------------------------------------------------------
 
             State.raw = ventesData.map(row => {
                 let cleanRow = {};
                 
-                // Utilisation de l'extracteur robuste
                 let dStr = getValCaseInsensitive(row, ['DATE']);
                 let mStr = getValCaseInsensitive(row, ['MOIS']);
                 let yStr = getValCaseInsensitive(row, ['ANNÉE', 'ANNEE']);
@@ -1285,7 +1300,6 @@
                 let prodName = getValCaseInsensitive(row, ['PRODUIT PODUCTION', 'PRODUIT PRODUCTION', 'PRODUIT']);
                 
                 if (prodName && prodName.trim() !== '') {
-                    // Extraction des dates et dimensions de prod de manière robuste
                     let dStr = getValCaseInsensitive(row, ['DATE']);
                     let mStr = getValCaseInsensitive(row, ['MOIS']);
                     let yStr = getValCaseInsensitive(row, ['ANNÉE', 'ANNEE']);
@@ -1304,7 +1318,6 @@
                         _DATE_SORT: parseDateToTimestamp(dStr)
                     };
 
-                    // FALLBACK: Si pas de date exacte valide, on utilise le Mois et l'Année
                     if (pRow._DATE_SORT === 0 && pRow.Année && pRow.Mois) {
                         let y = parseInt(pRow.Année); let mNum = 1; let parsedM = parseInt(pRow.Mois);
                         if (!isNaN(parsedM) && parsedM >= 1 && parsedM <= 12) mNum = parsedM;
@@ -1352,10 +1365,8 @@
             let anneesVentes = getUniques(State.raw, 'Année');
             populate('filterAnnee', anneesVentes, 'Toutes'); 
             
-            // --- NOUVEAU : Remplissage dynamique des produits de vente ---
             let produitsVentes = [...new Set(Object.values(State.colMeta).map(m => m.product).filter(Boolean))].sort();
             populate('filterProduit', produitsVentes, 'Tous');
-            // -------------------------------------------------------------
             
             let currentYear = new Date().getFullYear().toString();
             let anneeSelect = document.getElementById('filterAnnee');
@@ -1488,9 +1499,9 @@
 
         ['Annee', 'Mois', 'Semaine', 'Segment', 'Produit', 'Cond', 'Transport', 'Region', 'DateStart', 'DateEnd'].forEach(id => { bindFilter(`filter${id}`, State.filters, id.toLowerCase(), applyFilters); });
         
-        document.getElementById('inputCibleAnnuelle').addEventListener('input', debounce((e) => { State.targetLanding = parseFloat(e.target.value) || 0; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
-        document.getElementById('inputPrevMin').addEventListener('input', debounce((e) => { State.prevMin = parseFloat(e.target.value) || 0; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
-        document.getElementById('inputPrevMax').addEventListener('input', debounce((e) => { State.prevMax = parseFloat(e.target.value) || 0; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
+        document.getElementById('inputCibleAnnuelle').addEventListener('input', debounce((e) => { State.targetLanding = e.target.value; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
+        document.getElementById('inputPrevMin').addEventListener('input', debounce((e) => { State.prevMin = e.target.value; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
+        document.getElementById('inputPrevMax').addEventListener('input', debounce((e) => { State.prevMax = e.target.value; if(currentTab === 'VENTES') renderChartForecast(); }, 200));
         document.getElementById('filterVolume').addEventListener('input', (e) => { State.filters.minVolume = parseFloat(e.target.value); UI.volValDisplay.innerText = formatVal(State.filters.minVolume); });
         document.getElementById('filterVolume').addEventListener('change', () => applyFilters());
         document.getElementById('filterTimeView').addEventListener('change', () => { if(currentTab === 'VENTES') debouncedUpdateVentes(); });
@@ -1581,7 +1592,7 @@
 
                 State.matiereCols.forEach(mp => { agg.kpis.compSums[mp] += (r.Qtte * (r[mp] || 0)) / 100; });
 
-                let exactDate = getPlotlyDate(r); // CORRECTION : Argument 'true' retiré
+                let exactDate = getPlotlyDate(r); 
                 let bucket = exactDate && exactDate !== 'Inconnu' ? getBucketDate(exactDate, timeView) : 'Inconnu';
 
                 if (!agg.timeBuckets[bucket]) {
@@ -1817,7 +1828,18 @@
 
             let lastTs = dailyData[sortedDates[sortedDates.length-1]].sort;
             let endOfYear = new Date(targetYear, 11, 31).getTime();
-            let targetTotalLanding = State.targetLanding;
+            
+            // --- SÉCURISATION ROBUSTE DES ENTRÉES UTILISATEUR ---
+            let targetTotalLanding = parseFloat(State.targetLanding);
+            if (isNaN(targetTotalLanding) || targetTotalLanding < 0) targetTotalLanding = 1340000;
+            
+            let pMin = parseFloat(State.prevMin);
+            if (isNaN(pMin) || pMin < 0) pMin = 0;
+            
+            let pMax = parseFloat(State.prevMax);
+            if (isNaN(pMax) || pMax <= 0) pMax = Infinity;
+            // ----------------------------------------------------
+
             document.getElementById('titleForecast').innerText = `Prévisions (Chemin vers Obj. ${(targetTotalLanding / 1000000).toFixed(2).replace('.', ',')}M) : Retail vs Industrial`;
             
             let currentTotal = totalRet + totalInd;
@@ -1837,12 +1859,12 @@
 
             let futureX = [], futRet = [], futInd = [], monthlyTargets = {}, totalWeight = 0, futureDays = [];
             for(let tempTs = lastTs + 86400000; tempTs <= endOfYear; tempTs += 86400000) { 
-                let w = getDayWeight(new Date(tempTs)); 
+                let dTemp = new Date(tempTs);
+                let w = getDayWeight(dTemp); 
                 totalWeight += w; 
                 futureDays.push({ ts: tempTs, weight: w }); 
             }
 
-            // --- NOUVEAU : Groupement des poids par mois pour appliquer les limites ---
             let monthlyWeights = {};
             futureDays.forEach(day => {
                 let mKey = new Date(day.ts).getMonth();
@@ -1855,14 +1877,8 @@
                 let mKey = dObj.getMonth();
                 let monthWeight = monthlyWeights[mKey];
                 
-                // Calcul du volume mensuel naturel
                 let unconstrainedMonthVol = totalWeight > 0 ? (requiredRemainingVol * (monthWeight / totalWeight)) : 0;
-                
-                // Application de la limitation Min/Max
-                let maxL = State.prevMax > 0 ? State.prevMax : Infinity;
-                let clampedMonthVol = Math.max(State.prevMin, Math.min(unconstrainedMonthVol, maxL));
-                
-                // Redéploiement du volume mensuel plafonné/planché sur la journée
+                let clampedMonthVol = Math.max(pMin, Math.min(unconstrainedMonthVol, pMax));
                 let dayVol = monthWeight > 0 ? (clampedMonthVol * (day.weight / monthWeight)) : 0;
                 
                 let dayVolRet = dayVol * mixRet;
@@ -1870,10 +1886,12 @@
                 
                 currentCumRet += dayVolRet; currentCumInd += dayVolInd;
                 
-                // CORRECTION ICI : Remplissage de l'axe temporel futur
-                futureX.push(dObj.toISOString().split('T')[0]);
+                // Formatage rigide pour correspondre exactement à l'axe temporel (éviter les bugs timezone de toISOString)
+                let fDate = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}-${String(dObj.getDate()).padStart(2, '0')}`;
+                futureX.push(fDate);
+                futRet.push(currentCumRet); 
+                futInd.push(currentCumInd);
                 
-                futRet.push(currentCumRet); futInd.push(currentCumInd);
                 landingRet = currentCumRet; landingInd = currentCumInd;
                 
                 let mTargetKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, '0')}`;
@@ -1889,12 +1907,17 @@
                 futInd.unshift(cumInd[cumInd.length-1]); 
             }
 
+            // CORRECTION DES STYLES DE COURBES: Le 'dot' était invisible avec beaucoup de points, remplacé par 'dash' solide
             let traces = [
                 { x: histX, y: cumRet, type: 'scatter', mode: 'lines', name: 'Retail (YTD)', line: {color: '#a855f7', width: 3} },
-                { x: histX, y: cumInd, type: 'scatter', mode: 'lines', name: 'Industrial (YTD)', line: {color: '#10b981', width: 3} },
-                { x: futureX, y: futRet, type: 'scatter', mode: 'lines', name: 'Retail (Chemin Cible)', line: {color: '#a855f7', width: 2, dash: 'dot'} },
-                { x: futureX, y: futInd, type: 'scatter', mode: 'lines', name: 'Industrial (Chemin Cible)', line: {color: '#10b981', width: 2, dash: 'dot'} }
+                { x: histX, y: cumInd, type: 'scatter', mode: 'lines', name: 'Industrial (YTD)', line: {color: '#10b981', width: 3} }
             ];
+
+            // Ne pousser les traces cibles QUE s'il y a des données valides, sinon Plotly plante la légende
+            if (futureX.length > 1) {
+                traces.push({ x: futureX, y: futRet, type: 'scatter', mode: 'lines', name: 'Retail (Chemin Cible)', line: {color: '#d8b4fe', width: 3, dash: 'dash'} });
+                traces.push({ x: futureX, y: futInd, type: 'scatter', mode: 'lines', name: 'Industrial (Chemin Cible)', line: {color: '#6ee7b7', width: 3, dash: 'dash'} });
+            }
 
             let shapes = [], annotations = [], yearForEvents = targetYear;
             shapes.push({ type: 'rect', xref: 'x', yref: 'paper', x0: `${yearForEvents}-05-15`, y0: 0, x1: `${yearForEvents}-07-15`, y1: 1, fillcolor: 'rgba(59, 130, 246, 0.1)', line: { width: 0 }, layer: 'below' });
@@ -1909,4 +1932,281 @@
             const holidaysNames = { '01-01': "Jour de l'An", '03-16': "Nuit du Destin", '03-20': "Fin du Ramadan", '04-06': "Lundi de Pâques", '05-01': "Fête du Travail", '05-14': "Ascension", '05-25': "Lundi de Pentecôte", '05-27': "Tabaski", '07-27': "Maouloud", '08-07': "Indépendance", '08-15': "Assomption", '11-01': "Toussaint", '11-15': "Jour de la Paix", '12-25': "Noël" };
             holidaysList.forEach(dateStr => {
                 let hDate = `${yearForEvents}-${dateStr}`;
-                shapes.push({ type:
+                shapes.push({ type: 'line', xref: 'x', yref: 'paper', x0: hDate, y0: 0, x1: hDate, y1: 1, line: { color: 'rgba(239, 68, 68, 0.4)', width: 1, dash: 'dash' } });
+                annotations.push({ x: hDate, y: 0.95, xref: 'x', yref: 'paper', text: holidaysNames[dateStr], showarrow: false, textangle: -90, xanchor: 'right', font: {color: 'rgba(239, 68, 68, 0.7)', size: 9} });
+            });
+
+            if(futureX.length > 0) {
+                let lastDateStr = futureX[futureX.length-1];
+                annotations.push({ x: lastDateStr, y: landingRet, xref: 'x', yref: 'y', text: ` ${formatVal(landingRet, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#a855f7', size: 11} });
+                annotations.push({ x: lastDateStr, y: landingInd, xref: 'x', yref: 'y', text: ` ${formatVal(landingInd, 'T')}`, showarrow: true, ax: 40, ay: 0, font: {color: '#10b981', size: 11} });
+            }
+
+            Object.values(monthlyTargets).forEach(mt => {
+                if (mt.ret + mt.ind > 10) { 
+                    annotations.push({
+                        x: mt.midDate, y: 0.05, xref: 'x', yref: 'paper', text: `<b>Obj. ${mt.label}</b><br><span style="color:#a855f7">R: ${(mt.ret/1000).toFixed(1)}k</span><br><span style="color:#10b981">I: ${(mt.ind/1000).toFixed(1)}k</span>`,
+                        showarrow: false, bgcolor: isDarkMode() ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)', bordercolor: isDarkMode() ? '#475569' : '#cbd5e1', borderwidth: 1, font: { size: 10, color: isDarkMode() ? '#e2e8f0' : '#334155' }, align: 'left', borderpad: 4
+                    });
+                }
+            });
+            renderPlot('chartForecast', traces, { ...getPlotlyLayoutBase(), margin: { t: 40, r: 80, l: 50, b: 40 }, hovermode: 'x unified', legend: { orientation: 'h', y: 1.15 }, shapes: shapes, annotations: annotations, yaxis: { title: 'Volume Cumulé (Tonnes)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' } });
+        }
+
+        function renderChartWaterfall() {
+            let kpis = State._aggregatesVentes.kpis;
+            let autres = Math.max(0, kpis.totalVentes - (kpis.totalRetail + kpis.totalIndus));
+            
+            let data = [{
+                type: "waterfall", orientation: "v", measure: ["relative", "relative", "relative", "total", "relative", "total"],
+                x: ["Retail", "Industriel", "Autres Seg.", "Ventes Brutes", "Retours", "Ventes Nettes"], textposition: "outside",
+                y: [kpis.totalRetail, kpis.totalIndus, autres, kpis.totalVentes, -kpis.totalRetours, kpis.totalVentes - kpis.totalRetours],
+                connector: { line: { color: isDarkMode() ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)" } },
+                decreasing: { marker: { color: "#ef4444" } }, increasing: { marker: { color: "#3b82f6" } }, totals: { marker: { color: "#10b981" } }
+            }];
+            renderPlot('chartWaterfall', data, getPlotlyLayoutBase());
+        }
+
+        function renderChartPareto() {
+            let prodStats = State._aggregatesVentes.prodStats;
+            let sums = Object.keys(prodStats).map(k => ({name: k, val: prodStats[k].vol})).filter(s => s.val > 0).sort((a, b) => b.val - a.val);
+            if(sums.length === 0) { Plotly.purge('chartPareto'); return; }
+            
+            let total = sums.reduce((acc, s) => acc + s.val, 0); let cumSum = 0;
+            let cumPerc = sums.map(s => { cumSum += s.val; return (cumSum / total) * 100; });
+            let traceBar = { x: sums.map(s=>s.name), y: sums.map(s=>s.val), type: 'bar', name: 'Volume', marker: { color: '#60a5fa' }};
+            let traceLine = { x: sums.map(s=>s.name), y: cumPerc, type: 'scatter', mode: 'lines+markers', name: '% Cumulé', yaxis: 'y2', line: { color: '#f59e0b', width: 3 }};
+            renderPlot('chartPareto', [traceBar, traceLine], { ...getPlotlyLayoutBase(), yaxis2: { title: '% Cumul', overlaying: 'y', side: 'right', range: [0, 105], gridcolor: 'transparent' }, showlegend: false });
+        }
+
+        function renderChartVracSac() {
+            let timeView = document.getElementById('filterTimeView').value;
+            let bucketData = State._aggregatesVentes.timeBuckets;
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartVracSac'); return; }
+            
+            let t = timeView === 'day' ? 'scatter' : 'bar';
+            let traces = [
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].s), type: t, mode: 'lines', name: 'SAC', marker: {color: '#3b82f6'}, line: {color: '#3b82f6', width: 1}, fillcolor: 'rgba(59, 130, 246, 0.7)', stackgroup: 'one' },
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].v), type: t, mode: 'lines', name: 'VRAC', marker: {color: '#f59e0b'}, line: {color: '#f59e0b', width: 1}, fillcolor: 'rgba(245, 158, 11, 0.7)', stackgroup: 'one' },
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].b), type: t, mode: 'lines', name: 'BIG-BAG', marker: {color: '#06b6d4'}, line: {color: '#06b6d4', width: 1}, fillcolor: 'rgba(6, 182, 212, 0.7)', stackgroup: 'one' }
+            ];
+            renderPlot('chartVracSac', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' });
+        }
+
+        function renderChartRetInd() {
+            let timeView = document.getElementById('filterTimeView').value;
+            let bucketData = State._aggregatesVentes.timeBuckets;
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartRetInd'); return; }
+            
+            let t = timeView === 'day' ? 'scatter' : 'bar';
+            let traces = [
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].r_seg), type: t, mode: 'lines', name: 'Retail', marker: {color: '#a855f7'}, line: {color: '#a855f7', width: 1}, fillcolor: 'rgba(168, 85, 247, 0.7)', stackgroup: 'one' },
+                { x: sortedDates, y: sortedDates.map(d => bucketData[d].i_seg), type: t, mode: 'lines', name: 'Industrial', marker: {color: '#10b981'}, line: {color: '#10b981', width: 1}, fillcolor: 'rgba(16, 185, 129, 0.7)', stackgroup: 'one' }
+            ];
+            renderPlot('chartRetInd', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'stack' });
+        }
+
+        function generateExecutiveSummary() {
+            if (State.filtered.length === 0) { document.getElementById('executiveSummary').innerHTML = "<p>Aucune donnée correspondante.</p>"; return; }
+            let kpis = State._aggregatesVentes.kpis;
+            let perf = kpis.totalObj > 0 ? (kpis.totalVentes / kpis.totalObj * 100) : 0;
+            let leadSegment = Object.entries({Retail: kpis.totalRetail, Indus: kpis.totalIndus}).sort((a,b)=>b[1]-a[1])[0];
+            let html = `<ul class="list-disc pl-5 space-y-2">
+                <li><strong class="text-gray-900 dark:text-white">Performance Filtrée :</strong> Volume de <strong>${formatVal(kpis.totalVentes)}</strong> (${perf.toFixed(1)}% obj).</li>
+                <li><strong class="text-gray-900 dark:text-white">Top Segment :</strong> Moteur <strong>${leadSegment[0]}</strong> (${formatVal(leadSegment[1])}).</li>
+                <li><strong class="text-gray-900 dark:text-white">Opérationnel :</strong> ${formatVal(kpis.totalRetours)} de retours.</li></ul>`;
+            document.getElementById('executiveSummary').innerHTML = html;
+        }
+
+        async function progressiveRenderProd() {
+            computeAggregatesProd();
+            updateKPIsProd();
+            await new Promise(r => setTimeout(r, 0)); renderChartProdTrend();
+            await new Promise(r => setTimeout(r, 0)); renderChartProdMargeTime();     
+            await new Promise(r => setTimeout(r, 0)); renderChartProdMix();
+            await new Promise(r => setTimeout(r, 0)); renderChartProdClinkerFactor(); 
+            await new Promise(r => setTimeout(r, 0)); renderChartProdCostEvolution(); 
+            await new Promise(r => setTimeout(r, 0)); renderChartProdEcartTime();     
+            await new Promise(r => setTimeout(r, 0)); renderChartProdCost();
+        }
+
+        function updateKPIsProd() {
+            let kpis = State._aggregatesProd.kpis;
+            document.getElementById('kpiProdVol').innerText = formatVal(kpis.totQtte);
+            let debitMoy = kpis.totQtte > 0 ? (kpis.avgDebitSum / kpis.totQtte) : 0;
+            document.getElementById('kpiProdDebit').innerText = debitMoy.toFixed(1);
+            
+            let coutMoyen = kpis.totQtte > 0 ? (kpis.sumCoutMP / kpis.totQtte) : 0;
+            let coutTargetMoyen = kpis.totQtte > 0 ? (kpis.sumCoutMPTarget / kpis.totQtte) : 0;
+            let ecartCoutMPMoyen = coutMoyen - coutTargetMoyen;
+            
+            document.getElementById('kpiProdCoutMP').innerText = formatVal(coutMoyen);
+            let elEcartCout = document.getElementById('kpiProdEcartMPUnit');
+            elEcartCout.innerText = formatVal(ecartCoutMPMoyen);
+            elEcartCout.className = `font-bold ${ecartCoutMPMoyen > 0 ? 'text-danger' : 'text-accent'}`;
+            
+            let elMarge = document.getElementById('kpiProdMarge');
+            elMarge.innerText = formatVal(kpis.totMarge);
+            elMarge.className = `text-3xl font-bold ${kpis.totMarge >= 0 ? 'text-accent' : 'text-danger'}`;
+            
+            let margeUnitaireMoy = kpis.totQtte > 0 ? (kpis.totMarge / kpis.totQtte) : 0;
+            document.getElementById('kpiProdMargeUnit').innerText = formatVal(margeUnitaireMoy);
+
+            let elEcart = document.getElementById('kpiProdEcart');
+            elEcart.innerText = formatVal(kpis.totEcart);
+            elEcart.className = `text-3xl font-bold ${kpis.totEcart > 0 ? 'text-danger' : 'text-accent'}`;
+
+            let compHtml = '';
+            State.matiereCols.forEach(mp => {
+                if (kpis.compSums[mp] > 0) {
+                    compHtml += `
+                    <div class="glass-panel px-3 py-1.5 rounded-lg flex flex-col border-l-2 border-prod min-w-[120px] shadow-sm">
+                        <span class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">${mp}</span>
+                        <span class="text-sm font-bold text-gray-800 dark:text-white">${formatVal(kpis.compSums[mp])} <span class="text-[10px] font-normal text-gray-500">T</span></span>
+                    </div>`;
+                }
+            });
+            document.getElementById('prodComponentsSummary').innerHTML = compHtml || '<span class="text-sm text-gray-500 italic">Aucune consommation enregistrée.</span>';
+        }
+
+        function renderChartProdTrend() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = State._aggregatesProd.timeBuckets;
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdTrend'); return; }
+
+            let qttes = sortedDates.map(d => bucketData[d].qtte);
+            let debits = sortedDates.map(d => bucketData[d].qtte > 0 ? (bucketData[d].debitSum / bucketData[d].qtte) : 0);
+
+            let trace1 = { x: sortedDates, y: qttes, type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'Qtte Produite (t)', marker: {color: '#f59e0b'}, line: {color: '#f59e0b', width: 2}, fill: 'tozeroy', fillcolor: 'rgba(245, 158, 11, 0.1)' };
+            let trace2 = { x: sortedDates, y: debits, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Débit Moy (t/h)', yaxis: 'y2', line: {color: '#06b6d4', width: 2} };
+
+            let layout = { 
+                ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 },
+                yaxis: { title: 'Tonnage (t)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' },
+                yaxis2: { title: 'Débit (t/h)', overlaying: 'y', side: 'right', gridcolor: 'transparent' }
+            };
+            renderPlot('chartProdTrend', [trace1, trace2], layout);
+        }
+
+        function renderChartProdMargeTime() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = State._aggregatesProd.timeBuckets;
+            let allProds = Object.keys(State._aggregatesProd.prods);
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdMargeTime'); return; }
+
+            let traces = [];
+            allProds.forEach(prod => {
+                let yVals = sortedDates.map(d => bucketData[d].prods[prod] ? bucketData[d].prods[prod].marge : 0);
+                if (yVals.some(v => v !== 0)) {
+                    traces.push({ x: sortedDates, y: yVals, type: timeView==='day'?'scatter':'bar', mode: 'lines', name: prod, stackgroup: timeView==='day'?'one':null });
+                }
+            });
+            renderPlot('chartProdMargeTime', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Marge Totale (€)', tickformat: ',.0f' } });
+        }
+
+        function renderChartProdMix() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = State._aggregatesProd.timeBuckets;
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdMix'); return; }
+
+            let traces = [];
+            const colors = ['#64748b', '#cbd5e1', '#d9f99d', '#94a3b8', '#fca5a5', '#fdba74', '#bbf7d0', '#e9d5ff', '#a7f3d0'];
+            
+            State.matiereCols.forEach((mp, i) => {
+                let yVals = sortedDates.map(d => bucketData[d].vals[mp]);
+                if (yVals.some(v => v > 0)) {
+                    traces.push({
+                        x: sortedDates, y: yVals, type: timeView==='day'?'scatter':'bar', mode: 'lines', name: mp, 
+                        line: {width: 1}, marker: {color: colors[i % colors.length]},
+                        fillcolor: colors[i % colors.length], stackgroup: timeView==='day'?'one':null
+                    });
+                }
+            });
+            renderPlot('chartProdMix', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', barmode: 'stack', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Tonnes (T)' } });
+        }
+
+        function renderChartProdClinkerFactor() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = State._aggregatesProd.timeBuckets;
+            let allProds = Object.keys(State._aggregatesProd.prods);
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdClinkerFactor'); return; }
+
+            let traces = [];
+            allProds.forEach(prod => {
+                let yVals = sortedDates.map(d => { let pData = bucketData[d].prods[prod]; return pData && pData.cement > 0 ? (pData.clinker / pData.cement) * 100 : null; });
+                if (yVals.some(v => v !== null)) {
+                    traces.push({ x: sortedDates, y: yVals, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: prod, line: {width: 1, dash: 'dot'}, connectgaps: true });
+                }
+            });
+
+            let globalY = sortedDates.map(d => bucketData[d].globalCement > 0 ? (bucketData[d].globalClinker / bucketData[d].globalCement) * 100 : null);
+            traces.push({ x: sortedDates, y: globalY, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Global Pondéré', line: {color: '#f59e0b', width: 4}, connectgaps: true });
+
+            renderPlot('chartProdClinkerFactor', traces, { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.15 }, yaxis: { title: 'Facteur Clinker (%)', tickformat: ',.1f', ticksuffix: '%' } });
+        }
+
+        function renderChartProdCostEvolution() {
+            let timeView = document.getElementById('filterProdTimeView').value;
+            let bucketData = State._aggregatesProd.timeBuckets;
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdCostEvolution'); return; }
+
+            let modeType = timeView === 'day' ? 'lines' : 'lines+markers';
+            let arrCoutMPTarget = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].targetSum / bucketData[d].qtte : 0);
+            let arrCoutMPCalc = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].calcSum / bucketData[d].qtte : 0);
+            let arrCoutTotal = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].totalSum / bucketData[d].qtte : 0);
+            let arrPrixVente = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].pvSum / bucketData[d].qtte : 0);
+            let arrMarge = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].margeSum / bucketData[d].qtte : 0);
+            
+            let traceTarget = { x: sortedDates, y: arrCoutMPTarget, type: 'scatter', mode: modeType, name: 'Coût MP Target', line: {color: '#10b981', width: 2, dash: 'dot'} };
+            let traceMPCalc = { x: sortedDates, y: arrCoutMPCalc, type: 'scatter', mode: modeType, name: 'Coût MP Calculé', line: {color: '#f59e0b', width: 2} };
+            let traceTotal = { x: sortedDates, y: arrCoutTotal, type: 'scatter', mode: modeType, name: 'Coût Total Calculé', line: {color: '#8b5cf6', width: 2} };
+            let tracePV = { 
+                x: sortedDates, y: arrPrixVente, type: 'scatter', mode: modeType, name: 'Prix de Vente (Haut bande Marge)', line: {color: '#3b82f6', width: 2},
+                fill: 'tonexty', fillcolor: 'rgba(16, 185, 129, 0.15)', text: arrMarge.map(m => `Marge nette: ${formatVal(m)} €/t`), hovertemplate: '%{y:.1f} €/t<br>%{text}<extra></extra>'
+            };
+
+            renderPlot('chartProdCostEvolution', [traceTarget, traceMPCalc, traceTotal, tracePV], { ...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, yaxis: { title: 'Euros (€/t)', tickformat: ',.1f' } });
+        }
+
+        function renderChartProdEcartTime() {
+            let bucketData = State._aggregatesProd.timeBuckets;
+            let sortedDates = Object.keys(bucketData).sort((a, b) => bucketData[a].sort - bucketData[b].sort);
+            if(sortedDates.length === 0) { Plotly.purge('chartProdEcartTime'); return; }
+
+            let yVals = sortedDates.map(d => bucketData[d].ecart);
+            let colors = yVals.map(v => v > 0 ? '#ef4444' : '#10b981'); 
+
+            let trace1 = { x: sortedDates, y: yVals, type: 'bar', name: 'Écart de Marge', marker: { color: colors } };
+            renderPlot('chartProdEcartTime', [trace1], { ...getPlotlyLayoutBase(), hovermode: 'x unified', showlegend: false, yaxis: { title: 'Écart Marge (€)', tickformat: ',.0f' } });
+        }
+
+        function renderChartProdCost() {
+            let prods = State._aggregatesProd.prods;
+            let sortedProds = Object.keys(prods).filter(p => prods[p].qtte > 0).sort((a,b) => prods[a].marge - prods[b].marge);
+            if (sortedProds.length === 0) { Plotly.purge('chartProdCost'); return; }
+
+            let ecarts = sortedProds.map(p => prods[p].ecart);
+            let ecartColors = ecarts.map(v => v > 0 ? '#ef4444' : '#10b981'); 
+
+            let trace1 = { 
+                y: sortedProds, x: sortedProds.map(p => prods[p].marge), type: 'bar', orientation: 'h', name: 'Marge Globale (€)', marker: { color: '#3b82f6' },
+                text: sortedProds.map(p => formatVal(prods[p].marge) + " €  (" + formatVal(prods[p].marge / prods[p].qtte) + " €/t)"), textposition: 'auto', insidetextanchor: 'middle', textfont: {color: '#ffffff'}
+            };
+            let trace2 = { 
+                y: sortedProds, x: ecarts, type: 'bar', orientation: 'h', name: 'Écart vs Target (€)', marker: { color: ecartColors },
+                text: ecarts.map((v, i) => formatVal(v) + " €  (" + formatVal(v / sortedProds.map(p => prods[p].qtte)[i]) + " €/t)"), textposition: 'auto', insidetextanchor: 'middle'
+            };
+
+            renderPlot('chartProdCost', [trace1, trace2], { ...getPlotlyLayoutBase(), barmode: 'group', hovermode: 'y unified', legend: { orientation: 'h', y: 1.1 }, margin: { l: 150, r: 20, t: 40, b: 40 }, xaxis: { title: 'Euros (€)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', tickformat: ',.0f' } });
+        }
+
+    </script>
+</body>
+</html>
