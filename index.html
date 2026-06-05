@@ -79,8 +79,8 @@
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
                     <div>
-                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev.</h1>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Finance & Operations</p>
+                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.2</h1>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">Suivi Ventes & Production</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -188,7 +188,7 @@
     <main id="dashboardContent" class="hidden flex-1 max-w-7xl mx-auto w-full p-4 md:p-6 space-y-6">
         
         <!-- ================================================================================================= -->
-        <!-- ONGLET 1 : VENTES & MARGES -->
+        <!-- ONGLET 1 : SUIVI VENTES -->
         <!-- ================================================================================================= -->
         <div id="viewVentes" class="space-y-6">
             <!-- Interactive Filters -->
@@ -268,11 +268,11 @@
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Prév. Min/Mois (T)</label>
-                    <input type="number" id="inputPrevMin" value="0" step="1000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                    <input type="number" id="inputPrevMin" value="105000" step="1000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
                 </div>
                 <div>
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Prév. Max/Mois (T)</label>
-                    <input type="number" id="inputPrevMax" value="500000" step="1000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
+                    <input type="number" id="inputPrevMax" value="125000" step="1000" class="w-full bg-white dark:bg-dark border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white rounded-md py-1.5 px-3 text-sm focus:border-brand outline-none">
                 </div>
                 <div class="col-span-2 md:col-span-2 lg:col-span-2">
                     <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Vol. Min/Jour : <span id="volVal" class="text-brand">0</span></label>
@@ -389,7 +389,7 @@
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartTrend', 'icon-chartTrend', 'chartTrend')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-brand"></i> Analyse de Tendance : Volumes Strictement Filtrés</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-line text-brand"></i> Analyse de Tendance : Réalisations Vs Objectifs</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartTrend()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -437,7 +437,7 @@
 
                 <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartWaterfall', 'icon-chartWaterfall', 'chartWaterfall')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-water text-brand"></i> Décomposition (Waterfall)</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-water text-brand"></i> Waterfall: Par Seg. (Ventes, Retours)</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartWaterfall()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -452,7 +452,7 @@
 
                 <div class="glass-panel rounded-xl overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartPareto', 'icon-chartPareto', 'chartPareto')" class="flex justify-between items-center w-full p-4 hover:bg-gray-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-bar text-brand"></i> Analyse Pareto</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-bar text-brand"></i> Analyse Pareto: Produits</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartPareto()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-brand transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
@@ -507,7 +507,7 @@
         </div>
 
         <!-- ================================================================================================= -->
-        <!-- ONGLET 2 : PRODUCTION & COÛTS -->
+        <!-- ONGLET 2 : SUIVI PRODUCTION -->
         <!-- ================================================================================================= -->
         <div id="viewProduction" class="space-y-6 hidden">
             
@@ -655,7 +655,7 @@
 
                 <div class="glass-panel rounded-xl lg:col-span-2 overflow-hidden flex flex-col">
                     <button onclick="toggleSection('wrap-chartProdClinkerFactor', 'icon-chartProdClinkerFactor', 'chartProdClinkerFactor')" class="flex justify-between items-center w-full p-4 hover:bg-orange-50/50 dark:hover:bg-white/5 transition-colors focus:outline-none group">
-                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-flask text-prod"></i> Évolution du Facteur Clinker (Clinker / Ciment)</h3>
+                        <h3 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-flask text-prod"></i> Évolution du K/C (Par produit/Pondéré)</h3>
                         <div class="flex items-center gap-3">
                             <span onclick="event.stopPropagation(); renderChartProdClinkerFactor()" class="p-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-prod transition-colors cursor-pointer" title="Réinitialiser l'affichage">
                                 <i class="fa-solid fa-rotate-right"></i>
