@@ -120,16 +120,19 @@
                 </button>
             </div>
 
-            <div class="flex-1 w-full max-w-xl flex flex-col sm:flex-row gap-4 hidden lg:flex">
-                <div id="dropZone" class="drop-zone flex-1 flex items-center justify-center p-2 rounded-lg cursor-pointer bg-white dark:bg-card hover:bg-gray-50 dark:hover:bg-gray-800 border border-gray-200 dark:border-transparent shadow-sm">
-                    <input type="file" id="fileInput" class="hidden" accept=".csv">
-                    <div class="text-center pointer-events-none">
-                        <p class="text-xs text-gray-500 dark:text-gray-300 font-medium"><i class="fa-solid fa-cloud-arrow-up text-brand"></i> Glisser un CSV</p>
-                    </div>
-                </div>
-                
+            <!-- ZONE BOUTON ACTUALISER (Modifiée) -->
+            <div class="flex-1 w-full max-w-xl flex justify-end items-center gap-4">
+                <!-- Éléments cachés pour que le Javascript continue de fonctionner sans erreur -->
+                <div id="dropZone" class="hidden"></div>
+                <input type="file" id="fileInput" class="hidden" accept=".csv">
                 <input type="hidden" id="gsheetUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDsQROMcZt_7eGEnB8dGt6nJpeK3av3QTFW7_tSdrWJQa37mVEySknIhZfwGu7c8JiM2lCloANAMga/pub?output=csv">
+                
+                <!-- Bouton Actualiser visible -->
+                <button id="btnLoadUrl" class="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-bold rounded-lg text-white bg-brand hover:bg-blue-600 focus:outline-none shadow-md transition">
+                    <i class="fa-solid fa-rotate-right"></i> Actualiser
+                </button>
             </div>
+            
         </div>
     </header>
 
