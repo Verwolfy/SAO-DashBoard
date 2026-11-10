@@ -850,8 +850,8 @@
             colMeta: {},
             activeCols: [],
             targetLanding: 1340000,
-            prevMin: 0,
-            prevMax: 500000,
+            prevMin: 105000,
+            prevMax: 125000,
             filters: {
                 annee: 'ALL', mois: 'ALL', semaine: 'ALL', segment: 'ALL', produit: 'ALL', cond: 'ALL', transport: 'ALL', region: 'ALL', minVolume: 0, datestart: '', dateend: ''
             },
@@ -1041,6 +1041,16 @@
             }
             let dObj = new Date(s);
             return isNaN(dObj.getTime()) ? 0 : dObj.getTime();
+        }
+
+        // Semaine ISO, calculée pour les données de production sans colonne "Semaine".
+        function getIsoWeek(timestamp) {
+            if (!timestamp || !Number.isFinite(timestamp)) return '';
+            const local = new Date(timestamp);
+            const utc = new Date(Date.UTC(local.getFullYear(), local.getMonth(), local.getDate()));
+            utc.setUTCDate(utc.getUTCDate() + 4 - (utc.getUTCDay() || 7));
+            const firstDay = new Date(Date.UTC(utc.getUTCFullYear(), 0, 1));
+            return String(Math.ceil((((utc - firstDay) / 86400000) + 1) / 7));
         }
 
         function getPlotlyDate(r) {
@@ -1236,7 +1246,7 @@
                 else if (isVrac) meta.cond = 'VRAC';
                 else meta.cond = 'SAC'; 
                 
-                if(meta.product || meta.segment || meta.cond) {
+                if(meta.segment && meta.transport) {
                     State.colMeta[col] = meta;
                 }
             });
@@ -1326,6 +1336,7 @@
 
                     pRow.MargeTotale = pRow.MargeUnit * pRow.Qtte; pRow.EcartMargeTotale = pRow.EcartMargeUnit * pRow.Qtte;
                     if(!pRow.Année && pRow._DATE_SORT > 0) pRow.Année = new Date(pRow._DATE_SORT).getFullYear();
+                    if(!pRow.Semaine && pRow._DATE_SORT > 0) pRow.Semaine = getIsoWeek(pRow._DATE_SORT);
                     State.matiereCols.forEach(mp => { pRow[mp] = cleanNumber(row[mp]); });
                     State.rawProd.push(pRow);
                 }
@@ -1548,7 +1559,7 @@
 
                 State.activeCols.forEach(col => {
                     let val = r[col] || 0;
-                    if (val > 0) {
+                    if (val !== 0) {
                         let meta = State.colMeta[col];
                         if (meta.transport === 'DDP') { agg.kpis.totalDDP += val; b.ddpVol += val; }
                         if (meta.product === 'SUPERPRO' || meta.product === 'SUPERBRIC') { agg.kpis.totalCPA += val; b.cpaVol += val; }
