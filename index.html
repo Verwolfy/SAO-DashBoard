@@ -79,7 +79,7 @@
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
                     <div>
-                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.3</h1>
+                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.4</h1>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Suivi Ventes & Production</p>
                     </div>
                 </div>
@@ -109,7 +109,7 @@
             </div>
             
             <!-- ONGLETS DE NAVIGATION -->
-            <div class="flex bg-gray-200 dark:bg-gray-800 rounded-lg p-1 shadow-inner overflow-hidden mx-auto md:mx-0">
+            <div class="flex flex-wrap bg-gray-200 dark:bg-gray-800 rounded-lg p-1 shadow-inner mx-auto md:mx-0 gap-1">
                 <button onclick="switchTab('VENTES')" id="tabVentes" data-tab="VENTES" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-brand text-white flex flex-col items-start gap-0.5">
                     <div class="flex items-center gap-2"><i class="fa-solid fa-chart-pie"></i> Ventes & Marges</div>
                     <div class="text-[10px] font-normal opacity-80 pl-6">MAJ : <span id="majVentes">--/--/----</span></div>
@@ -117,6 +117,10 @@
                 <button onclick="switchTab('PROD')" id="tabProd" data-tab="PROD" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white flex flex-col items-start gap-0.5">
                     <div class="flex items-center gap-2"><i class="fa-solid fa-industry"></i> Production & Coûts</div>
                     <div class="text-[10px] font-normal opacity-80 pl-5">MAJ : <span id="majProd">--/--/----</span></div>
+                </button>
+                <button onclick="switchTab('ANALYSE')" id="tabAnalyse" data-tab="ANALYSE" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white flex flex-col items-start gap-0.5">
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-magnifying-glass-chart"></i> Analyse Opérationnelle</div>
+                    <div class="text-[10px] font-normal opacity-80 pl-6">Chargé : <span id="majAnalyse">--/--/----</span></div>
                 </button>
             </div>
 
@@ -126,6 +130,7 @@
                 <div id="dropZone" class="hidden"></div>
                 <input type="file" id="fileInput" class="hidden" accept=".csv">
                 <input type="hidden" id="gsheetUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDsQROMcZt_7eGEnB8dGt6nJpeK3av3QTFW7_tSdrWJQa37mVEySknIhZfwGu7c8JiM2lCloANAMga/pub?output=csv">
+                <input type="hidden" id="gsheetAnalysisUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDsQROMcZt_7eGEnB8dGt6nJpeK3av3QTFW7_tSdrWJQa37mVEySknIhZfwGu7c8JiM2lCloANAMga/pub?gid=1417141903&amp;single=true&amp;output=csv">
                 
                 <!-- Bouton Actualiser visible -->
                 <button id="btnLoadUrl" class="inline-flex items-center gap-2 px-4 py-2 border border-transparent text-sm font-bold rounded-lg text-white bg-brand hover:bg-blue-600 focus:outline-none shadow-md transition">
@@ -716,6 +721,57 @@
         </div>
         
         <div class="h-10"></div>
+
+        <!-- ONGLET 3 : ANALYSE OPÉRATIONNELLE (CSV GOOGLE SHEETS INDÉPENDANT) -->
+        <div id="viewAnalyse" class="hidden space-y-6">
+            <section class="glass-panel rounded-xl p-5 border-l-4 border-indigo-500 flex flex-col md:flex-row md:justify-between md:items-center gap-3">
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-magnifying-glass-chart text-indigo-500 mr-2"></i>Performance & Déviations Opérationnelles</h2>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="analysisPeriod">Chargement de la synthèse hebdomadaire...</p>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="px-3 py-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold">Source : CSV Analyse</span>
+                    <span id="analysisLoadLabel" class="text-gray-500 dark:text-gray-400"></span>
+                </div>
+            </section>
+            <div id="analysisError" class="hidden p-4 rounded-lg border border-red-300 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200" role="alert"></div>
+            <section class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+                <div class="glass-panel rounded-xl border-t-2 border-blue-500 p-4"><p class="text-xs text-gray-500 dark:text-gray-400">Objectif hebdomadaire</p><p class="text-xl font-bold mt-1" id="analysisKpiTarget">—</p><p class="text-xs text-gray-500">CSV Analyse</p></div>
+                <div class="glass-panel rounded-xl border-t-2 border-indigo-500 p-4"><p class="text-xs text-gray-500 dark:text-gray-400">Ventes selon rapport</p><p class="text-xl font-bold mt-1" id="analysisKpiActual">—</p><p class="text-xs text-gray-500">CSV Analyse</p></div>
+                <div class="glass-panel rounded-xl border-t-2 border-red-500 p-4"><p class="text-xs text-gray-500 dark:text-gray-400">Écart commercial</p><p class="text-xl font-bold mt-1" id="analysisKpiGap">—</p><p class="text-xs text-gray-500">Objectif - réalisé</p></div>
+                <div class="glass-panel rounded-xl border-t-2 border-amber-500 p-4"><p class="text-xs text-gray-500 dark:text-gray-400">Pertes identifiées</p><p class="text-xl font-bold mt-1" id="analysisKpiLosses">—</p><p class="text-xs text-gray-500">Causes opérationnelles</p></div>
+                <div class="glass-panel rounded-xl border-t-2 border-emerald-500 p-4"><p class="text-xs text-gray-500 dark:text-gray-400">Taux de réalisation</p><p class="text-xl font-bold mt-1" id="analysisKpiRate">—</p><p class="text-xs text-gray-500">Selon rapport</p></div>
+                <div class="glass-panel rounded-xl border-t-2 border-purple-500 p-4"><p class="text-xs text-gray-500 dark:text-gray-400">Cause principale</p><p class="text-sm font-bold mt-2" id="analysisKpiCause">—</p><p class="text-xs text-gray-500 mt-1" id="analysisKpiCauseShare"></p></div>
+            </section>
+            <div id="analysisReconciliation" class="hidden rounded-lg border p-4 text-sm" role="status"></div>
+            <div id="analysisQuality" class="hidden rounded-lg border border-amber-300/60 bg-amber-50 dark:bg-amber-900/20 p-4 text-sm text-amber-900 dark:text-amber-200"></div>
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                <div class="glass-panel rounded-xl p-4">
+                    <h3 class="font-bold text-lg mb-2">Pareto des pertes par cause</h3>
+                    <div id="chartAnalysisCauses" class="w-full h-[360px]"></div>
+                </div>
+                <div class="glass-panel rounded-xl p-4">
+                    <h3 class="font-bold text-lg mb-2">Écarts des canaux commerciaux</h3>
+                    <div id="chartAnalysisChannels" class="w-full h-[360px]"></div>
+                </div>
+            </section>
+            <section class="glass-panel rounded-xl overflow-hidden">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700"><h3 class="font-bold text-lg">1. Causes racines et incidents</h3><p class="text-xs text-gray-500">Les détails des incidents restent consultables.</p></div>
+                <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"><tr><th class="p-3">Cause</th><th class="p-3 text-right">Pertes (t)</th><th class="p-3 text-right">% pertes</th><th class="p-3">Criticité</th><th class="p-3">Responsable</th><th class="p-3">Incidents</th></tr></thead><tbody id="analysisCausesBody" class="divide-y divide-gray-100 dark:divide-gray-800"></tbody></table></div>
+            </section>
+            <section class="glass-panel rounded-xl overflow-hidden">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700"><h3 class="font-bold text-lg">2. Performance par canal</h3><p class="text-xs text-gray-500">Données du rapport d'analyse, distinctes du CSV principal.</p></div>
+                <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"><tr><th class="p-3">Canal</th><th class="p-3 text-right">Objectif (t)</th><th class="p-3 text-right">Réalisé (t)</th><th class="p-3 text-right">Écart (t)</th><th class="p-3 text-right">Réalisation</th><th class="p-3">Principal risque</th></tr></thead><tbody id="analysisChannelsBody" class="divide-y divide-gray-100 dark:divide-gray-800"></tbody></table></div>
+            </section>
+            <section class="glass-panel rounded-xl p-4">
+                <h3 class="font-bold text-lg mb-4">3. Diagnostic exécutif</h3>
+                <div id="analysisInsights" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+            </section>
+            <section class="glass-panel rounded-xl overflow-hidden">
+                <div class="p-4 border-b border-gray-200 dark:border-gray-700"><h3 class="font-bold text-lg">4. Plan d'actions prioritaires</h3><p class="text-xs text-gray-500">Les statuts d'avancement ne sont pas présents dans le CSV source.</p></div>
+                <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"><tr><th class="p-3">Priorité</th><th class="p-3">Domaine</th><th class="p-3">Mesure corrective</th><th class="p-3">Responsable</th><th class="p-3">Échéance / KPI</th><th class="p-3">Statut</th></tr></thead><tbody id="analysisActionsBody" class="divide-y divide-gray-100 dark:divide-gray-800"></tbody></table></div>
+            </section>
+        </div>
     </main>
 
     <!-- Scripts Core Logic -->
@@ -821,13 +877,14 @@
             currentTab = tab;
             const tabs = [
                 { id: 'tabVentes', viewId: 'viewVentes', activeClass: 'bg-brand' },
-                { id: 'tabProd', viewId: 'viewProduction', activeClass: 'bg-prod' }
+                { id: 'tabProd', viewId: 'viewProduction', activeClass: 'bg-prod' },
+                { id: 'tabAnalyse', viewId: 'viewAnalyse', activeClass: 'bg-indigo-600' }
             ];
 
             tabs.forEach(t => {
                 const btn = document.getElementById(t.id);
                 const view = document.getElementById(t.viewId);
-                const isActive = (tab === 'VENTES' && t.id === 'tabVentes') || (tab === 'PROD' && t.id === 'tabProd');
+                const isActive = (tab === 'VENTES' && t.id === 'tabVentes') || (tab === 'PROD' && t.id === 'tabProd') || (tab === 'ANALYSE' && t.id === 'tabAnalyse');
                 
                 if (isActive) {
                     view.classList.remove('hidden');
@@ -840,11 +897,13 @@
 
             if(tab === 'VENTES' && State.filtered.length > 0) debouncedUpdateVentes();
             if(tab === 'PROD' && State.filteredProd.length > 0) debouncedUpdateProd();
+            if(tab === 'ANALYSE') renderAnalysisTab();
         }
 
         function refreshCurrentView() {
             if(currentTab === 'VENTES') debouncedUpdateVentes();
-            else debouncedUpdateProd();
+            else if(currentTab === 'PROD') debouncedUpdateProd();
+            else renderAnalysisTab();
         }
 
         const State = {
@@ -865,7 +924,9 @@
             filtersProd: {
                 annee: 'ALL', mois: 'ALL', semaine: 'ALL', produit: 'ALL', bk: 'ALL', datestart: '', dateend: ''
             },
-            _aggregatesProd: null, 
+            _aggregatesProd: null,
+            analysis: null,
+            analysisLoadError: '', 
             dimMapping: [], 
             matiereCols: ['Clinker Gris', 'Clinker Blanc', 'Gypse', 'Granit', 'Laitier', 'Calcaire', 'Pouzzolane', 'Marbre', 'Carbonate'],
             users: [], 
@@ -877,6 +938,7 @@
             fileInput: document.getElementById('fileInput'),
             btnLoadUrl: document.getElementById('btnLoadUrl'),
             gsheetUrl: document.getElementById('gsheetUrl'),
+            gsheetAnalysisUrl: document.getElementById('gsheetAnalysisUrl'),
             dashboardContent: document.getElementById('dashboardContent'),
             loadingOverlay: document.getElementById('loadingOverlay'),
             volValDisplay: document.getElementById('volVal'),
@@ -1092,6 +1154,243 @@
             return dateStr;
         }
 
+
+        // --- SYNTHESE HEBDOMADAIRE : DEUXIEME CSV PUBLIC, ISOLE DES VENTES/PRODUCTION ---
+        function analysisNumber(value) {
+            const v = String(value ?? '').replace(/[\u2212]/g, '-').replace(/\s*[Tt]\s*$/, '');
+            return parseNumericValue(v);
+        }
+        function analysisEscape(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+        function analysisIsoPeriod(timestamp) {
+            if (!Number.isFinite(timestamp) || timestamp <= 0) return null;
+            const date = new Date(timestamp);
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+            const year = d.getUTCFullYear();
+            const y0 = new Date(Date.UTC(year, 0, 1));
+            return { week: Math.ceil((((d - y0) / 86400000) + 1) / 7), year };
+        }
+        function parseAnalysisReport(rows) {
+            if (!Array.isArray(rows) || rows.length < 20 || !Array.isArray(rows[0]) || rows[0].length < 12) {
+                throw new Error('Format de synthèse inconnu : attendu un rapport 13 colonnes avec quatre sections.');
+            }
+            const get = (line, col) => String(rows[line - 1]?.[col - 1] ?? '').trim();
+            const num = (line, col) => analysisNumber(get(line, col));
+            if (!/ANALYSE/i.test(get(2, 2)) || !/Catégorie de Défaillance/i.test(get(9, 2)) || !/Segment & Canal/i.test(get(19, 2))) {
+                throw new Error('Les sections Causes et Canaux attendues sont introuvables dans le CSV.');
+            }
+            const weekMatch = get(3, 2).match(/semaine\s*(\d{1,2})/i);
+            const yearMatch = get(3, 2).match(/\b(20\d{2})\b/);
+            const causes = [];
+            for (let row = 10; row <= 15; row++) {
+                if (!get(row, 2)) continue;
+                causes.push({
+                    name: get(row, 2), incidents: get(row, 3),
+                    loss: num(row, 4), share: num(row, 5),
+                    criticality: get(row, 6), owner: get(row, 7)
+                });
+            }
+            const channels = [];
+            for (let row = 20; row <= 27; row++) {
+                if (!get(row, 2)) continue;
+                const target = num(row, 3), actual = num(row, 4);
+                channels.push({
+                    name: get(row, 2), target, actual, gap: num(row, 5),
+                    rate: target > 0 && actual !== null ? 100 * actual / target : null,
+                    risk: get(row, 7)
+                });
+            }
+            const insights = [];
+            for (let row = 10; row <= 16; row++) {
+                if (!get(row, 9)) continue;
+                insights.push({
+                    theme: get(row, 9), finding: get(row, 10), impact: get(row, 11),
+                    risk: get(row, 12), lever: get(row, 13)
+                });
+            }
+            const actions = [];
+            for (let row = 20; row <= 27; row++) {
+                if (!get(row, 9)) continue;
+                actions.push({
+                    priority: get(row, 9), domain: get(row, 10),
+                    measure: get(row, 11), owner: get(row, 12), deadline: get(row, 13)
+                });
+            }
+            if (!causes.length || !channels.length) throw new Error('Le rapport est incomplet : causes ou canaux absents.');
+            const result = {
+                week: weekMatch ? Number(weekMatch[1]) : null,
+                year: yearMatch ? Number(yearMatch[1]) : null,
+                target: num(5, 2), actual: num(5, 4),
+                gap: num(5, 6), losses: num(5, 8),
+                mainCause: get(5, 10), rate: num(5, 12),
+                causes, channels, insights, actions, warnings: []
+            };
+            const totalCauses = causes.reduce((sum, c) => sum + (c.loss ?? 0), 0);
+            const totalChannels = channels.reduce((sum, c) => sum + (c.actual ?? 0), 0);
+            if (result.losses !== null && Math.abs(totalCauses - Math.abs(result.losses)) > 0.5)
+                result.warnings.push('Somme des causes différente du total déclaré : ' + formatVal(totalCauses) + ' t / ' + formatVal(Math.abs(result.losses)) + ' t.');
+            if (result.actual !== null && Math.abs(totalChannels - result.actual) > 0.5)
+                result.warnings.push('Somme des canaux différente des ventes déclarées : ' + formatVal(totalChannels) + ' t / ' + formatVal(result.actual) + ' t.');
+            if (result.gap !== null && result.target !== null && result.actual !== null &&
+                Math.abs((result.actual - result.target) - result.gap) > 0.5)
+                result.warnings.push('Écart commercial incohérent entre objectif et réalisé.');
+            if (result.losses !== null && result.gap !== null && Math.abs(Math.abs(result.losses) - Math.abs(result.gap)) > 0.5)
+                result.warnings.push('Pertes opérationnelles et déficit commercial : mesures distinctes (écart ' + formatVal(Math.abs(Math.abs(result.losses) - Math.abs(result.gap))) + ' t), non directement réconciliables.');
+            if (!result.year) result.warnings.push('Année non indiquée dans le rapport : année du rapprochement déduite des ventes si possible.');
+            return result;
+        }
+
+        function handleAnalysisUrl() {
+            const url = UI.gsheetAnalysisUrl.value.trim();
+            if (!url) return;
+            const refreshTime = Date.now();
+            Papa.parse(url, {
+                download: true, header: false, skipEmptyLines: false,
+                complete: result => {
+                    try {
+                        if (result.errors && result.errors.length) {
+                            throw new Error('Erreur CSV : ' + result.errors[0].message);
+                        }
+                        State.analysis = parseAnalysisReport(result.data);
+                        State.analysisLoadError = '';
+                        document.getElementById('majAnalyse').textContent = new Date(refreshTime).toLocaleDateString('fr-FR');
+                        if (currentTab === 'ANALYSE') renderAnalysisTab();
+                    } catch (err) {
+                        State.analysisLoadError = err.message || String(err);
+                        if (currentTab === 'ANALYSE') renderAnalysisTab();
+                    }
+                },
+                error: err => {
+                    State.analysisLoadError = (err && err.message) || 'Échec du chargement du deuxième CSV.';
+                    if (currentTab === 'ANALYSE') renderAnalysisTab();
+                }
+            });
+        }
+
+        function renderAnalysisTab() {
+            const a = State.analysis;
+            const errorEl = document.getElementById('analysisError');
+            if (State.analysisLoadError) {
+                errorEl.textContent = 'CSV Analyse : ' + State.analysisLoadError + (a ? ' Dernière version chargée conservée.' : '');
+                errorEl.classList.remove('hidden');
+            } else errorEl.classList.add('hidden');
+            if (!a) {
+                document.getElementById('analysisPeriod').textContent = State.analysisLoadError ?
+                    'Chargement de l’analyse indisponible. Les onglets Ventes et Production restent accessibles.' :
+                    'En attente du CSV Analyse.';
+                return;
+            }
+            const fmtT = value => value === null || !Number.isFinite(value) ? 'N/D' : formatVal(value) + ' t';
+            const fmtPct = value => value === null || !Number.isFinite(value) ? 'N/D' : formatVal(value) + ' %';
+            const label = a.week ? 'Semaine ' + a.week : 'Semaine non renseignée';
+            const mainWeekRows = State.raw.filter(r => r._DATE_SORT > 0 && analysisIsoPeriod(r._DATE_SORT)?.week === a.week);
+            const matchingYears = [...new Set(mainWeekRows.map(r => analysisIsoPeriod(r._DATE_SORT).year))].sort((x, y) => y - x);
+            const year = a.year || matchingYears[0] || null;
+            document.getElementById('analysisPeriod').textContent = label + (year ? ' · ' + year + (a.year ? '' : ' (année déduite du CSV Ventes)') : ' · année indisponible');
+            document.getElementById('analysisLoadLabel').textContent = 'Rapport hebdomadaire';
+            document.getElementById('analysisKpiTarget').textContent = fmtT(a.target);
+            document.getElementById('analysisKpiActual').textContent = fmtT(a.actual);
+            document.getElementById('analysisKpiGap').textContent = fmtT(a.gap);
+            document.getElementById('analysisKpiLosses').textContent = fmtT(a.losses === null ? null : Math.abs(a.losses));
+            document.getElementById('analysisKpiRate').textContent = fmtPct(a.rate);
+            document.getElementById('analysisKpiCause').textContent = a.mainCause || '—';
+            const mainCause = a.causes.find(c => c.name === a.mainCause) || [...a.causes].sort((x,y)=>(y.loss||0)-(x.loss||0))[0];
+            document.getElementById('analysisKpiCauseShare').textContent = mainCause ? fmtPct(mainCause.share) + ' des pertes' : '';
+
+            const qualityEl = document.getElementById('analysisQuality');
+            qualityEl.textContent = a.warnings.join(' ');
+            qualityEl.classList.toggle('hidden', a.warnings.length === 0);
+
+            const rec = document.getElementById('analysisReconciliation');
+            if (year && a.week && State.raw.length) {
+                const rows = mainWeekRows.filter(r => analysisIsoPeriod(r._DATE_SORT).year === year);
+                if (rows.length) {
+                    let primarySales = 0, primaryTarget = 0;
+                    rows.forEach(r => {
+                        primaryTarget += r['Objectif fixé'] || 0;
+                        Object.keys(State.colMeta).forEach(col => {
+                            if (State.colMeta[col].isData) primarySales += r[col] || 0;
+                        });
+                    });
+                    const difference = a.actual === null ? null : primarySales - a.actual;
+                    const isMismatch = difference !== null && Math.abs(difference) > 0.5;
+                    rec.className = 'rounded-lg border p-4 text-sm ' + (isMismatch ?
+                        'border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-900/20 dark:text-amber-200' :
+                        'border-emerald-400 bg-emerald-50 text-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-200');
+                    rec.textContent = 'Rapprochement ' + label + ' ' + year + ' : CSV principal ' + fmtT(primarySales) +
+                        ' (objectif ' + fmtT(primaryTarget) + ') · CSV Analyse ' + fmtT(a.actual) +
+                        ' · différence ' + fmtT(difference) +
+                        (isMismatch ? '. Sources divergentes : vérifier période, actualisation et périmètre avant décision.' : '. Ventes cohérentes entre sources.');
+                    rec.classList.remove('hidden');
+                } else {
+                    rec.textContent = 'Rapprochement indisponible : aucune vente trouvée pour cette semaine et cette année.';
+                    rec.className = 'rounded-lg border border-gray-300 p-4 text-sm';
+                    rec.classList.remove('hidden');
+                }
+            } else {
+                rec.textContent = 'Rapprochement indisponible : données commerciales ou période non identifiées.';
+                rec.className = 'rounded-lg border border-gray-300 p-4 text-sm';
+                rec.classList.remove('hidden');
+            }
+
+            document.getElementById('analysisCausesBody').innerHTML = [...a.causes]
+                .sort((x,y)=>(y.loss||0)-(x.loss||0)).map(c => '<tr>' +
+                    '<td class="p-3 font-semibold">' + analysisEscape(c.name) + '</td>' +
+                    '<td class="p-3 text-right">' + fmtT(c.loss) + '</td>' +
+                    '<td class="p-3 text-right">' + fmtPct(c.share) + '</td>' +
+                    '<td class="p-3">' + analysisEscape(c.criticality) + '</td>' +
+                    '<td class="p-3">' + analysisEscape(c.owner) + '</td>' +
+                    '<td class="p-3 max-w-xs"><details><summary class="cursor-pointer text-blue-600 dark:text-blue-400">Voir détails</summary><p class="mt-2 whitespace-pre-wrap text-xs">' +
+                    analysisEscape(c.incidents) + '</p></details></td></tr>').join('');
+
+            document.getElementById('analysisChannelsBody').innerHTML = [...a.channels]
+                .sort((x,y)=>(x.gap ?? 0)-(y.gap ?? 0)).map(c => '<tr>' +
+                    '<td class="p-3 font-semibold">' + analysisEscape(c.name) + '</td>' +
+                    '<td class="p-3 text-right">' + fmtT(c.target) + '</td>' +
+                    '<td class="p-3 text-right">' + fmtT(c.actual) + '</td>' +
+                    '<td class="p-3 text-right font-bold ' + (c.gap < 0 ? 'text-red-500' : 'text-emerald-500') + '">' + fmtT(c.gap) + '</td>' +
+                    '<td class="p-3 text-right">' + fmtPct(c.rate) + '</td>' +
+                    '<td class="p-3 max-w-xs text-xs">' + analysisEscape(c.risk) + '</td></tr>').join('');
+
+            document.getElementById('analysisInsights').innerHTML = a.insights.map(item =>
+                '<article class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/40 p-4">' +
+                '<h4 class="font-bold text-indigo-600 dark:text-indigo-400">' + analysisEscape(item.theme) + '</h4>' +
+                '<p class="text-sm mt-2">' + analysisEscape(item.finding) + '</p>' +
+                '<p class="text-xs mt-2"><strong>Impact :</strong> ' + analysisEscape(item.impact) + '</p>' +
+                '<p class="text-xs mt-1"><strong>Risque :</strong> ' + analysisEscape(item.risk) + '</p>' +
+                '<p class="text-xs mt-1"><strong>Levier :</strong> ' + analysisEscape(item.lever) + '</p></article>'
+            ).join('');
+
+            document.getElementById('analysisActionsBody').innerHTML = a.actions.map(item => '<tr>' +
+                '<td class="p-3 font-bold">' + analysisEscape(item.priority) + '</td>' +
+                '<td class="p-3 font-semibold">' + analysisEscape(item.domain) + '</td>' +
+                '<td class="p-3 min-w-[230px]">' + analysisEscape(item.measure) + '</td>' +
+                '<td class="p-3">' + analysisEscape(item.owner) + '</td>' +
+                '<td class="p-3">' + analysisEscape(item.deadline) + '</td>' +
+                '<td class="p-3 text-gray-500">Non renseigné</td></tr>').join('');
+
+            const causes = [...a.causes].sort((x,y)=>(y.loss||0)-(x.loss||0));
+            renderPlot('chartAnalysisCauses', [{
+                x: causes.map(c=>c.name).reverse(), y: causes.map(c=>c.loss||0).reverse(),
+                type: 'bar', orientation: 'h', name: 'Pertes (t)',
+                marker: { color: '#ef4444' },
+                text: causes.map(c=>fmtPct(c.share)).reverse(), textposition:'auto'
+            }], { ...getPlotlyLayoutBase(), margin: {l:185,r:30,t:10,b:45},
+                  xaxis: { title:'Tonnage perdu (t)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0' } });
+            const channels = [...a.channels].sort((x,y)=>(x.gap??0)-(y.gap??0));
+            renderPlot('chartAnalysisChannels', [{
+                x: channels.map(c=>c.gap||0).reverse(), y:channels.map(c=>c.name).reverse(),
+                type:'bar', orientation:'h', name:'Écart (t)',
+                marker:{ color: channels.map(c=>c.gap<0?'#ef4444':'#10b981').reverse() },
+                hovertemplate:'%{x:,.1f} t<extra></extra>'
+            }], { ...getPlotlyLayoutBase(), margin:{l:160,r:25,t:10,b:45},
+                  xaxis:{title:'Écart à l’objectif (t)',zeroline:true,zerolinecolor:'#94a3b8'} });
+        }
+
         function handleFile(file) {
             showLoading(true);
             Papa.parse(file, { 
@@ -1126,9 +1425,12 @@
         UI.dropZone.addEventListener('dragleave', () => UI.dropZone.classList.remove('dragover'));
         UI.dropZone.addEventListener('drop', (e) => { e.preventDefault(); UI.dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
         UI.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
-        UI.btnLoadUrl.addEventListener('click', handleUrl);
+        UI.btnLoadUrl.addEventListener('click', () => { handleUrl(); handleAnalysisUrl(); });
 
-        window.addEventListener('DOMContentLoaded', () => { if (UI.gsheetUrl.value.trim() !== '') handleUrl(); });
+        window.addEventListener('DOMContentLoaded', () => {
+            if (UI.gsheetUrl.value.trim() !== '') handleUrl();
+            if (UI.gsheetAnalysisUrl.value.trim() !== '') handleAnalysisUrl();
+        });
 
         UI.loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1363,6 +1665,7 @@
             if (maxDateProd > 0) { let d = new Date(maxDateProd); document.getElementById('majProd').innerText = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; }
 
             setupFilters(); applyFilters(); applyFiltersProd(); showLoading(false);
+            if (State.analysis && currentTab === 'ANALYSE') renderAnalysisTab();
 
             if (State.currentUser) {
                 UI.dashboardContent.classList.remove('hidden');
