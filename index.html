@@ -63,43 +63,107 @@
         
         .tab-btn { transition: all 0.3s ease; }
 
-        /* Impression compacte du seul onglet Analyse actif (sans changer les autres vues). */
+        /* Impression du rapport hebdomadaire : pages HTML compactes, sans SVG Plotly coupés. */
         @media print {
-            @page { size: A4 landscape; margin: 9mm; }
-            body:has(#viewAnalyse:not(.hidden)) { background: #fff !important; color: #111827 !important; font-size: 10px !important; }
-            body:has(#viewAnalyse:not(.hidden)) header,
-            body:has(#viewAnalyse:not(.hidden)) #globalError,
-            body:has(#viewAnalyse:not(.hidden)) #loadingOverlay,
-            body:has(#viewAnalyse:not(.hidden)) #loginModal,
-            body:has(#viewAnalyse:not(.hidden)) #viewVentes,
-            body:has(#viewAnalyse:not(.hidden)) #viewProduction,
-            body:has(#viewAnalyse:not(.hidden)) #analysisPrintBtn { display: none !important; }
-            body:has(#viewAnalyse:not(.hidden)) main { max-width: none !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
-            #viewAnalyse:not(.hidden) { display: block !important; margin: 0 !important; }
-            #viewAnalyse:not(.hidden) > section,
-            #viewAnalyse:not(.hidden) > div { margin-bottom: 8px !important; }
-            #viewAnalyse:not(.hidden) .glass-panel {
-                background: #fff !important; color: #111827 !important;
-                border: 1px solid #cbd5e1 !important; box-shadow: none !important;
-                backdrop-filter: none !important;
+            @page { size: A4 landscape; margin: 8mm; }
+            body:has(#viewAnalyse:not(.hidden)) {
+                display: block !important; background: white !important; color: #172033 !important;
+                min-height: 0 !important; margin: 0 !important;
             }
-            #analysisKpiGrid { display: grid !important; grid-template-columns: repeat(6, minmax(0,1fr)) !important; gap: 6px !important; }
-            #analysisKpiGrid .glass-panel { padding: 8px !important; }
-            #analysisKpiGrid .text-xl { font-size: 15px !important; line-height: 1.2 !important; }
-            #analysisChartGrid { display: grid !important; grid-template-columns: repeat(2, minmax(0,1fr)) !important; gap: 8px !important; break-inside: avoid; }
-            #chartAnalysisCauses, #chartAnalysisChannels { height: 260px !important; }
-            #viewAnalyse:not(.hidden) .overflow-x-auto { overflow: visible !important; }
-            #viewAnalyse:not(.hidden) table { width: 100% !important; table-layout: fixed !important; font-size: 9px !important; }
-            #viewAnalyse:not(.hidden) td, #viewAnalyse:not(.hidden) th { padding: 5px !important; overflow-wrap: anywhere; }
-            #viewAnalyse:not(.hidden) tr { break-inside: avoid; }
-            #viewAnalyse:not(.hidden) section { break-inside: auto; }
-            #viewAnalyse:not(.hidden) #analysisInsights { display: grid !important; grid-template-columns: repeat(3,minmax(0,1fr)) !important; gap: 7px !important; }
-            #viewAnalyse:not(.hidden) #analysisInsights article { break-inside: avoid; padding: 8px !important; }
-            #viewAnalyse:not(.hidden) .min-w-\[230px\] { min-width: 0 !important; }
-            #viewAnalyse:not(.hidden) details summary { font-size: 8px; }
-            #viewAnalyse:not(.hidden) h2 { font-size: 17px !important; }
-            #viewAnalyse:not(.hidden) h3 { font-size: 13px !important; }
-            #viewAnalyse:not(.hidden) p { margin-top: 3px !important; }
+            body:has(#viewAnalyse:not(.hidden)) > :not(#analysisPrintReport) { display: none !important; }
+            body:has(#viewAnalyse:not(.hidden)) > #analysisPrintReport {
+                display: block !important; margin: 0 !important; padding: 0 !important;
+                width: 100% !important; font: 9px/1.32 Arial, sans-serif !important;
+                color: #172033 !important; background: white !important;
+            }
+            #analysisPrintReport .analysis-print-page {
+                width: 100%; box-sizing: border-box; break-after: page; page-break-after: always;
+            }
+            #analysisPrintReport .analysis-print-page:last-child {
+                break-after: auto; page-break-after: auto;
+            }
+            #analysisPrintReport .print-head {
+                position: relative; padding: 0 0 7px; margin-bottom: 10px;
+                border-bottom: 2px solid #4f46e5;
+            }
+            #analysisPrintReport .print-head h1 { margin: 0 0 3px; font-size: 17px; font-weight: 750; color: #1e293b; }
+            #analysisPrintReport .print-head p { margin: 0; font-size: 9px; color: #475569; }
+            #analysisPrintReport .print-head span { position: absolute; right: 0; top: 2px; font-size: 9px; color: #64748b; }
+            #analysisPrintReport .print-kpis {
+                display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 7px;
+                margin: 0 0 10px;
+            }
+            #analysisPrintReport .print-kpi {
+                border: 1px solid #cbd5e1; border-top: 2px solid #4f46e5;
+                border-radius: 4px; padding: 8px 7px; min-height: 48px;
+                display: flex; flex-direction: column;
+            }
+            #analysisPrintReport .print-kpi span { font-size: 8px; color: #475569; }
+            #analysisPrintReport .print-kpi strong { font-size: 13px; line-height: 1.2; margin-top: 3px; color: #111827; overflow-wrap: anywhere; }
+            #analysisPrintReport .print-kpi:last-child strong { font-size: 10px; }
+            #analysisPrintReport .print-kpi small { margin-top: 4px; color: #64748b; }
+            #analysisPrintReport .print-reconciliation {
+                margin: 0 0 11px; border: 1px solid #a7d8bf; background: #effaf4;
+                padding: 8px; border-radius: 4px; font-size: 9px;
+            }
+            #analysisPrintReport .print-charts {
+                display: grid; grid-template-columns: repeat(2,minmax(0,1fr));
+                gap: 12px; align-items: start;
+            }
+            #analysisPrintReport .print-charts section {
+                border: 1px solid #cbd5e1; border-radius: 5px; padding: 9px; min-width: 0;
+            }
+            #analysisPrintReport h2 {
+                font-size: 11px; color: #1e293b; margin: 0 0 6px; font-weight: bold;
+            }
+            #analysisPrintReport section > p { margin: 0 0 7px; color: #64748b; font-size: 8px; }
+            #analysisPrintReport .print-bar-row {
+                display: grid; grid-template-columns: 132px minmax(0,1fr) 56px 55px;
+                align-items: center; gap: 5px; min-height: 31px;
+                border-bottom: 1px solid #e5e7eb; padding: 4px 0;
+            }
+            #analysisPrintReport .print-bar-row > span { line-height: 1.2; }
+            #analysisPrintReport .print-bar-row b,
+            #analysisPrintReport .print-bar-row small { white-space: nowrap; text-align: right; font-size: 8px; }
+            #analysisPrintReport .print-bar-track { height: 12px; background: #f1f5f9; overflow: hidden; border-radius: 2px; }
+            #analysisPrintReport .print-bar { display:block; height:100%; min-width:1px; }
+            #analysisPrintReport .print-bar.red { background: #ef4444; }
+            #analysisPrintReport .print-bar.green { background: #10b981; }
+            #analysisPrintReport .analysis-print-page > section { margin-bottom: 12px; }
+            #analysisPrintReport table {
+                width: 100%; border-collapse: collapse; table-layout: fixed;
+                color: #172033; font-size: 8px;
+            }
+            #analysisPrintReport th {
+                text-align: left; background: #eef2ff; color: #334155;
+                border: 1px solid #cbd5e1; padding: 6px 5px;
+            }
+            #analysisPrintReport td {
+                border: 1px solid #dce3ed; padding: 5px;
+                vertical-align: top; overflow-wrap: anywhere;
+            }
+            #analysisPrintReport tr { break-inside: avoid; }
+            #analysisPrintReport td.num { text-align: right; white-space: nowrap; }
+            #analysisPrintReport .print-insights {
+                display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 6px;
+                margin-bottom: 12px;
+            }
+            #analysisPrintReport .print-insight {
+                border: 1px solid #cbd5e1; border-radius: 4px;
+                padding: 7px; break-inside: avoid; min-width: 0;
+            }
+            #analysisPrintReport .print-insight b { display: block; margin-bottom: 4px; font-size: 9px; color: #4338ca; }
+            #analysisPrintReport .print-insight p { margin: 2px 0; font-size: 8px; overflow-wrap: anywhere; }
+            #analysisPrintReport .analysis-print-page:nth-child(2) table th:nth-child(1) { width: 19%; }
+            #analysisPrintReport .analysis-print-page:nth-child(2) table th:nth-child(2) { width: 12%; }
+            #analysisPrintReport .analysis-print-page:nth-child(2) table th:nth-child(3) { width: 11%; }
+            #analysisPrintReport .analysis-print-page:nth-child(2) table th:nth-child(4) { width: 13%; }
+            #analysisPrintReport .analysis-print-page:nth-child(2) table th:nth-child(5) { width: 16%; }
+            #analysisPrintReport .analysis-print-page:nth-child(3) table th:nth-child(1) { width: 9%; }
+            #analysisPrintReport .analysis-print-page:nth-child(3) table th:nth-child(2) { width: 17%; }
+            #analysisPrintReport .analysis-print-page:nth-child(3) table th:nth-child(3) { width: 40%; }
+            #analysisPrintReport .analysis-print-page:nth-child(3) table th:nth-child(4) { width: 16%; }
+            #analysisPrintReport .analysis-print-page:nth-child(3) table th:nth-child(5) { width: 18%; }
         }
     </style>
 </head>
@@ -118,7 +182,7 @@
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
                     <div>
-                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.4.1</h1>
+                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.4.2</h1>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Suivi Ventes & Production</p>
                     </div>
                 </div>
@@ -158,8 +222,8 @@
                     <div class="text-[10px] font-normal opacity-80 pl-5">MAJ : <span id="majProd">--/--/----</span></div>
                 </button>
                 <button onclick="switchTab('ANALYSE')" id="tabAnalyse" data-tab="ANALYSE" class="tab-btn px-4 py-1.5 text-sm font-bold rounded-md bg-transparent text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white flex flex-col items-start gap-0.5">
-                    <div class="flex items-center gap-2"><i class="fa-solid fa-magnifying-glass-chart"></i> Analyse Opérationnelle</div>
-                    <div class="text-[10px] font-normal opacity-80 pl-6">Chargé : <span id="majAnalyse">--/--/----</span></div>
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-chart-column"></i> Analyse Hebdomadaire</div>
+                    <div class="text-[10px] font-normal opacity-80 pl-6">MAJ : <span id="majAnalyse">--/--/----</span>/<span id="majAnalyseWeek">S--</span></div>
                 </button>
             </div>
 
@@ -769,9 +833,7 @@
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" id="analysisPeriod">Chargement de la synthèse hebdomadaire...</p>
                 </div>
                 <div class="flex items-center gap-2 text-sm">
-                    <span class="px-3 py-1.5 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 font-bold">Source : CSV Analyse</span>
-                    <span id="analysisLoadLabel" class="text-gray-500 dark:text-gray-400"></span>
-                    <button id="analysisPrintBtn" type="button" onclick="window.print()" class="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold"><i class="fa-solid fa-print mr-1"></i> Imprimer</button>
+                    <button id="analysisPrintBtn" type="button" onclick="printAnalysisReport()" class="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold"><i class="fa-solid fa-print mr-1"></i> Imprimer</button>
                 </div>
             </section>
             <div id="analysisError" class="hidden p-4 rounded-lg border border-red-300 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200" role="alert"></div>
@@ -791,7 +853,7 @@
                     <div id="chartAnalysisCauses" class="w-full h-[360px]"></div>
                 </div>
                 <div class="glass-panel rounded-xl p-4">
-                    <h3 class="font-bold text-lg mb-2">Écarts des canaux commerciaux</h3>
+                    <h3 class="font-bold text-lg mb-2">Écarts des canaux commerciaux</h3><p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Barres : écarts par canal · étiquettes en tonnes</p>
                     <div id="chartAnalysisChannels" class="w-full h-[360px]"></div>
                 </div>
             </section>
@@ -813,6 +875,9 @@
             </section>
         </div>
     </main>
+
+    <!-- Rapport d'impression autonome : rempli depuis les deux CSV lors de l'impression -->
+    <div id="analysisPrintReport" class="hidden" aria-label="Rapport d'analyse hebdomadaire à imprimer"></div>
 
     <!-- Scripts Core Logic -->
     <script>
@@ -1318,16 +1383,12 @@
             if (result.gap !== null && result.target !== null && result.actual !== null &&
                 Math.abs((result.actual - result.target) - result.gap) > 0.5)
                 result.warnings.push('Écart commercial incohérent entre objectif et réalisé.');
-            if (result.losses !== null && result.gap !== null && Math.abs(Math.abs(result.losses) - Math.abs(result.gap)) > 0.5)
-                result.warnings.push('Pertes opérationnelles et déficit commercial : mesures distinctes (écart ' + formatVal(Math.abs(Math.abs(result.losses) - Math.abs(result.gap))) + ' t), non directement réconciliables.');
-            if (!result.year) result.warnings.push('Année non indiquée dans le rapport : année du rapprochement déduite des ventes si possible.');
             return result;
         }
 
         function handleAnalysisUrl() {
             const url = UI.gsheetAnalysisUrl.value.trim();
             if (!url) return;
-            const refreshTime = Date.now();
             Papa.parse(url, {
                 download: true, header: false, skipEmptyLines: false,
                 complete: result => {
@@ -1337,7 +1398,7 @@
                         }
                         State.analysis = parseAnalysisReport(result.data);
                         State.analysisLoadError = '';
-                        document.getElementById('majAnalyse').textContent = new Date(refreshTime).toLocaleDateString('fr-FR');
+                        updateAnalysisNavigation();
                         if (currentTab === 'ANALYSE') renderAnalysisTab();
                     } catch (err) {
                         State.analysisLoadError = err.message || String(err);
@@ -1349,6 +1410,24 @@
                     if (currentTab === 'ANALYSE') renderAnalysisTab();
                 }
             });
+        }
+
+        function getAnalysisSalesPeriod(a = State.analysis) {
+            if (!a || !a.week) return { year: null, rows: [], lastSalesDate: null, bounds: null };
+            const byWeek = State.raw.filter(row => row._DATE_SORT > 0 && analysisIsoPeriod(row._DATE_SORT)?.week === a.week);
+            const years = [...new Set(byWeek.map(row => analysisIsoPeriod(row._DATE_SORT).year))].sort((x,y)=>y-x);
+            const year = a.year || years[0] || null;
+            const rows = byWeek.filter(row => analysisIsoPeriod(row._DATE_SORT).year === year);
+            const latest = rows.length ? Math.max(...rows.map(row => row._DATE_SORT)) : null;
+            return { year, rows, lastSalesDate: latest ? new Date(latest) : null, bounds: analysisIsoWeekBounds(year, a.week) };
+        }
+
+        function updateAnalysisNavigation() {
+            const a = State.analysis;
+            const info = getAnalysisSalesPeriod(a);
+            document.getElementById('majAnalyse').textContent = info.lastSalesDate ?
+                info.lastSalesDate.toLocaleDateString('fr-FR') : '--/--/----';
+            document.getElementById('majAnalyseWeek').textContent = a?.week ? 'Semaine ' + a.week : 'S--';
         }
 
         function renderAnalysisTab() {
@@ -1368,24 +1447,13 @@
             const fmtT = value => value === null || !Number.isFinite(value) ? 'N/D' : formatVal(value) + ' t';
             const fmtPct = value => value === null || !Number.isFinite(value) ? 'N/D' : formatVal(value) + ' %';
             const label = a.week ? 'Semaine ' + a.week : 'Semaine non renseignée';
-            const mainWeekRows = State.raw.filter(r => r._DATE_SORT > 0 && analysisIsoPeriod(r._DATE_SORT)?.week === a.week);
-            const matchingYears = [...new Set(mainWeekRows.map(r => analysisIsoPeriod(r._DATE_SORT).year))].sort((x, y) => y - x);
-            const year = a.year || matchingYears[0] || null;
-            const bounds = analysisIsoWeekBounds(year, a.week);
-            const formatDay = date => date.toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric', timeZone:'UTC'});
-            const thisWeekRows = mainWeekRows.filter(r => analysisIsoPeriod(r._DATE_SORT).year === year);
-            const lastSalesTime = thisWeekRows.length ? Math.max(...thisWeekRows.map(r => r._DATE_SORT)) : null;
-            const lastSalesDate = lastSalesTime ? new Date(lastSalesTime) : null;
-            const lastSalesUTC = lastSalesDate ?
-                Date.UTC(lastSalesDate.getFullYear(), lastSalesDate.getMonth(), lastSalesDate.getDate()) : null;
-            const isProvisional = !!(bounds && lastSalesUTC !== null && lastSalesUTC < bounds.sunday.getTime());
-            let periodText = label + (year ? ' · ' + year + (a.year ? '' : ' (année déduite des ventes)') : ' · année indisponible');
-            if (bounds) periodText += ' · du ' + formatDay(bounds.monday) + ' au ' + formatDay(bounds.sunday);
-            if (lastSalesDate) periodText += ' · dernières ventes au ' + lastSalesDate.toLocaleDateString('fr-FR') +
-                (isProvisional ? ' · BILAN PROVISOIRE' : ' · période couverte selon les ventes');
+            const { year, rows, lastSalesDate, bounds } = getAnalysisSalesPeriod(a);
+            const formatDay = date => date.toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric',timeZone:'UTC'});
+            let periodText = a.week && year ? 'Semaine ' + a.week + '/' + year : 'Période non renseignée';
+            if (bounds) periodText += ' du ' + formatDay(bounds.monday) + ' au ' + formatDay(bounds.sunday);
+            if (lastSalesDate) periodText += ' · dernières ventes au ' + lastSalesDate.toLocaleDateString('fr-FR');
             document.getElementById('analysisPeriod').textContent = periodText;
-            document.getElementById('analysisLoadLabel').textContent = isProvisional ?
-                'Semaine non clôturée dans le CSV Ventes' : 'Rapport hebdomadaire';
+            updateAnalysisNavigation();
             document.getElementById('analysisKpiTarget').textContent = fmtT(a.target);
             document.getElementById('analysisKpiActual').textContent = fmtT(a.actual);
             document.getElementById('analysisKpiGap').textContent = fmtT(a.gap);
@@ -1404,7 +1472,6 @@
 
             const rec = document.getElementById('analysisReconciliation');
             if (year && a.week && State.raw.length) {
-                const rows = mainWeekRows.filter(r => analysisIsoPeriod(r._DATE_SORT).year === year);
                 if (rows.length) {
                     let primarySales = 0, primaryTarget = 0;
                     rows.forEach(r => {
@@ -1506,14 +1573,100 @@
                     ticktext:causeNames.map(name=>analysisWrapAxisLabel(name))}
             });
             const channels = [...a.channels].sort((x,y)=>(x.gap??0)-(y.gap??0));
+            const channelBars = [...channels].reverse();
             renderPlot('chartAnalysisChannels', [{
-                x: channels.map(c=>c.gap||0).reverse(), y:channels.map(c=>c.name).reverse(),
+                x: channelBars.map(c=>c.gap ?? 0), y:channelBars.map(c=>c.name),
                 type:'bar', orientation:'h', name:'Écart (t)',
-                marker:{ color: channels.map(c=>c.gap<0?'#ef4444':'#10b981').reverse() },
-                hovertemplate:'%{x:,.1f} t<extra></extra>'
-            }], { ...getPlotlyLayoutBase(), margin:{l:160,r:25,t:10,b:45},
+                marker:{ color: channelBars.map(c=>(c.gap ?? 0)<0?'#ef4444':'#10b981') },
+                text: channelBars.map(c=>fmtT(c.gap)), textposition:'auto',
+                cliponaxis:false, textfont:{size:11},
+                hovertemplate:'%{y}<br>%{x:,.1f} t<extra></extra>'
+            }], { ...getPlotlyLayoutBase(), margin:{l:170,r:55,t:10,b:45},
                   xaxis:{title:'Écart à l’objectif (t)',zeroline:true,zerolinecolor:'#94a3b8'} });
         }
+
+        // --- IMPRESSION STABLE : 3 PAGES A4 PAYSAGE, SANS GRAPHIQUES PLOTLY FRAGMENTÉS ---
+        function buildAnalysisPrintReport() {
+            if (!canAccessAnalysis() || currentTab !== 'ANALYSE' || !State.analysis) return false;
+            const a = State.analysis;
+            const target = document.getElementById('analysisPrintReport');
+            const e = analysisEscape;
+            const num = value => Number.isFinite(value) ? formatVal(value) : 'N/D';
+            const tons = value => Number.isFinite(value) ? formatVal(value) + ' t' : 'N/D';
+            const percent = value => Number.isFinite(value) ? formatVal(value) + ' %' : 'N/D';
+            const causes = [...a.causes].sort((x,y)=>(y.loss||0)-(x.loss||0));
+            const channels = [...a.channels].sort((x,y)=>(x.gap??0)-(y.gap??0));
+            const tops = analysisPrincipalCauses(causes);
+            const topLoss = Math.max(1,...causes.map(c=>Math.max(0,c.loss||0)));
+            const maxGap = Math.max(1,...channels.map(c=>Math.abs(c.gap||0)));
+            const totalLoss = causes.reduce((s,c)=>s+Math.max(0,c.loss||0),0);
+            let cumLoss = 0;
+            const causeBars = causes.map(c=>{
+                cumLoss += Math.max(0,c.loss||0);
+                const width = Math.max(0,Math.min(100,100*(c.loss||0)/topLoss));
+                const cum = totalLoss ? (100*cumLoss/totalLoss) : 0;
+                return '<div class="print-bar-row"><span>'+e(c.name)+'</span>' +
+                    '<div class="print-bar-track"><i class="print-bar red" style="width:'+width+'%"></i></div>' +
+                    '<b>'+tons(c.loss)+'</b><small>Cumul '+percent(cum)+'</small></div>';
+            }).join('');
+            const channelBars = channels.map(c=>{
+                const width = Math.max(0,Math.min(100,100*Math.abs(c.gap||0)/maxGap));
+                const color = (c.gap??0)<0?'red':'green';
+                return '<div class="print-bar-row"><span>'+e(c.name)+'</span>' +
+                    '<div class="print-bar-track"><i class="print-bar '+color+'" style="width:'+width+'%"></i></div>' +
+                    '<b>'+tons(c.gap)+'</b><small>'+percent(c.rate)+'</small></div>';
+            }).join('');
+            const kpi = (label,value,detail) =>
+                '<div class="print-kpi"><span>'+e(label)+'</span><strong>'+e(value)+'</strong><small>'+e(detail)+'</small></div>';
+            const leadLabel = tops.length ? tops.map(c=>c.name).join(' / ') : (a.mainCause||'—');
+            const kpis = [
+                kpi('Objectif',tons(a.target),'CSV Analyse'),
+                kpi('Ventes',tons(a.actual),'CSV Analyse'),
+                kpi('Écart commercial',tons(a.gap),'Réalisé − objectif'),
+                kpi('Pertes identifiées',tons(a.losses===null?null:Math.abs(a.losses)),'Causes'),
+                kpi('Réalisation',percent(a.rate),'CSV Analyse'),
+                kpi('Causes majeures',leadLabel,tops.length>1?'Ex æquo':'Cause principale')
+            ].join('');
+            const causeTableRows = causes.map(c=>'<tr><td>'+e(c.name)+'</td><td class="num">'+tons(c.loss)+'</td>' +
+                '<td class="num">'+percent(c.share)+'</td><td>'+e(c.criticality)+'</td>' +
+                '<td>'+e(c.owner)+'</td><td>'+e(c.incidents)+'</td></tr>').join('');
+            const channelTableRows = channels.map(c=>'<tr><td>'+e(c.name)+'</td><td class="num">'+tons(c.target)+'</td>' +
+                '<td class="num">'+tons(c.actual)+'</td><td class="num">'+tons(c.gap)+'</td>' +
+                '<td class="num">'+percent(c.rate)+'</td><td>'+e(c.risk)+'</td></tr>').join('');
+            const insightCards = a.insights.map(item=>
+                '<div class="print-insight"><b>'+e(item.theme)+'</b><p>'+e(item.finding)+'</p>' +
+                '<p><strong>Impact :</strong> '+e(item.impact)+'</p><p><strong>Risque :</strong> '+e(item.risk)+'</p>' +
+                '<p><strong>Levier :</strong> '+e(item.lever)+'</p></div>').join('');
+            const actionRows = a.actions.map(item=>
+                '<tr><td><strong>'+e(item.priority)+'</strong></td><td>'+e(item.domain)+'</td>' +
+                '<td>'+e(item.measure)+'</td><td>'+e(item.owner)+'</td><td>'+e(item.deadline)+'</td></tr>').join('');
+            const title = e(document.getElementById('analysisPeriod').textContent);
+            const reconcile = e(document.getElementById('analysisReconciliation').textContent);
+            target.innerHTML =
+                '<div class="analysis-print-page">' +
+                '<div class="print-head"><h1>Analyse Hebdomadaire</h1><p>'+title+'</p><span>1 / 3</span></div>' +
+                '<div class="print-kpis">'+kpis+'</div>' +
+                '<p class="print-reconciliation">'+reconcile+'</p>' +
+                '<div class="print-charts"><section><h2>Causes des pertes · Pareto</h2><p>Classement décroissant, part cumulée des pertes</p>'+causeBars+'</section>' +
+                '<section><h2>Écarts par canal commercial</h2><p>Rouge : déficit · Vert : surperformance</p>'+channelBars+'</section></div></div>' +
+                '<div class="analysis-print-page">' +
+                '<div class="print-head"><h1>Données détaillées</h1><p>'+title+'</p><span>2 / 3</span></div>' +
+                '<section><h2>1. Causes racines et incidents</h2><table><thead><tr><th>Cause</th><th>Pertes (t)</th><th>%</th><th>Criticité</th><th>Responsable</th><th>Incidents</th></tr></thead><tbody>'+causeTableRows+'</tbody></table></section>' +
+                '<section><h2>2. Performance commerciale par canal</h2><table><thead><tr><th>Canal</th><th>Objectif</th><th>Réalisé</th><th>Écart</th><th>Réalisation</th><th>Principal risque</th></tr></thead><tbody>'+channelTableRows+'</tbody></table></section></div>' +
+                '<div class="analysis-print-page">' +
+                '<div class="print-head"><h1>Diagnostic & plan d’actions</h1><p>'+title+'</p><span>3 / 3</span></div>' +
+                '<section><h2>3. Diagnostic exécutif</h2><div class="print-insights">'+insightCards+'</div></section>' +
+                '<section><h2>4. Plan d’actions prioritaires</h2><table><thead><tr><th>Priorité</th><th>Domaine</th><th>Mesure corrective</th><th>Responsable</th><th>Échéance / KPI</th></tr></thead><tbody>'+actionRows+'</tbody></table></section></div>';
+            return true;
+        }
+
+        function printAnalysisReport() {
+            if (!buildAnalysisPrintReport()) return;
+            window.print();
+        }
+        window.addEventListener('beforeprint', () => {
+            if (currentTab === 'ANALYSE') buildAnalysisPrintReport();
+        });
 
         function handleFile(file) {
             showLoading(true);
@@ -1791,6 +1944,7 @@
             if (maxDateProd > 0) { let d = new Date(maxDateProd); document.getElementById('majProd').innerText = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`; }
 
             setupFilters(); applyFilters(); applyFiltersProd(); showLoading(false);
+            updateAnalysisNavigation();
             if (State.analysis && currentTab === 'ANALYSE') renderAnalysisTab();
 
             if (State.currentUser) {
