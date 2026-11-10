@@ -1501,10 +1501,9 @@
                     rec.className = 'rounded-lg border p-4 text-sm ' + (isMismatch ?
                         'border-amber-400 bg-amber-50 text-amber-900 dark:bg-amber-900/20 dark:text-amber-200' :
                         'border-emerald-400 bg-emerald-50 text-emerald-900 dark:bg-emerald-900/20 dark:text-emerald-200');
-                    rec.textContent = 'Rapprochement ' + label + ' ' + year + ' : CSV principal ' + fmtT(primarySales) +
-                        ' (objectif ' + fmtT(primaryTarget) + ') · CSV Analyse ' + fmtT(a.actual) +
-                        ' · différence ' + fmtT(difference) +
-                        (isMismatch ? '. Sources divergentes : vérifier période, actualisation et périmètre avant décision.' : '. Ventes cohérentes entre sources.');
+                    rec.textContent = 'Rapprochement ' + label + ' ' + year + ' : Ventes MTD ' + fmtT(primarySales) +
+                        ' (objectif ' + fmtT(primaryTarget) + ') · Analyse Hebdomadaire ' + fmtT(a.actual) +
+                        ' · différence ' + fmtT(difference) + '.';
                     rec.classList.remove('hidden');
                 } else {
                     rec.textContent = 'Rapprochement indisponible : aucune vente trouvée pour cette semaine et cette année.';
