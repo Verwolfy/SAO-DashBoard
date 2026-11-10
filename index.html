@@ -2266,7 +2266,7 @@
             };
             let trace2 = { 
                 y: sortedProds, x: ecarts, type: 'bar', orientation: 'h', name: 'Écart vs Target (€)', marker: { color: ecartColors },
-                text: ecarts.map((v, i) => formatVal(v) + " €  (" + prods[sortedProds[i]].ecartQtte > 0 ? formatVal(v / prods[sortedProds[i]].ecartQtte) : '—' + " €/t)"), textposition: 'auto', insidetextanchor: 'middle'
+                text: ecarts.map((v, i) => formatVal(v) + " €  (" + (prods[sortedProds[i]].ecartQtte > 0 ? formatVal(v / prods[sortedProds[i]].ecartQtte) : '—') + " €/t)"), textposition: 'auto', insidetextanchor: 'middle'
             };
 
             renderPlot('chartProdCost', [trace1, trace2], { ...getPlotlyLayoutBase(), barmode: 'group', hovermode: 'y unified', legend: { orientation: 'h', y: 1.1 }, margin: { l: 150, r: 20, t: 40, b: 40 }, xaxis: { title: 'Euros (€)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', tickformat: ',.0f' } });
