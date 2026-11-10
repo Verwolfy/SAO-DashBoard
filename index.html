@@ -596,6 +596,8 @@
                 </div>
             </section>
 
+            <div id="prodDataQualityAlerts" class="hidden rounded-lg border border-amber-400/50 bg-amber-100/60 dark:bg-amber-900/20 p-3 text-sm font-medium text-amber-900 dark:text-amber-200" role="status"></div>
+
             <!-- Bandeau des Consommations de Matières Premières -->
             <div class="mb-2">
                 <h3 class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Composants Consommés (Tonnages Calculés)</h3>
@@ -1008,15 +1010,22 @@
             return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
-        function cleanNumber(val) {
-            if (val === null || val === undefined || val === '') return 0;
-            if (typeof val === 'number') return val;
-            let str = String(val).replace(/\s+/g, '').replace(/€|\$|T|%/g, '');
-            if (str.includes(',') && !str.includes('.')) str = str.replace(',', '.');
-            else if (str.includes(',') && str.includes('.')) str = str.replace(/,/g, '');
-            let num = parseFloat(str);
-            return isNaN(num) ? 0 : num;
+        function parseNumericValue(val) {
+            if (val === null || val === undefined || String(val).trim() === '') return null;
+            if (typeof val === 'number') return Number.isFinite(val) ? val : null;
+            let str = String(val).trim().replace(/\s+/g, '').replace(/[€$%]/g, '');
+            if (str.includes(',') && str.includes('.')) {
+                if (str.lastIndexOf(',') > str.lastIndexOf('.')) str = str.replace(/\./g, '').replace(',', '.');
+                else str = str.replace(/,/g, '');
+            } else if (str.includes(',')) str = str.replace(',', '.');
+            else if (/^\d{1,3}(?:\.\d{3})+$/.test(str)) str = str.replace(/\./g, '');
+            if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(str)) return null;
+            let num = Number(str);
+            return Number.isFinite(num) ? num : null;
         }
+
+        function cleanNumber(val) { return parseNumericValue(val) ?? 0; }
+        function cleanOptionalNumber(val) { return parseNumericValue(val); }
 
         function formatVal(num, suffix = '') {
             return new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 1 }).format(num) + suffix;
@@ -1291,14 +1300,14 @@
             });
 
             const getColRobust = (r, searchTerms, excludeTerms = []) => {
-                for (let t of searchTerms) { if (r[t] !== undefined) return cleanNumber(r[t]); }
+                for (let t of searchTerms) { if (r[t] !== undefined) return cleanOptionalNumber(r[t]); }
                 let keys = Object.keys(r);
                 for (let k of keys) {
                     let upperK = k.toUpperCase();
                     let isExcluded = excludeTerms.some(ex => upperK.includes(ex.toUpperCase()));
-                    if (!isExcluded && searchTerms.some(s => upperK.includes(s.toUpperCase()))) return cleanNumber(r[k]);
+                    if (!isExcluded && searchTerms.some(s => upperK.includes(s.toUpperCase()))) return cleanOptionalNumber(r[k]);
                 }
-                return 0;
+                return null;
             };
 
             State.rawProd = [];
@@ -1314,7 +1323,7 @@
                     
                     let pRow = {
                         Date: dStr, Semaine: sStr, Mois: mStr, Année: yStr, Produit: String(prodName).toUpperCase().trim(), BK: bkStr,
-                        Refus45: cleanNumber(row['Refus 45 (%)']), Debit: cleanNumber(row['Débit (t/h)']), Qtte: cleanNumber(row['Qtte (t)']),
+                        Refus45: cleanOptionalNumber(row['Refus 45 (%)']), Debit: cleanOptionalNumber(row['Débit (t/h)']), Qtte: cleanNumber(row['Qtte (t)']),
                         CoutMPUnit: getColRobust(row, ['Coût Matère Première Calculé', 'Coût Matière Première Calculé', 'Coût MP Calculé'], ['Ecart', 'Target', 'Total']),
                         CoutMPTargetUnit: getColRobust(row, ['Coût Matère Première Target', 'Coût Matière Première Target', 'Coût MP Target'], ['Ecart', 'Total']),
                         CoutTotalUnit: getColRobust(row, ['Coût Total Calculé'], ['Ecart']),
@@ -1334,7 +1343,8 @@
                         if (!isNaN(y) && y > 2000) pRow._DATE_SORT = new Date(y, mNum - 1, 28).getTime(); 
                     }
 
-                    pRow.MargeTotale = pRow.MargeUnit * pRow.Qtte; pRow.EcartMargeTotale = pRow.EcartMargeUnit * pRow.Qtte;
+                    pRow.MargeTotale = Number.isFinite(pRow.MargeUnit) ? pRow.MargeUnit * pRow.Qtte : null;
+                    pRow.EcartMargeTotale = Number.isFinite(pRow.EcartMargeUnit) ? pRow.EcartMargeUnit * pRow.Qtte : null;
                     if(!pRow.Année && pRow._DATE_SORT > 0) pRow.Année = new Date(pRow._DATE_SORT).getFullYear();
                     if(!pRow.Semaine && pRow._DATE_SORT > 0) pRow.Semaine = getIsoWeek(pRow._DATE_SORT);
                     State.matiereCols.forEach(mp => { pRow[mp] = cleanNumber(row[mp]); });
@@ -1581,51 +1591,92 @@
         }
 
         function computeAggregatesProd() {
-            let timeView = document.getElementById('filterProdTimeView').value;
-            let agg = {
-                kpis: { totQtte: 0, totMarge: 0, totEcart: 0, avgDebitSum: 0, sumCoutMP: 0, sumCoutMPTarget: 0, compSums: {} },
-                timeBuckets: {},
-                prods: {}
+            const timeView = document.getElementById('filterProdTimeView').value;
+            const agg = {
+                kpis: {
+                    totQtte: 0, totMarge: 0, totEcart: 0,
+                    debitValidQty: 0, debitHours: 0, missingDebitQty: 0,
+                    margeValidQty: 0, missingMargeQty: 0,
+                    sumCoutMP: 0, qtyCoutMP: 0, missingCoutMPQty: 0,
+                    sumCoutMPTarget: 0, qtyCoutMPTarget: 0,
+                    sumDiffCoutMP: 0, qtyDiffCoutMP: 0, compSums: {}
+                },
+                timeBuckets: {}, prods: {}
             };
             State.matiereCols.forEach(mp => agg.kpis.compSums[mp] = 0);
 
             State.filteredProd.forEach(r => {
-                agg.kpis.totQtte += r.Qtte;
-                agg.kpis.totMarge += r.MargeTotale;
-                agg.kpis.totEcart += r.EcartMargeTotale;
-                agg.kpis.avgDebitSum += (r.Debit * r.Qtte);
-                agg.kpis.sumCoutMP += (r.CoutMPUnit * r.Qtte);
-                agg.kpis.sumCoutMPTarget += (r.CoutMPTargetUnit * r.Qtte);
+                const q = r.Qtte;
+                const k = agg.kpis;
+                k.totQtte += q;
+                if (r.Debit > 0 && q > 0) {
+                    k.debitValidQty += q;
+                    k.debitHours += q / r.Debit;
+                } else if (q > 0) k.missingDebitQty += q;
 
-                State.matiereCols.forEach(mp => { agg.kpis.compSums[mp] += (r.Qtte * (r[mp] || 0)) / 100; });
+                if (Number.isFinite(r.MargeTotale)) {
+                    k.totMarge += r.MargeTotale;
+                    k.margeValidQty += q;
+                } else if (q > 0) k.missingMargeQty += q;
+                if (Number.isFinite(r.EcartMargeTotale)) k.totEcart += r.EcartMargeTotale;
+                if (Number.isFinite(r.CoutMPUnit)) {
+                    k.sumCoutMP += r.CoutMPUnit * q;
+                    k.qtyCoutMP += q;
+                } else if (q > 0) k.missingCoutMPQty += q;
+                if (Number.isFinite(r.CoutMPTargetUnit)) {
+                    k.sumCoutMPTarget += r.CoutMPTargetUnit * q;
+                    k.qtyCoutMPTarget += q;
+                }
+                if (Number.isFinite(r.CoutMPUnit) && Number.isFinite(r.CoutMPTargetUnit)) {
+                    k.sumDiffCoutMP += (r.CoutMPUnit - r.CoutMPTargetUnit) * q;
+                    k.qtyDiffCoutMP += q;
+                }
+                State.matiereCols.forEach(mp => { k.compSums[mp] += (q * (r[mp] || 0)) / 100; });
 
-                let exactDate = getPlotlyDate(r); 
-                let bucket = exactDate && exactDate !== 'Inconnu' ? getBucketDate(exactDate, timeView) : 'Inconnu';
-
+                const exactDate = getPlotlyDate(r);
+                const bucket = exactDate && exactDate !== 'Inconnu' ? getBucketDate(exactDate, timeView) : 'Inconnu';
                 if (!agg.timeBuckets[bucket]) {
                     agg.timeBuckets[bucket] = {
-                        sort: new Date(bucket).getTime(), qtte: 0, debitSum: 0, prods: {}, vals: {}, globalClinker: 0, globalCement: 0,
-                        calcSum: 0, targetSum: 0, totalSum: 0, pvSum: 0, margeSum: 0, ecart: 0
+                        sort: new Date(bucket).getTime(), qtte: 0, debitValidQty: 0, debitHours: 0,
+                        prods: {}, vals: {}, globalClinker: 0, globalCement: 0,
+                        calcSum: 0, calcQty: 0, targetSum: 0, targetQty: 0,
+                        totalSum: 0, totalQty: 0, pvSum: 0, pvQty: 0,
+                        margeSum: 0, margeQty: 0, ecart: 0
                     };
                     State.matiereCols.forEach(mp => agg.timeBuckets[bucket].vals[mp] = 0);
                 }
-                let b = agg.timeBuckets[bucket];
-                b.qtte += r.Qtte; b.debitSum += (r.Debit * r.Qtte);
+                const b = agg.timeBuckets[bucket];
+                b.qtte += q;
+                if (r.Debit > 0 && q > 0) {
+                    b.debitValidQty += q;
+                    b.debitHours += q / r.Debit;
+                }
                 if (!b.prods[r.Produit]) b.prods[r.Produit] = { marge: 0, clinker: 0, cement: 0 };
-                b.prods[r.Produit].marge += r.MargeTotale;
+                if (!agg.prods[r.Produit]) agg.prods[r.Produit] = { qtte: 0, marge: 0, ecart: 0, margeQtte: 0, ecartQtte: 0 };
+                const p = agg.prods[r.Produit];
+                p.qtte += q;
 
-                State.matiereCols.forEach(mp => b.vals[mp] += (r.Qtte * (r[mp] || 0)) / 100);
+                State.matiereCols.forEach(mp => { b.vals[mp] += (q * (r[mp] || 0)) / 100; });
+                const clinkerRatio = (r['Clinker Gris'] || 0) + (r['Clinker Blanc'] || 0);
+                const clinkerT = q * (clinkerRatio / 100);
+                b.globalClinker += clinkerT; b.globalCement += q;
+                b.prods[r.Produit].clinker += clinkerT; b.prods[r.Produit].cement += q;
 
-                let clinkerRatio = (r['Clinker Gris'] || 0) + (r['Clinker Blanc'] || 0);
-                let clinkerT = r.Qtte * (clinkerRatio / 100);
-                b.globalClinker += clinkerT; b.globalCement += r.Qtte;
-                b.prods[r.Produit].clinker += clinkerT; b.prods[r.Produit].cement += r.Qtte;
-
-                b.calcSum += (r.CoutMPUnit * r.Qtte); b.targetSum += (r.CoutMPTargetUnit * r.Qtte); b.totalSum += (r.CoutTotalUnit * r.Qtte);
-                b.pvSum += (r.PrixVenteUnit * r.Qtte); b.margeSum += (r.MargeUnit * r.Qtte); b.ecart += r.EcartMargeTotale;
-
-                if (!agg.prods[r.Produit]) agg.prods[r.Produit] = { qtte: 0, marge: 0, ecart: 0 };
-                agg.prods[r.Produit].qtte += r.Qtte; agg.prods[r.Produit].marge += r.MargeTotale; agg.prods[r.Produit].ecart += r.EcartMargeTotale;
+                if (Number.isFinite(r.MargeTotale)) {
+                    b.prods[r.Produit].marge += r.MargeTotale;
+                    p.marge += r.MargeTotale;
+                    p.margeQtte += q;
+                }
+                if (Number.isFinite(r.EcartMargeTotale)) {
+                    b.ecart += r.EcartMargeTotale;
+                    p.ecart += r.EcartMargeTotale;
+                    p.ecartQtte += q;
+                }
+                if (Number.isFinite(r.CoutMPUnit)) { b.calcSum += r.CoutMPUnit * q; b.calcQty += q; }
+                if (Number.isFinite(r.CoutMPTargetUnit)) { b.targetSum += r.CoutMPTargetUnit * q; b.targetQty += q; }
+                if (Number.isFinite(r.CoutTotalUnit)) { b.totalSum += r.CoutTotalUnit * q; b.totalQty += q; }
+                if (Number.isFinite(r.PrixVenteUnit)) { b.pvSum += r.PrixVenteUnit * q; b.pvQty += q; }
+                if (Number.isFinite(r.MargeUnit)) { b.margeSum += r.MargeUnit * q; b.margeQty += q; }
             });
             State._aggregatesProd = agg;
         }
@@ -2042,28 +2093,35 @@
         function updateKPIsProd() {
             let kpis = State._aggregatesProd.kpis;
             document.getElementById('kpiProdVol').innerText = formatVal(kpis.totQtte);
-            let debitMoy = kpis.totQtte > 0 ? (kpis.avgDebitSum / kpis.totQtte) : 0;
-            document.getElementById('kpiProdDebit').innerText = debitMoy.toFixed(1);
+            let debitMoy = kpis.debitHours > 0 ? (kpis.debitValidQty / kpis.debitHours) : null;
+            document.getElementById('kpiProdDebit').innerText = debitMoy === null ? '—' : debitMoy.toFixed(1);
             
-            let coutMoyen = kpis.totQtte > 0 ? (kpis.sumCoutMP / kpis.totQtte) : 0;
-            let coutTargetMoyen = kpis.totQtte > 0 ? (kpis.sumCoutMPTarget / kpis.totQtte) : 0;
-            let ecartCoutMPMoyen = coutMoyen - coutTargetMoyen;
+            let coutMoyen = kpis.qtyCoutMP > 0 ? kpis.sumCoutMP / kpis.qtyCoutMP : null;
+            let ecartCoutMPMoyen = kpis.qtyDiffCoutMP > 0 ? kpis.sumDiffCoutMP / kpis.qtyDiffCoutMP : null;
             
-            document.getElementById('kpiProdCoutMP').innerText = formatVal(coutMoyen);
+            document.getElementById('kpiProdCoutMP').innerText = coutMoyen === null ? '—' : formatVal(coutMoyen);
             let elEcartCout = document.getElementById('kpiProdEcartMPUnit');
-            elEcartCout.innerText = formatVal(ecartCoutMPMoyen);
-            elEcartCout.className = `font-bold ${ecartCoutMPMoyen > 0 ? 'text-danger' : 'text-accent'}`;
+            elEcartCout.innerText = ecartCoutMPMoyen === null ? '—' : formatVal(ecartCoutMPMoyen);
+            elEcartCout.className = `font-bold ${ecartCoutMPMoyen === null ? 'text-gray-500' : ecartCoutMPMoyen > 0 ? 'text-danger' : 'text-accent'}`;
             
             let elMarge = document.getElementById('kpiProdMarge');
             elMarge.innerText = formatVal(kpis.totMarge);
             elMarge.className = `text-3xl font-bold ${kpis.totMarge >= 0 ? 'text-accent' : 'text-danger'}`;
             
-            let margeUnitaireMoy = kpis.totQtte > 0 ? (kpis.totMarge / kpis.totQtte) : 0;
-            document.getElementById('kpiProdMargeUnit').innerText = formatVal(margeUnitaireMoy);
+            let margeUnitaireMoy = kpis.margeValidQty > 0 ? kpis.totMarge / kpis.margeValidQty : null;
+            document.getElementById('kpiProdMargeUnit').innerText = margeUnitaireMoy === null ? '—' : formatVal(margeUnitaireMoy);
 
             let elEcart = document.getElementById('kpiProdEcart');
             elEcart.innerText = formatVal(kpis.totEcart);
             elEcart.className = `text-3xl font-bold ${kpis.totEcart > 0 ? 'text-danger' : 'text-accent'}`;
+
+            const warnings = [];
+            if (kpis.missingMargeQty > 0) warnings.push(formatVal(kpis.missingMargeQty) + ' t sans marge : marge totale partielle');
+            if (kpis.missingCoutMPQty > 0) warnings.push(formatVal(kpis.missingCoutMPQty) + ' t sans coût MP');
+            if (kpis.missingDebitQty > 0) warnings.push(formatVal(kpis.missingDebitQty) + ' t sans débit : exclus du débit moyen');
+            const qualityAlert = document.getElementById('prodDataQualityAlerts');
+            qualityAlert.textContent = warnings.join(' | ');
+            qualityAlert.classList.toggle('hidden', warnings.length === 0);
 
             let compHtml = '';
             State.matiereCols.forEach(mp => {
@@ -2085,7 +2143,7 @@
             if(sortedDates.length === 0) { Plotly.purge('chartProdTrend'); return; }
 
             let qttes = sortedDates.map(d => bucketData[d].qtte);
-            let debits = sortedDates.map(d => bucketData[d].qtte > 0 ? (bucketData[d].debitSum / bucketData[d].qtte) : 0);
+            let debits = sortedDates.map(d => bucketData[d].debitHours > 0 ? (bucketData[d].debitValidQty / bucketData[d].debitHours) : null);
 
             let trace1 = { x: sortedDates, y: qttes, type: timeView==='day'?'scatter':'bar', mode: 'lines', name: 'Qtte Produite (t)', marker: {color: '#f59e0b'}, line: {color: '#f59e0b', width: 2}, fill: 'tozeroy', fillcolor: 'rgba(245, 158, 11, 0.1)' };
             let trace2 = { x: sortedDates, y: debits, type: 'scatter', mode: timeView==='day'?'lines':'lines+markers', name: 'Débit Moy (t/h)', yaxis: 'y2', line: {color: '#06b6d4', width: 2} };
@@ -2165,11 +2223,11 @@
             if(sortedDates.length === 0) { Plotly.purge('chartProdCostEvolution'); return; }
 
             let modeType = timeView === 'day' ? 'lines' : 'lines+markers';
-            let arrCoutMPTarget = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].targetSum / bucketData[d].qtte : 0);
-            let arrCoutMPCalc = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].calcSum / bucketData[d].qtte : 0);
-            let arrCoutTotal = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].totalSum / bucketData[d].qtte : 0);
-            let arrPrixVente = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].pvSum / bucketData[d].qtte : 0);
-            let arrMarge = sortedDates.map(d => bucketData[d].qtte > 0 ? bucketData[d].margeSum / bucketData[d].qtte : 0);
+            let arrCoutMPTarget = sortedDates.map(d => bucketData[d].targetQty > 0 ? bucketData[d].targetSum / bucketData[d].targetQty : null);
+            let arrCoutMPCalc = sortedDates.map(d => bucketData[d].calcQty > 0 ? bucketData[d].calcSum / bucketData[d].calcQty : null);
+            let arrCoutTotal = sortedDates.map(d => bucketData[d].totalQty > 0 ? bucketData[d].totalSum / bucketData[d].totalQty : null);
+            let arrPrixVente = sortedDates.map(d => bucketData[d].pvQty > 0 ? bucketData[d].pvSum / bucketData[d].pvQty : null);
+            let arrMarge = sortedDates.map(d => bucketData[d].margeQty > 0 ? bucketData[d].margeSum / bucketData[d].margeQty : null);
             
             let traceTarget = { x: sortedDates, y: arrCoutMPTarget, type: 'scatter', mode: modeType, name: 'Coût MP Target', line: {color: '#10b981', width: 2, dash: 'dot'} };
             let traceMPCalc = { x: sortedDates, y: arrCoutMPCalc, type: 'scatter', mode: modeType, name: 'Coût MP Calculé', line: {color: '#f59e0b', width: 2} };
@@ -2196,7 +2254,7 @@
 
         function renderChartProdCost() {
             let prods = State._aggregatesProd.prods;
-            let sortedProds = Object.keys(prods).filter(p => prods[p].qtte > 0).sort((a,b) => prods[a].marge - prods[b].marge);
+            let sortedProds = Object.keys(prods).filter(p => prods[p].margeQtte > 0).sort((a,b) => prods[a].marge - prods[b].marge);
             if (sortedProds.length === 0) { Plotly.purge('chartProdCost'); return; }
 
             let ecarts = sortedProds.map(p => prods[p].ecart);
@@ -2204,11 +2262,11 @@
 
             let trace1 = { 
                 y: sortedProds, x: sortedProds.map(p => prods[p].marge), type: 'bar', orientation: 'h', name: 'Marge Globale (€)', marker: { color: '#3b82f6' },
-                text: sortedProds.map(p => formatVal(prods[p].marge) + " €  (" + formatVal(prods[p].marge / prods[p].qtte) + " €/t)"), textposition: 'auto', insidetextanchor: 'middle', textfont: {color: '#ffffff'}
+                text: sortedProds.map(p => formatVal(prods[p].marge) + " €  (" + formatVal(prods[p].marge / prods[p].margeQtte) + " €/t)"), textposition: 'auto', insidetextanchor: 'middle', textfont: {color: '#ffffff'}
             };
             let trace2 = { 
                 y: sortedProds, x: ecarts, type: 'bar', orientation: 'h', name: 'Écart vs Target (€)', marker: { color: ecartColors },
-                text: ecarts.map((v, i) => formatVal(v) + " €  (" + formatVal(v / sortedProds.map(p => prods[p].qtte)[i]) + " €/t)"), textposition: 'auto', insidetextanchor: 'middle'
+                text: ecarts.map((v, i) => formatVal(v) + " €  (" + prods[sortedProds[i]].ecartQtte > 0 ? formatVal(v / prods[sortedProds[i]].ecartQtte) : '—' + " €/t)"), textposition: 'auto', insidetextanchor: 'middle'
             };
 
             renderPlot('chartProdCost', [trace1, trace2], { ...getPlotlyLayoutBase(), barmode: 'group', hovermode: 'y unified', legend: { orientation: 'h', y: 1.1 }, margin: { l: 150, r: 20, t: 40, b: 40 }, xaxis: { title: 'Euros (€)', gridcolor: isDarkMode() ? '#334155' : '#e2e8f0', tickformat: ',.0f' } });
