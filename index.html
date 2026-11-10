@@ -352,6 +352,8 @@
                 </div>
             </section>
 
+            <div id="ventesScopeNotice" class="hidden rounded-lg border border-blue-400/40 bg-blue-100/50 dark:bg-blue-900/20 p-3 text-sm text-blue-900 dark:text-blue-200" role="status"></div>
+
             <!-- Tableau des Ventes par Produit -->
             <section class="glass-panel rounded-xl p-0 overflow-hidden flex flex-col border-t-4 border-brand">
                 <div class="p-4 border-b border-gray-200 dark:border-gray-700 bg-white/50 dark:bg-dark/50 flex justify-between items-center">
@@ -1370,6 +1372,10 @@
             }
         }
 
+        function ventesHaveDimensionalFilters() {
+            return ['segment', 'produit', 'cond', 'transport', 'region'].some(key => State.filters[key] !== 'ALL');
+        }
+
         function bindFilter(domId, stateObj, stateKey, callback) {
             let el = document.getElementById(domId);
             if (el) el.addEventListener('change', (e) => { stateObj[stateKey] = e.target.value; callback(); });
@@ -1461,13 +1467,16 @@
                     if (State.colMeta[col].segment === 'INDUSTRIAL') dynIndus += val;
                 });
 
-                let obj = row['Objectif fixé'] || 0, retours = row['RETOUR PRODUIT'] || 0;
+                const comparable = !ventesHaveDimensionalFilters();
+                let obj = comparable ? (row['Objectif fixé'] || 0) : 0;
+                let retours = comparable ? (row['RETOUR PRODUIT'] || 0) : 0;
                 if (dynVentes === 0 && obj === 0 && retours === 0) return null;
                 if (dynVentes < State.filters.minVolume) return null;
                 
-                let netRatio = dynVentes > 0 ? ((dynVentes - retours) / dynVentes) * 100 : 0;
+                let netRatio = comparable && dynVentes > 0 ? ((dynVentes - retours) / dynVentes) * 100 : null;
 
-                return { ...row, _DYN_VENTES: dynVentes, _DYN_RETAIL: dynRetail, _DYN_INDUS: dynIndus, _DYN_NET_RATIO: netRatio };
+                return { ...row, _DYN_VENTES: dynVentes, _DYN_RETAIL: dynRetail, _DYN_INDUS: dynIndus,
+                    _DYN_OBJ: obj, _DYN_RETOURS: retours, _DYN_NET_RATIO: netRatio };
             }).filter(Boolean);
 
             if(currentTab === 'VENTES' && !UI.dashboardContent.classList.contains('hidden')) debouncedUpdateVentes();
@@ -1554,7 +1563,7 @@
             let uniqueDaysSet = new Set();
 
             State.filtered.forEach(r => {
-                agg.kpis.totalVentes += r._DYN_VENTES; agg.kpis.totalObj += (r['Objectif fixé'] || 0); agg.kpis.totalRetours += (r['RETOUR PRODUIT'] || 0);
+                agg.kpis.totalVentes += r._DYN_VENTES; agg.kpis.totalObj += r._DYN_OBJ; agg.kpis.totalRetours += r._DYN_RETOURS;
                 agg.kpis.totalRetail += r._DYN_RETAIL || 0; agg.kpis.totalIndus += r._DYN_INDUS || 0;
 
                 let exactDate = getPlotlyDate(r); 
@@ -1565,7 +1574,7 @@
 
                 if (!agg.timeBuckets[bucket]) { agg.timeBuckets[bucket] = { sort: new Date(bucket).getTime() || 0, ventes: 0, obj: 0, totalVol: 0, ddpVol: 0, cpaVol: 0, s: 0, v: 0, b: 0, r_seg: 0, i_seg: 0 }; }
                 let b = agg.timeBuckets[bucket];
-                b.ventes += r._DYN_VENTES; b.obj += (r['Objectif fixé'] || 0); b.totalVol += r._DYN_VENTES;
+                b.ventes += r._DYN_VENTES; b.obj += r._DYN_OBJ; b.totalVol += r._DYN_VENTES;
 
                 State.activeCols.forEach(col => {
                     let val = r[col] || 0;
@@ -1758,10 +1767,15 @@
             let totalVentes = kpis.totalVentes, totalObj = kpis.totalObj;
 
             document.getElementById('kpiVentes').innerText = formatVal(totalVentes);
-            let reaRatio = totalObj > 0 ? (totalVentes / totalObj) * 100 : 0;
-            let reaEl = document.getElementById('kpiRealisation'); reaEl.innerText = reaRatio.toFixed(1) + '%';
-            document.getElementById('kpiProgress').style.width = Math.min(reaRatio, 100) + '%';
-            reaEl.className = `text-3xl font-bold ${reaRatio >= 100 ? 'text-accent' : (reaRatio > 80 ? 'text-brand_light' : 'text-danger')}`;
+            const comparable = !ventesHaveDimensionalFilters();
+            const reaRatio = comparable && totalObj > 0 ? (totalVentes / totalObj) * 100 : null;
+            const reaEl = document.getElementById('kpiRealisation');
+            reaEl.innerText = reaRatio === null ? 'N/D' : reaRatio.toFixed(1) + '%';
+            document.getElementById('kpiProgress').style.width = reaRatio === null ? '0%' : Math.min(Math.max(reaRatio, 0), 100) + '%';
+            reaEl.className = `text-3xl font-bold ${reaRatio === null ? 'text-gray-500' : reaRatio >= 100 ? 'text-accent' : (reaRatio > 80 ? 'text-brand_light' : 'text-danger')}`;
+            const scopeNotice = document.getElementById('ventesScopeNotice');
+            scopeNotice.textContent = comparable ? '' : 'Objectifs et retours uniquement globaux dans le CSV : taux de réalisation et ventes nettes indisponibles pour cette sélection. Les volumes restent filtrés.';
+            scopeNotice.classList.toggle('hidden', comparable);
 
             let ratioRetail = totalVentes > 0 ? (kpis.totalRetail / totalVentes) * 100 : 0;
             let ratioIndus = totalVentes > 0 ? (kpis.totalIndus / totalVentes) * 100 : 0;
@@ -1833,7 +1847,7 @@
             if(sortedDates.length === 0) { Plotly.purge('chartTrend'); return; }
             let trace1 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].ventes), type: timeView==='day'?'scatter':'bar', mode: 'lines+markers', name: 'Ventes', marker: {color: '#3b82f6'}, line: {color: '#3b82f6', width: 3}, fill: 'tozeroy', fillcolor: 'rgba(59, 130, 246, 0.1)' };
             let trace2 = { x: sortedDates, y: sortedDates.map(d => bucketData[d].obj), type: 'scatter', mode: 'lines+markers', name: 'Objectif', marker: {color: '#ef4444'}, line: {color: '#ef4444', width: 2, dash: 'dot'} };
-            renderPlot('chartTrend', [trace1, trace2], {...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'group'});
+            renderPlot('chartTrend', ventesHaveDimensionalFilters() ? [trace1] : [trace1, trace2], {...getPlotlyLayoutBase(), hovermode: 'x unified', legend: { orientation: 'h', y: 1.1 }, barmode: 'group'});
         }
 
         function renderChartRatios() {
@@ -1898,7 +1912,7 @@
             if (isNaN(pMax) || pMax <= 0) pMax = Infinity;
             // ----------------------------------------------------
 
-            document.getElementById('titleForecast').innerText = `Prévisions (Chemin vers Obj. ${(targetTotalLanding / 1000000).toFixed(2).replace('.', ',')}M) : Retail vs Industrial`;
+            document.getElementById('titleForecast').innerText = `Prévisions globales (Chemin vers Obj. ${(targetTotalLanding / 1000000).toFixed(2).replace('.', ',')}M) : Retail vs Industrial`;
             
             let currentTotal = totalRet + totalInd;
             let requiredRemainingVol = Math.max(0, targetTotalLanding - currentTotal);
@@ -2012,15 +2026,23 @@
         }
 
         function renderChartWaterfall() {
-            let kpis = State._aggregatesVentes.kpis;
-            let autres = Math.max(0, kpis.totalVentes - (kpis.totalRetail + kpis.totalIndus));
-            
-            let data = [{
-                type: "waterfall", orientation: "v", measure: ["relative", "relative", "relative", "total", "relative", "total"],
-                x: ["Retail", "Industriel", "Autres Seg.", "Ventes Brutes", "Retours", "Ventes Nettes"], textposition: "outside",
-                y: [kpis.totalRetail, kpis.totalIndus, autres, kpis.totalVentes, -kpis.totalRetours, kpis.totalVentes - kpis.totalRetours],
+            const kpis = State._aggregatesVentes.kpis;
+            const autres = Math.max(0, kpis.totalVentes - (kpis.totalRetail + kpis.totalIndus));
+            const measures = ["relative", "relative", "relative", "total"];
+            const labels = ["Retail", "Industriel", "Autres Seg.", "Ventes Brutes"];
+            const values = [kpis.totalRetail, kpis.totalIndus, autres, kpis.totalVentes];
+            if (!ventesHaveDimensionalFilters()) {
+                measures.push("relative", "total");
+                labels.push("Retours", "Ventes Nettes");
+                values.push(-kpis.totalRetours, kpis.totalVentes - kpis.totalRetours);
+            }
+            const data = [{
+                type: "waterfall", orientation: "v", measure: measures, x: labels,
+                textposition: "outside", y: values,
                 connector: { line: { color: isDarkMode() ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)" } },
-                decreasing: { marker: { color: "#ef4444" } }, increasing: { marker: { color: "#3b82f6" } }, totals: { marker: { color: "#10b981" } }
+                decreasing: { marker: { color: "#ef4444" } },
+                increasing: { marker: { color: "#3b82f6" } },
+                totals: { marker: { color: "#10b981" } }
             }];
             renderPlot('chartWaterfall', data, getPlotlyLayoutBase());
         }
@@ -2069,12 +2091,12 @@
         function generateExecutiveSummary() {
             if (State.filtered.length === 0) { document.getElementById('executiveSummary').innerHTML = "<p>Aucune donnée correspondante.</p>"; return; }
             let kpis = State._aggregatesVentes.kpis;
-            let perf = kpis.totalObj > 0 ? (kpis.totalVentes / kpis.totalObj * 100) : 0;
+            let perf = !ventesHaveDimensionalFilters() && kpis.totalObj > 0 ? (kpis.totalVentes / kpis.totalObj * 100) : null;
             let leadSegment = Object.entries({Retail: kpis.totalRetail, Indus: kpis.totalIndus}).sort((a,b)=>b[1]-a[1])[0];
             let html = `<ul class="list-disc pl-5 space-y-2">
-                <li><strong class="text-gray-900 dark:text-white">Performance Filtrée :</strong> Volume de <strong>${formatVal(kpis.totalVentes)}</strong> (${perf.toFixed(1)}% obj).</li>
+                <li><strong class="text-gray-900 dark:text-white">Performance Filtrée :</strong> Volume de <strong>${formatVal(kpis.totalVentes)}</strong> (${perf === null ? 'objectif non ventilable' : perf.toFixed(1) + '% obj'}).</li>
                 <li><strong class="text-gray-900 dark:text-white">Top Segment :</strong> Moteur <strong>${leadSegment[0]}</strong> (${formatVal(leadSegment[1])}).</li>
-                <li><strong class="text-gray-900 dark:text-white">Opérationnel :</strong> ${formatVal(kpis.totalRetours)} de retours.</li></ul>`;
+                <li><strong class="text-gray-900 dark:text-white">Opérationnel :</strong> ${ventesHaveDimensionalFilters() ? 'Retours non ventilables sur la sélection' : formatVal(kpis.totalRetours) + ' de retours'}.</li></ul>`;
             document.getElementById('executiveSummary').innerHTML = html;
         }
 
