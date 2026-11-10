@@ -913,7 +913,18 @@
         const isDarkMode = () => htmlEl.classList.contains('dark');
 
         let currentTab = 'VENTES';
+        const ANALYSIS_ALLOWED_ROLES = Object.freeze(['admin', 'dg', 'commercial', 'marketing', 'industriel']);
+
+        function canAccessAnalysis(role = State.currentUser?.role) {
+            return ANALYSIS_ALLOWED_ROLES.includes(String(role ?? '').trim().toLowerCase());
+        }
+
         function switchTab(tab) {
+            if (tab === 'ANALYSE' && !canAccessAnalysis()) {
+                document.getElementById('viewAnalyse').classList.add('hidden');
+                showError('Accès refusé : le rôle connecté ne peut pas consulter Analyse Opérationnelle.');
+                return;
+            }
             currentTab = tab;
             const tabs = [
                 { id: 'tabVentes', viewId: 'viewVentes', activeClass: 'bg-brand' },
@@ -1095,6 +1106,8 @@
         function forceLogout() {
             setPresenceStatus('offline'); 
             State.currentUser = null;
+            document.getElementById('tabAnalyse').style.display = 'none';
+            document.getElementById('viewAnalyse').classList.add('hidden');
             UI.presenceContainer.classList.add('hidden');
             UI.dashboardContent.classList.add('hidden');
             UI.loginError.innerText = "Session expirée. Rafraîchissement des données en cours...";
@@ -1339,6 +1352,7 @@
         }
 
         function renderAnalysisTab() {
+            if (!canAccessAnalysis()) return;
             const a = State.analysis;
             const errorEl = document.getElementById('analysisError');
             if (State.analysisLoadError) {
@@ -1555,9 +1569,11 @@
                 const role = user.role;
                 const tabVentes = document.getElementById('tabVentes');
                 const tabProd = document.getElementById('tabProd');
-                
+                const tabAnalyse = document.getElementById('tabAnalyse');
+
                 tabVentes.style.display = 'flex';
                 tabProd.style.display = 'flex';
+                tabAnalyse.style.display = canAccessAnalysis(role) ? 'flex' : 'none';
                 UI.loginModal.classList.add('hidden');
                 UI.dashboardContent.classList.remove('hidden');
 
