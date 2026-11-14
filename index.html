@@ -1307,7 +1307,16 @@
         }
         // Toujours afficher la semaine ISO complète, du lundi au dimanche.
         // Les jours pris en charge viennent séparément du CSV Analyse Hebdomadaire.
-        // La dernière date renseignée provient séparément du CSV Ventes MTD.
+        // La date affichée comme dernières ventes vient des jours pris en charge du rapport.
+        function analysisReportLastDate(bounds, countedDays) {
+            // Jour 1 = lundi : 5 jours couverts => vendredi (lundi + 4 jours).
+            // Cette date reflète la couverture déclarée dans Analyse Hebdomadaire,
+            // et non la date maximale de la colonne DATE du CSV Ventes MTD.
+            if (!bounds || !Number.isInteger(countedDays) || countedDays < 1 || countedDays > 7) return null;
+            const date = new Date(bounds.monday.getTime());
+            date.setUTCDate(date.getUTCDate() + countedDays - 1);
+            return date;
+        }
         function analysisFullWeekPeriod(bounds) {
             if (!bounds) return null;
             const start = bounds.monday;
@@ -1444,15 +1453,16 @@
             const years = [...new Set(byWeek.map(row => analysisIsoPeriod(row._DATE_SORT).year))].sort((x,y)=>y-x);
             const year = a.year || years[0] || null;
             const rows = byWeek.filter(row => analysisIsoPeriod(row._DATE_SORT).year === year);
-            const latest = rows.length ? Math.max(...rows.map(row => row._DATE_SORT)) : null;
-            return { year, rows, lastSalesDate: latest ? new Date(latest) : null, bounds: analysisIsoWeekBounds(year, a.week) };
+            const bounds = analysisIsoWeekBounds(year, a.week);
+            const lastSalesDate = analysisReportLastDate(bounds, a.countedDays);
+            return { year, rows, lastSalesDate, bounds };
         }
 
         function updateAnalysisNavigation() {
             const a = State.analysis;
             const info = getAnalysisSalesPeriod(a);
             document.getElementById('majAnalyse').textContent = info.lastSalesDate ?
-                info.lastSalesDate.toLocaleDateString('fr-FR') : '--/--/----';
+                info.lastSalesDate.toLocaleDateString('fr-FR', {timeZone:'UTC'}) : '--/--/----';
             document.getElementById('majAnalyseWeek').textContent = a?.week ? 'Semaine ' + a.week : 'S--';
         }
 
@@ -1481,7 +1491,7 @@
             if (fullWeekPeriod) periodText += ' · ' + fullWeekPeriod;
             document.getElementById('analysisPeriod').textContent = periodText;
             document.getElementById('analysisLastSales').textContent = lastSalesDate ?
-                'Dernières ventes enregistrées le ' + lastSalesDate.toLocaleDateString('fr-FR') :
+                'Dernières ventes enregistrées le ' + lastSalesDate.toLocaleDateString('fr-FR', {timeZone:'UTC'}) :
                 'Dernières ventes enregistrées : date non disponible';
             document.getElementById('analysisDaysCovered').textContent =
                 a.countedDays === null ? 'Jours pris en charge : non renseignés dans le rapport' :
