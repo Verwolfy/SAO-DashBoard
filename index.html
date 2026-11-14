@@ -1305,17 +1305,16 @@
             sunday.setUTCDate(monday.getUTCDate() + 6);
             return { monday, sunday };
         }
-        // Période du rapport = lundi de la semaine ISO + nombre de jours déclaré dans le CSV.
-        // La date de dernière vente, issue du CSV commercial, reste indépendante.
-        function analysisCoveredPeriod(bounds, countedDays) {
-            if (!bounds || !Number.isInteger(countedDays) || countedDays < 1 || countedDays > 7) return null;
+        // Toujours afficher la semaine ISO complète, du lundi au dimanche.
+        // Les jours pris en charge viennent séparément du CSV Analyse Hebdomadaire.
+        // La dernière date renseignée provient séparément du CSV Ventes MTD.
+        function analysisFullWeekPeriod(bounds) {
+            if (!bounds) return null;
             const start = bounds.monday;
-            const end = new Date(start.getTime());
-            end.setUTCDate(end.getUTCDate() + countedDays - 1);
+            const end = bounds.sunday;
             const day = date => date.getUTCDate();
             const month = date => date.toLocaleDateString('fr-FR', {month:'long', timeZone:'UTC'});
             const year = date => date.getUTCFullYear();
-            if (countedDays === 1) return 'Le ' + day(start) + ' ' + month(start);
             if (year(start) !== year(end))
                 return 'Du ' + day(start) + ' ' + month(start) + ' ' + year(start) +
                     ' au ' + day(end) + ' ' + month(end) + ' ' + year(end);
@@ -1477,10 +1476,9 @@
             const fmtPct = value => value === null || !Number.isFinite(value) ? 'N/D' : formatVal(value) + ' %';
             const label = a.week ? 'Semaine ' + a.week : 'Semaine non renseignée';
             const { year, rows, lastSalesDate, bounds } = getAnalysisSalesPeriod(a);
-            const coveredPeriod = analysisCoveredPeriod(bounds, a.countedDays);
+            const fullWeekPeriod = analysisFullWeekPeriod(bounds);
             let periodText = a.week && year ? 'Semaine ' + a.week + '/' + String(year).slice(-2) : 'Période non renseignée';
-            if (coveredPeriod) periodText += ' · ' + coveredPeriod;
-            else if (bounds) periodText += ' · période couverte non renseignée';
+            if (fullWeekPeriod) periodText += ' · ' + fullWeekPeriod;
             document.getElementById('analysisPeriod').textContent = periodText;
             document.getElementById('analysisLastSales').textContent = lastSalesDate ?
                 'Dernières ventes enregistrées le ' + lastSalesDate.toLocaleDateString('fr-FR') :
