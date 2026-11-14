@@ -184,7 +184,7 @@
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
                     <div>
-                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.4.3</h1>
+                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.4.4</h1>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Suivi Ventes & Production</p>
                     </div>
                 </div>
@@ -1305,6 +1305,24 @@
             sunday.setUTCDate(monday.getUTCDate() + 6);
             return { monday, sunday };
         }
+        // Période du rapport = lundi de la semaine ISO + nombre de jours déclaré dans le CSV.
+        // La date de dernière vente, issue du CSV commercial, reste indépendante.
+        function analysisCoveredPeriod(bounds, countedDays) {
+            if (!bounds || !Number.isInteger(countedDays) || countedDays < 1 || countedDays > 7) return null;
+            const start = bounds.monday;
+            const end = new Date(start.getTime());
+            end.setUTCDate(end.getUTCDate() + countedDays - 1);
+            const day = date => date.getUTCDate();
+            const month = date => date.toLocaleDateString('fr-FR', {month:'long', timeZone:'UTC'});
+            const year = date => date.getUTCFullYear();
+            if (countedDays === 1) return 'Le ' + day(start) + ' ' + month(start);
+            if (year(start) !== year(end))
+                return 'Du ' + day(start) + ' ' + month(start) + ' ' + year(start) +
+                    ' au ' + day(end) + ' ' + month(end) + ' ' + year(end);
+            if (start.getUTCMonth() !== end.getUTCMonth())
+                return 'Du ' + day(start) + ' ' + month(start) + ' au ' + day(end) + ' ' + month(end);
+            return 'Du ' + day(start) + ' au ' + day(end) + ' ' + month(end);
+        }
         function analysisWrapAxisLabel(value, maxChars = 23) {
             const words = String(value ?? '').split(/\s+/);
             let line = '', lines = [];
@@ -1459,9 +1477,10 @@
             const fmtPct = value => value === null || !Number.isFinite(value) ? 'N/D' : formatVal(value) + ' %';
             const label = a.week ? 'Semaine ' + a.week : 'Semaine non renseignée';
             const { year, rows, lastSalesDate, bounds } = getAnalysisSalesPeriod(a);
-            const formatDay = date => date.toLocaleDateString('fr-FR', {day:'2-digit',month:'2-digit',year:'numeric',timeZone:'UTC'});
+            const coveredPeriod = analysisCoveredPeriod(bounds, a.countedDays);
             let periodText = a.week && year ? 'Semaine ' + a.week + '/' + String(year).slice(-2) : 'Période non renseignée';
-            if (bounds) periodText += ' du ' + formatDay(bounds.monday) + ' au ' + formatDay(bounds.sunday);
+            if (coveredPeriod) periodText += ' · ' + coveredPeriod;
+            else if (bounds) periodText += ' · période couverte non renseignée';
             document.getElementById('analysisPeriod').textContent = periodText;
             document.getElementById('analysisLastSales').textContent = lastSalesDate ?
                 'Dernières ventes enregistrées le ' + lastSalesDate.toLocaleDateString('fr-FR') :
