@@ -184,7 +184,7 @@
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
                     <div>
-                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.4.4</h1>
+                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.5</h1>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Suivi Ventes & Production</p>
                     </div>
                 </div>
@@ -235,6 +235,8 @@
                 <div id="dropZone" class="hidden"></div>
                 <input type="file" id="fileInput" class="hidden" accept=".csv">
                 <input type="hidden" id="gsheetUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDsQROMcZt_7eGEnB8dGt6nJpeK3av3QTFW7_tSdrWJQa37mVEySknIhZfwGu7c8JiM2lCloANAMga/pub?output=csv">
+                <input type="hidden" id="gsheetRecapUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDsQROMcZt_7eGEnB8dGt6nJpeK3av3QTFW7_tSdrWJQa37mVEySknIhZfwGu7c8JiM2lCloANAMga/pub?gid=1470100175&amp;single=true&amp;output=csv">
+                <input type="hidden" id="gsheetHistoryUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDsQROMcZt_7eGEnB8dGt6nJpeK3av3QTFW7_tSdrWJQa37mVEySknIhZfwGu7c8JiM2lCloANAMga/pub?gid=1001001&amp;single=true&amp;output=csv">
                 <input type="hidden" id="gsheetAnalysisUrl" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vSDsQROMcZt_7eGEnB8dGt6nJpeK3av3QTFW7_tSdrWJQa37mVEySknIhZfwGu7c8JiM2lCloANAMga/pub?gid=1417141903&amp;single=true&amp;output=csv">
                 
                 <!-- Bouton Actualiser visible -->
@@ -829,6 +831,81 @@
 
         <!-- ONGLET 3 : ANALYSE OPÉRATIONNELLE (CSV GOOGLE SHEETS INDÉPENDANT) -->
         <div id="viewAnalyse" class="hidden space-y-6">
+
+            <!-- Indicateurs historiques : source journalière RECAP_VT + répartition HISTORIQUE_HEBDO -->
+            <section id="analysisHistoryBlock" class="space-y-5">
+                <div class="glass-panel rounded-xl p-5 border-l-4 border-indigo-500 space-y-4">
+                    <div class="flex flex-wrap justify-between items-start gap-3">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-clock-rotate-left text-indigo-500 mr-2"></i>Historique opérationnel</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Base journalière RECAP_VT · causes consolidées HISTORIQUE_HEBDO</p>
+                        </div>
+                        <button type="button" onclick="printAnalysisHistory()" class="px-3 py-2 text-sm font-semibold bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"><i class="fa-solid fa-print mr-1"></i> Imprimer l'historique</button>
+                    </div>
+                    <div class="flex flex-wrap gap-2" role="group" aria-label="Période d'analyse">
+                        <button id="historyModeWTD" type="button" onclick="setHistoryMode('WTD')" class="history-mode-btn rounded-lg px-4 py-2 font-bold text-sm border">WTD</button>
+                        <button id="historyModeMTD" type="button" onclick="setHistoryMode('MTD')" class="history-mode-btn rounded-lg px-4 py-2 font-bold text-sm border">MTD</button>
+                        <button id="historyModeYTD" type="button" onclick="setHistoryMode('YTD')" class="history-mode-btn rounded-lg px-4 py-2 font-bold text-sm border">YTD</button>
+                        <button id="historyModeHIST" type="button" onclick="setHistoryMode('HIST')" class="history-mode-btn rounded-lg px-4 py-2 font-bold text-sm border">Historique</button>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <label class="text-xs text-gray-500 dark:text-gray-400">Année
+                            <select id="historyFilterYear" onchange="setHistoryFilter('year',this.value)" class="block w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></select>
+                        </label>
+                        <label id="historyFilterMonthWrap" class="text-xs text-gray-500 dark:text-gray-400 hidden">Mois
+                            <select id="historyFilterMonth" onchange="setHistoryFilter('month',this.value)" class="block w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></select>
+                        </label>
+                        <label id="historyFilterWeekWrap" class="text-xs text-gray-500 dark:text-gray-400">Semaine ISO
+                            <select id="historyFilterWeek" onchange="setHistoryFilter('week',this.value)" class="block w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></select>
+                        </label>
+                        <label class="text-xs text-gray-500 dark:text-gray-400">Canal
+                            <select id="historyFilterSegment" onchange="setHistoryFilter('segment',this.value)" class="block w-full mt-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"></select>
+                        </label>
+                    </div>
+                    <p id="historyPeriodInfo" class="text-sm font-semibold">En attente de RECAP_VT...</p>
+                    <p id="historySourceStatus" class="text-xs text-gray-500 dark:text-gray-400">Chargement des données journalières et de l'historique des causes...</p>
+                </div>
+                <div id="historyError" class="hidden p-3 rounded-lg border border-red-300 bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-200" role="alert"></div>
+                <div id="historyKpiGrid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                    <div class="glass-panel rounded-xl p-3 border-t-2 border-indigo-500"><p class="text-xs text-gray-500">Ventes RECAP_VT</p><p id="historyKpiSales" class="text-xl font-bold mt-1">—</p></div>
+                    <div class="glass-panel rounded-xl p-3 border-t-2 border-blue-500"><p class="text-xs text-gray-500">Objectif connu</p><p id="historyKpiTarget" class="text-xl font-bold mt-1">—</p></div>
+                    <div class="glass-panel rounded-xl p-3 border-t-2 border-emerald-500"><p class="text-xs text-gray-500">Réalisation</p><p id="historyKpiRate" class="text-xl font-bold mt-1">—</p></div>
+                    <div class="glass-panel rounded-xl p-3 border-t-2 border-red-500"><p class="text-xs text-gray-500">Déficits bruts</p><p id="historyKpiDeficit" class="text-xl font-bold mt-1">—</p></div>
+                    <div class="glass-panel rounded-xl p-3 border-t-2 border-amber-500"><p class="text-xs text-gray-500">Déficits classifiés</p><p id="historyKpiClassified" class="text-xl font-bold mt-1">—</p></div>
+                    <div class="glass-panel rounded-xl p-3 border-t-2 border-gray-500"><p class="text-xs text-gray-500">Non classifiés</p><p id="historyKpiUnknown" class="text-xl font-bold mt-1">—</p></div>
+                </div>
+                <div id="historyCoverage" class="rounded-lg border border-indigo-300/50 bg-indigo-50/50 dark:bg-indigo-900/20 p-3 text-sm"></div>
+                <div id="historyReconciliation" class="rounded-lg border border-gray-300 dark:border-gray-700 p-3 text-sm"></div>
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                    <section class="glass-panel rounded-xl p-4">
+                        <h3 class="font-semibold mb-2">Évolution des ventes et objectifs</h3>
+                        <div id="chartHistoryTrend" class="h-[350px] w-full"></div>
+                    </section>
+                    <section class="glass-panel rounded-xl p-4">
+                        <h3 class="font-semibold mb-1">Déficits classifiés par cause</h3>
+                        <p class="text-xs text-gray-500 mb-2">Répartition HISTORIQUE_HEBDO · semaines intégralement couvertes seulement</p>
+                        <div id="chartHistoryCauses" class="h-[350px] w-full"></div>
+                    </section>
+                </div>
+                <section class="glass-panel rounded-xl overflow-hidden">
+                    <h3 class="font-semibold p-4 border-b border-gray-200 dark:border-gray-700">Performance par canal sur la période</h3>
+                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 dark:bg-gray-800"><tr>
+                        <th class="p-3">Canal</th><th class="p-3 text-right">Objectif (t)</th><th class="p-3 text-right">Ventes (t)</th><th class="p-3 text-right">Écart net (t)</th><th class="p-3 text-right">Taux</th><th class="p-3 text-right">Déficits bruts (t)</th>
+                    </tr></thead><tbody id="historyChannelsBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody></table></div>
+                </section>
+                <section class="glass-panel rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="font-semibold">Incidents et commentaires journaliers</h3>
+                        <p id="historyIncidentsCount" class="text-xs text-gray-500 mt-1"></p>
+                    </div>
+                    <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 dark:bg-gray-800"><tr>
+                        <th class="p-3">Date</th><th class="p-3">Canal</th><th class="p-3 text-right">Déficit (t)</th><th class="p-3">Catégories déclarées</th><th class="p-3">Commentaire</th>
+                    </tr></thead><tbody id="historyIncidentsBody" class="divide-y divide-gray-200 dark:divide-gray-700"></tbody></table></div>
+                </section>
+            </section>
+            <details id="analysisCurrentDetails" class="glass-panel rounded-xl p-4">
+                <summary class="cursor-pointer font-semibold text-indigo-600 dark:text-indigo-400"><i class="fa-solid fa-file-lines mr-2"></i>Afficher le rapport détaillé de la dernière semaine publiée (diagnostic et plan d'actions)</summary>
+                <div class="space-y-6 mt-5">
             <section class="glass-panel rounded-xl p-5 border-l-4 border-indigo-500 flex flex-col md:flex-row md:justify-between md:items-center gap-3">
                 <div>
                     <h2 class="text-2xl font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-magnifying-glass-chart text-indigo-500 mr-2"></i>Performance & Déviations Opérationnelles</h2>
@@ -877,6 +954,8 @@
                 <div class="p-4 border-b border-gray-200 dark:border-gray-700"><h3 class="font-bold text-lg">4. Plan d'actions prioritaires</h3><p class="text-xs text-gray-500">Les statuts d'avancement ne sont pas présents dans le CSV source.</p></div>
                 <div class="overflow-x-auto"><table class="w-full text-sm text-left"><thead class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"><tr><th class="p-3">Priorité</th><th class="p-3">Domaine</th><th class="p-3">Mesure corrective</th><th class="p-3">Responsable</th><th class="p-3">Échéance / KPI</th><th class="p-3">Statut</th></tr></thead><tbody id="analysisActionsBody" class="divide-y divide-gray-100 dark:divide-gray-800"></tbody></table></div>
             </section>
+                </div>
+            </details>
         </div>
     </main>
 
@@ -1046,7 +1125,13 @@
             },
             _aggregatesProd: null,
             analysis: null,
-            analysisLoadError: '', 
+            analysisLoadError: '',
+            recapRows: [],
+            recapError: '',
+            historyRows: [],
+            historyError: '',
+            historyView: { mode: 'WTD', year: null, month: null, week: null, segment: 'ALL' },
+            historyLastSummary: null, 
             dimMapping: [], 
             matiereCols: ['Clinker Gris', 'Clinker Blanc', 'Gypse', 'Granit', 'Laitier', 'Calcaire', 'Pouzzolane', 'Marbre', 'Carbonate'],
             users: [], 
@@ -1059,6 +1144,8 @@
             btnLoadUrl: document.getElementById('btnLoadUrl'),
             gsheetUrl: document.getElementById('gsheetUrl'),
             gsheetAnalysisUrl: document.getElementById('gsheetAnalysisUrl'),
+            gsheetRecapUrl: document.getElementById('gsheetRecapUrl'),
+            gsheetHistoryUrl: document.getElementById('gsheetHistoryUrl'),
             dashboardContent: document.getElementById('dashboardContent'),
             loadingOverlay: document.getElementById('loadingOverlay'),
             volValDisplay: document.getElementById('volVal'),
@@ -1421,6 +1508,287 @@
             return result;
         }
 
+
+        // --- V3.5 : Historique opérationnel à granularité quotidienne ---
+        const HISTORY_CAUSES = Object.freeze([
+            'Fiabilité Équipements Usine', 'Flotte Camions & Coordination',
+            'Disponibilité Produits & Stocks', 'Logistique Marché & No-Show',
+            'Énergie & Réseau CIE', 'Commandes & Demande Marché'
+        ]);
+
+        function historyDateISO(value) {
+            const match = String(value ?? '').trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+            if (!match) return null;
+            const d = Number(match[1]), m = Number(match[2]), y = Number(match[3]);
+            const utc = new Date(Date.UTC(y,m-1,d));
+            if (utc.getUTCFullYear()!==y || utc.getUTCMonth()!==m-1 || utc.getUTCDate()!==d) return null;
+            return utc.toISOString().slice(0,10);
+        }
+        function historyISOWeek(value) {
+            const d = new Date(value + 'T00:00:00Z');
+            const weekday = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate()+4-weekday);
+            const y=d.getUTCFullYear(), jan1=new Date(Date.UTC(y,0,1));
+            return {year:y,week:Math.ceil(((d-jan1)/86400000+1)/7)};
+        }
+        function historyParseRecap(rows) {
+            const need = ['Date','Segment','Objectif Ventes','Ventes Par segment','Déviation','Commentaire','Catégorie Défaillance','Pertes (T)','Année Auto'];
+            if (!rows?.length || need.some(h=>!Object.hasOwn(rows[0],h))) throw new Error('RECAP_VT : colonnes attendues absentes.');
+            const seen=new Set(),data=[];
+            rows.forEach((r,i)=>{
+                if (!Object.values(r).some(v=>String(v??'').trim())) return;
+                const date=historyDateISO(r.Date), segment=String(r.Segment||'').trim();
+                if (!date || !segment) throw new Error('RECAP_VT : date ou canal invalide à la ligne '+(i+2));
+                const key=date+'|'+segment.toLowerCase();
+                if (seen.has(key)) throw new Error('RECAP_VT : doublon Date + Segment ('+key+')');
+                seen.add(key);
+                const sales=analysisNumber(r['Ventes Par segment']);
+                const target=analysisNumber(r['Objectif Ventes']);
+                const gap=analysisNumber(r['Déviation']);
+                const loss=analysisNumber(r['Pertes (T)']);
+                if (sales===null || gap===null || (target!==null && Math.abs(sales-target-gap)>.051)) {
+                    throw new Error('RECAP_VT : indicateurs incompatibles à la ligne '+(i+2));
+                }
+                const category=String(r['Catégorie Défaillance']||'').trim();
+                const tags=category ? category.split(',').map(x=>x.trim()).filter(Boolean):[];
+                const known=tags.length>0 && tags.every(x=>HISTORY_CAUSES.includes(x));
+                const w=historyISOWeek(date);
+                data.push({date,year:Number(date.slice(0,4)),month:Number(date.slice(5,7)),
+                    week:w.week,weekYear:w.year,segment,target,sales,gap,
+                    deficit:loss??0,classified:known?(loss??0):0,
+                    unclassified:known?0:(loss??0),category,tags,comment:String(r.Commentaire||'').trim()});
+            });
+            return data.sort((a,b)=>a.date.localeCompare(b.date)||a.segment.localeCompare(b.segment));
+        }
+        function historyParseWeekly(rows) {
+            const required=['Année','Semaine','Date Début','Date Fin','Segment','Objectif (T)',
+                'Ventes Réelles (T)','Total Pertes Quantifiées (T)',...HISTORY_CAUSES];
+            if (!rows?.length || required.some(h=>!Object.hasOwn(rows[0],h)))throw new Error('HISTORIQUE_HEBDO : colonnes attendues absentes.');
+            const seen=new Set(),data=[];
+            rows.forEach((r,i)=>{
+                if (!Object.values(r).some(v=>String(v??'').trim())) return;
+                const year=Number(r['Année']),week=Number(r.Semaine),segment=String(r.Segment||'').trim();
+                const start=historyDateISO(r['Date Début']),end=historyDateISO(r['Date Fin']);
+                const key=year+'|'+week+'|'+segment.toLowerCase();
+                if (!Number.isInteger(year)||!Number.isInteger(week)||week<1||week>53||!start||!end||!segment||end<start)
+                    throw new Error('HISTORIQUE_HEBDO : période ou canal invalide à la ligne '+(i+2));
+                if (seen.has(key))throw new Error('HISTORIQUE_HEBDO : doublon '+key);
+                seen.add(key);
+                const causes=Object.fromEntries(HISTORY_CAUSES.map(name=>[name,analysisNumber(r[name])??0]));
+                const classified=analysisNumber(r['Total Pertes Quantifiées (T)'])??0;
+                if(Math.abs(Object.values(causes).reduce((v,x)=>v+x,0)-classified)>.051)
+                    throw new Error('HISTORIQUE_HEBDO : somme des causes incohérente à la ligne '+(i+2));
+                data.push({year,week,segment,start,end,causes,classified,
+                    target:analysisNumber(r['Objectif (T)']),sales:analysisNumber(r['Ventes Réelles (T)'])});
+            });
+            return data;
+        }
+        function historyLoadCSV(input, parser, rowsKey, errorKey) {
+            const url=input?.value?.trim();
+            if (!url)return;
+            Papa.parse(url,{
+                download:true,header:true,skipEmptyLines:true,transformHeader:h=>String(h).replace(/^\uFEFF/,'').trim(),
+                complete:res=>{
+                    try{
+                        if(res.errors?.length)throw new Error('Erreur CSV : '+res.errors[0].message);
+                        State[rowsKey]=parser(res.data);
+                        State[errorKey]='';
+                    } catch(error){State[errorKey]=error.message||String(error);}
+                    if(currentTab==='ANALYSE'&&canAccessAnalysis())renderHistoryDashboard();
+                },
+                error:err=>{
+                    State[errorKey]=err?.message||'Import CSV impossible.';
+                    if(currentTab==='ANALYSE'&&canAccessAnalysis())renderHistoryDashboard();
+                }
+            });
+        }
+        function handleRecapUrl() { historyLoadCSV(UI.gsheetRecapUrl,historyParseRecap,'recapRows','recapError'); }
+        function handleHistoryWeeklyUrl() { historyLoadCSV(UI.gsheetHistoryUrl,historyParseWeekly,'historyRows','historyError'); }
+        function setHistoryMode(mode) {
+            if(!canAccessAnalysis() || !['WTD','MTD','YTD','HIST'].includes(mode))return;
+            State.historyView.mode=mode;renderHistoryDashboard();
+        }
+        function setHistoryFilter(key,value) {
+            if(!canAccessAnalysis() || !['year','month','week','segment'].includes(key))return;
+            State.historyView[key]=key==='segment'?value:Number(value);
+            if(key==='year'){State.historyView.month=null;State.historyView.week=null;}
+            renderHistoryDashboard();
+        }
+        function historySelectedData() {
+            const all=State.recapRows,view=State.historyView;
+            if(!all.length)return null;
+            const years=[...new Set(all.map(r=>r.year))].sort((a,b)=>b-a);
+            if(!years.includes(view.year))view.year=years[0];
+            const inYear=all.filter(r=>r.year===view.year);
+            const months=[...new Set(inYear.map(r=>r.month))].sort((a,b)=>b-a);
+            if(!months.includes(view.month))view.month=months[0];
+            const weeks=[...new Set(inYear.filter(r=>r.weekYear===view.year).map(r=>r.week))].sort((a,b)=>b-a);
+            if(!weeks.includes(view.week))view.week=weeks[0];
+            const segments=[...new Set(all.map(r=>r.segment))].sort();
+            if(view.segment!=='ALL'&&!segments.includes(view.segment))view.segment='ALL';
+            const selected=inYear.filter(r=>
+                (view.segment==='ALL'||r.segment===view.segment) &&
+                (view.mode==='WTD'?r.weekYear===view.year&&r.week===view.week :
+                 view.mode==='MTD'?r.month===view.month : true));
+            return {rows:selected,years,months,weeks,segments,mode:view.mode,year:view.year,month:view.month,week:view.week};
+        }
+        function historyAggregate(rows) {
+            const total=(key)=>rows.reduce((sum,r)=>sum+(r[key]??0),0);
+            const target=total('target'),sales=total('sales'),gap=total('gap');
+            const deficit=total('deficit'),classified=total('classified'),unclassified=total('unclassified');
+            return {target,sales,gap,deficit,classified,unclassified,
+                rate:target>0?100*sales/target:null,missingTargets:rows.filter(r=>r.target===null).length,
+                days:new Set(rows.map(r=>r.date)).size};
+        }
+        function historyBuildSummary(selected) {
+            if(!selected)return null;
+            const rows=selected.rows,agg=historyAggregate(rows);
+            const byChannel=new Map(),byBucket=new Map();
+            function update(map,key,r) {
+                if(!map.has(key))map.set(key,{name:key,target:0,sales:0,gap:0,deficit:0,classified:0,unclassified:0,missingTargets:0});
+                const a=map.get(key);
+                for(const field of ['target','sales','gap','deficit','classified','unclassified'])a[field]+=r[field]??0;
+                if(r.target===null)a.missingTargets++;
+            }
+            for(const r of rows){
+                update(byChannel,r.segment,r);
+                let bucket=selected.mode==='WTD'||selected.mode==='MTD'?r.date :
+                    selected.mode==='YTD'?r.date.slice(0,7) :
+                    r.weekYear+'-S'+String(r.week).padStart(2,'0');
+                update(byBucket,bucket,r);
+            }
+            const channels=[...byChannel.values()].sort((a,b)=>a.gap-b.gap);
+            const buckets=[...byBucket.values()].sort((a,b)=>a.name.localeCompare(b.name));
+            const selectedKeys=new Set(rows.map(r=>r.weekYear+'|'+r.week+'|'+r.segment.toLowerCase()));
+            const groupAll=new Map();
+            for(const r of State.recapRows){
+                const key=r.weekYear+'|'+r.week+'|'+r.segment.toLowerCase();
+                if(!groupAll.has(key))groupAll.set(key,[]);
+                groupAll.get(key).push(r);
+            }
+            const causeSums=Object.fromEntries(HISTORY_CAUSES.map(c=>[c,0]));
+            let coveredClassified=0,excludedWeeks=new Set(),matchedGroups=0;
+            for(const r of State.historyRows){
+                if(selected.segment!=='ALL'&&r.segment!==selected.segment)continue;
+                const key=r.year+'|'+r.week+'|'+r.segment.toLowerCase();
+                if(!selectedKeys.has(key))continue;
+                const allInWeek=groupAll.get(key)||[];
+                if(!allInWeek.length || !allInWeek.every(x=>rows.includes(x))){
+                    excludedWeeks.add('S'+r.week);continue;
+                }
+                for(const name of HISTORY_CAUSES)causeSums[name]+=r.causes[name]??0;
+                coveredClassified+=r.classified;matchedGroups++;
+            }
+            const causes=Object.entries(causeSums).map(([name,loss])=>({name,loss})).sort((a,b)=>b.loss-a.loss);
+            const sourceDates=new Set(rows.map(r=>r.date));
+            const mainRows=State.raw.filter(r=>r._DATE_SORT>0&&sourceDates.has(getPlotlyDate(r)));
+            let mainSales=0,recapMatchedSales=0;
+            const mainDates=new Set(mainRows.map(r=>getPlotlyDate(r)));
+            if(selected.segment==='ALL'){
+                for(const r of mainRows)for(const [col,meta] of Object.entries(State.colMeta))
+                    if(meta.isData)mainSales+=r[col]??0;
+                recapMatchedSales=rows.filter(r=>mainDates.has(r.date)).reduce((v,r)=>v+r.sales,0);
+            }
+            const incidents=rows.filter(r=>r.comment||r.deficit>0).sort((a,b)=>b.date.localeCompare(a.date)||b.deficit-a.deficit);
+            return {selected,agg,channels,buckets,causes,coveredClassified,excludedWeeks:[...excludedWeeks].sort(),
+                matchedGroups,mainSales,recapMatchedSales,mainDates:mainDates.size,incidents};
+        }
+        function renderHistoryDashboard() {
+            if(!canAccessAnalysis())return;
+            const error=document.getElementById('historyError');
+            const errors=[State.recapError,State.historyError].filter(Boolean);
+            error.textContent=errors.join(' | ');error.classList.toggle('hidden',!errors.length);
+            const sourceInfo=document.getElementById('historySourceStatus');
+            sourceInfo.textContent='RECAP_VT : '+State.recapRows.length+' lignes · HISTORIQUE_HEBDO : '+
+                State.historyRows.length+' lignes · SYNTHESE_ANALYSE : '+(State.analysis?'disponible':'en attente');
+            if(!State.recapRows.length){
+                document.getElementById('historyPeriodInfo').textContent='Historique journalier indisponible.';
+                return;
+            }
+            const s=historySelectedData(),data=historyBuildSummary(s);
+            State.historyLastSummary=data;
+            const v=State.historyView, esc=analysisEscape;
+            const fill=(id,items,selected)=>{const el=document.getElementById(id);
+                el.innerHTML=items.map(item=>'<option value="'+esc(String(item.value))+'"'+
+                    (String(item.value)===String(selected)?' selected':'')+'>'+esc(item.label)+'</option>').join('');};
+            fill('historyFilterYear',s.years.map(y=>({value:y,label:String(y)})),v.year);
+            fill('historyFilterMonth',s.months.map(m=>({value:m,label:new Date(Date.UTC(v.year,m-1,1)).toLocaleDateString('fr-FR',{month:'long',timeZone:'UTC'})})),v.month);
+            fill('historyFilterWeek',s.weeks.map(w=>({value:w,label:'Semaine '+w})),v.week);
+            fill('historyFilterSegment',[{value:'ALL',label:'Tous les canaux'},...s.segments.map(x=>({value:x,label:x}))],v.segment);
+            document.getElementById('historyFilterMonthWrap').classList.toggle('hidden',v.mode!=='MTD');
+            document.getElementById('historyFilterWeekWrap').classList.toggle('hidden',v.mode!=='WTD');
+            for(const mode of ['WTD','MTD','YTD','HIST']){
+                const b=document.getElementById('historyMode'+mode),active=mode===v.mode;
+                b.className='history-mode-btn rounded-lg px-4 py-2 font-bold text-sm border '+(active?
+                    'bg-indigo-600 text-white border-indigo-600':'bg-transparent border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-200');
+                b.setAttribute('aria-pressed',String(active));
+            }
+            const fmt=n=>Number.isFinite(n)?formatVal(n)+' t':'N/D',percent=n=>n===null?'N/D':formatVal(n)+' %';
+            const dts=[...new Set(s.rows.map(r=>r.date))].sort(),latest=dts.at(-1),first=dts[0];
+            const datesLabel=v.mode==='WTD'?'Semaine '+v.week+'/'+String(v.year).slice(-2):
+                v.mode==='MTD'?new Date(Date.UTC(v.year,v.month-1,1)).toLocaleDateString('fr-FR',{month:'long',year:'numeric',timeZone:'UTC'}):
+                v.mode==='YTD'?'Cumul disponible '+v.year:'Historique disponible '+v.year;
+            const frDate=x=>x?new Date(x+'T00:00:00Z').toLocaleDateString('fr-FR',{timeZone:'UTC'}):'—';
+            document.getElementById('historyPeriodInfo').textContent=datesLabel+' · '+s.rows.length+' enregistrements · '+
+                data.agg.days+' journées avec données · du '+frDate(first)+' au '+frDate(latest);
+            for(const [key,value] of Object.entries({
+                historyKpiSales:fmt(data.agg.sales),historyKpiTarget:fmt(data.agg.target),
+                historyKpiRate:percent(data.agg.rate),historyKpiDeficit:fmt(data.agg.deficit),
+                historyKpiClassified:fmt(data.agg.classified),historyKpiUnknown:fmt(data.agg.unclassified)
+            }))document.getElementById(key).textContent=value;
+            const warnings=[];
+            if(data.agg.missingTargets)warnings.push(data.agg.missingTargets+' lignes sans objectif explicite.');
+            if(v.mode==='YTD'||v.mode==='HIST')warnings.push('Cumul partiel : RECAP_VT ne couvre pas toute l’année.');
+            if(data.excludedWeeks.length)warnings.push('Répartition des causes non ventilable au calendrier : '+data.excludedWeeks.join(', ')+' exclue(s) du Pareto.');
+            const recapClassedIncluded=s.rows.filter(r=>{
+                const key=r.weekYear+'|'+r.week+'|'+r.segment.toLowerCase();
+                const all=State.recapRows.filter(x=>x.weekYear+'|'+x.week+'|'+x.segment.toLowerCase()===key);
+                return all.length&&all.every(x=>s.rows.includes(x));
+            }).reduce((sum,r)=>sum+r.classified,0);
+            if(data.matchedGroups&&Math.abs(recapClassedIncluded-data.coveredClassified)>0.5)
+                warnings.push('Pertes classifiées : RECAP_VT et HISTORIQUE_HEBDO présentent un écart sur la sélection.');
+            if(!State.historyRows.length)warnings.push('Pareto indisponible : HISTORIQUE_HEBDO non chargé.');
+            document.getElementById('historyCoverage').textContent=warnings.length?warnings.join(' '):
+                'Période couverte dans les fichiers publiés ; les déficits bruts ne sont pas additionnés aux pertes classifiées.';
+            const rec=document.getElementById('historyReconciliation');
+            if(v.segment!=='ALL')rec.textContent='Rapprochement Ventes MTD global non applicable au filtre canal : '+v.segment+'.';
+            else if(!State.raw.length)rec.textContent='Rapprochement Ventes MTD indisponible (source commerciale non chargée).';
+            else if(!data.mainDates)rec.textContent='Rapprochement Ventes MTD indisponible : aucune date commune.';
+            else rec.textContent='Rapprochement sur '+data.mainDates+' dates communes : Ventes MTD '+
+                fmt(data.mainSales)+' · Analyse Hebdomadaire (RECAP_VT) '+fmt(data.recapMatchedSales)+
+                ' · différence '+fmt(data.mainSales-data.recapMatchedSales)+'.';
+            document.getElementById('historyChannelsBody').innerHTML=data.channels.map(c=>
+                '<tr><td class="p-3 font-medium">'+esc(c.name)+'</td>'+
+                '<td class="p-3 text-right">'+(c.missingTargets?'† ':'')+fmt(c.target)+'</td>'+
+                '<td class="p-3 text-right">'+fmt(c.sales)+'</td>'+
+                '<td class="p-3 text-right">'+fmt(c.gap)+'</td>'+
+                '<td class="p-3 text-right">'+percent(c.target>0?100*c.sales/c.target:null)+'</td>'+
+                '<td class="p-3 text-right">'+fmt(c.deficit)+'</td></tr>').join('');
+            const shown=data.incidents.slice(0,30);
+            document.getElementById('historyIncidentsCount').textContent=
+                shown.length+' derniers incidents affichés sur '+data.incidents.length+' · † objectif partiellement absent.';
+            document.getElementById('historyIncidentsBody').innerHTML=shown.map(r=>
+                '<tr><td class="p-3 whitespace-nowrap">'+esc(frDate(r.date))+'</td>'+
+                '<td class="p-3">'+esc(r.segment)+'</td>'+
+                '<td class="p-3 text-right">'+fmt(r.deficit)+'</td>'+
+                '<td class="p-3">'+esc(r.category||'—')+'</td>'+
+                '<td class="p-3 whitespace-pre-wrap max-w-md">'+esc(r.comment||'Non renseigné')+'</td></tr>').join('');
+            const bucketNames=data.buckets.map(x=>x.name);
+            renderPlot('chartHistoryTrend',[
+                {type:'scatter',mode:'lines+markers',x:bucketNames,y:data.buckets.map(b=>b.sales),name:'Ventes RECAP_VT',line:{color:'#6366f1',width:2}},
+                {type:'scatter',mode:'lines+markers',x:bucketNames,y:data.buckets.map(b=>b.target),name:'Objectif',line:{color:'#10b981',width:2,dash:'dash'}}
+            ],{...getPlotlyLayoutBase(),margin:{l:65,r:20,t:15,b:65},hovermode:'x unified',
+                legend:{orientation:'h',y:1.16},xaxis:{type:'category',tickangle:bucketNames.length>14?-45:0},yaxis:{title:'Tonnes'}});
+            const nonzero=data.causes.filter(c=>c.loss>0).reverse();
+            renderPlot('chartHistoryCauses',[{
+                type:'bar',orientation:'h',x:nonzero.map(c=>c.loss),y:nonzero.map(c=>c.name),
+                text:nonzero.map(c=>fmt(c.loss)),textposition:'auto',
+                marker:{color:'#ef4444'},hovertemplate:'%{y}<br>%{x:,.1f} t<extra></extra>'
+            }],{...getPlotlyLayoutBase(),margin:{l:190,r:25,t:10,b:48},
+                xaxis:{title:'Tonnes classifiées',rangemode:'tozero',range:[0,Math.max(1,...nonzero.map(c=>c.loss))*1.13]},
+                yaxis:{type:'category'}});
+        }
+
         function handleAnalysisUrl() {
             const url = UI.gsheetAnalysisUrl.value.trim();
             if (!url) return;
@@ -1468,6 +1836,7 @@
 
         function renderAnalysisTab() {
             if (!canAccessAnalysis()) return;
+            renderHistoryDashboard();
             const a = State.analysis;
             const errorEl = document.getElementById('analysisError');
             if (State.analysisLoadError) {
@@ -1756,11 +2125,16 @@
         UI.dropZone.addEventListener('dragleave', () => UI.dropZone.classList.remove('dragover'));
         UI.dropZone.addEventListener('drop', (e) => { e.preventDefault(); UI.dropZone.classList.remove('dragover'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
         UI.fileInput.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
-        UI.btnLoadUrl.addEventListener('click', () => { handleUrl(); handleAnalysisUrl(); });
+        UI.btnLoadUrl.addEventListener('click', () => { handleUrl(); handleAnalysisUrl(); handleRecapUrl(); handleHistoryWeeklyUrl(); });
 
         window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('analysisCurrentDetails').addEventListener('toggle', event => {
+                if(event.target.open&&currentTab==='ANALYSE'&&State.analysis)renderAnalysisTab();
+            });
             if (UI.gsheetUrl.value.trim() !== '') handleUrl();
             if (UI.gsheetAnalysisUrl.value.trim() !== '') handleAnalysisUrl();
+            if (UI.gsheetRecapUrl.value.trim() !== '') handleRecapUrl();
+            if (UI.gsheetHistoryUrl.value.trim() !== '') handleHistoryWeeklyUrl();
         });
 
         UI.loginForm.addEventListener('submit', async (e) => {
@@ -1999,6 +2373,7 @@
 
             setupFilters(); applyFilters(); applyFiltersProd(); showLoading(false);
             updateAnalysisNavigation();
+            if (currentTab === 'ANALYSE' && canAccessAnalysis()) renderHistoryDashboard();
             if (State.analysis && currentTab === 'ANALYSE') renderAnalysisTab();
 
             if (State.currentUser) {
