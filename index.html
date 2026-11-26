@@ -1630,7 +1630,7 @@
                 (view.segment==='ALL'||r.segment===view.segment) &&
                 (view.mode==='WTD'?r.weekYear===view.year&&r.week===view.week :
                  view.mode==='MTD'?r.month===view.month : true));
-            return {rows:selected,years,months,weeks,segments,mode:view.mode,year:view.year,month:view.month,week:view.week};
+            return {rows:selected,years,months,weeks,segments,mode:view.mode,year:view.year,month:view.month,week:view.week,segment:view.segment};
         }
         function historyAggregate(rows) {
             const total=(key)=>rows.reduce((sum,r)=>sum+(r[key]??0),0);
