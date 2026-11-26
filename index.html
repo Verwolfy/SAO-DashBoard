@@ -869,7 +869,7 @@
                 <div id="historyKpiGrid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
                     <div class="glass-panel rounded-xl p-3 border-t-2 border-indigo-500"><p class="text-xs text-gray-500">Ventes RECAP_VT</p><p id="historyKpiSales" class="text-xl font-bold mt-1">—</p></div>
                     <div class="glass-panel rounded-xl p-3 border-t-2 border-blue-500"><p class="text-xs text-gray-500">Objectif connu</p><p id="historyKpiTarget" class="text-xl font-bold mt-1">—</p></div>
-                    <div class="glass-panel rounded-xl p-3 border-t-2 border-emerald-500"><p class="text-xs text-gray-500">Réalisation</p><p id="historyKpiRate" class="text-xl font-bold mt-1">—</p></div>
+                    <div class="glass-panel rounded-xl p-3 border-t-2 border-emerald-500"><p class="text-xs text-gray-500">Réalisation (objectifs renseignés)</p><p id="historyKpiRate" class="text-xl font-bold mt-1">—</p></div>
                     <div class="glass-panel rounded-xl p-3 border-t-2 border-red-500"><p class="text-xs text-gray-500">Déficits bruts</p><p id="historyKpiDeficit" class="text-xl font-bold mt-1">—</p></div>
                     <div class="glass-panel rounded-xl p-3 border-t-2 border-amber-500"><p class="text-xs text-gray-500">Déficits classifiés</p><p id="historyKpiClassified" class="text-xl font-bold mt-1">—</p></div>
                     <div class="glass-panel rounded-xl p-3 border-t-2 border-gray-500"><p class="text-xs text-gray-500">Non classifiés</p><p id="historyKpiUnknown" class="text-xl font-bold mt-1">—</p></div>
@@ -1635,9 +1635,11 @@
         function historyAggregate(rows) {
             const total=(key)=>rows.reduce((sum,r)=>sum+(r[key]??0),0);
             const target=total('target'),sales=total('sales'),gap=total('gap');
+            const comparableSales=rows.filter(r=>r.target!==null).reduce((sum,r)=>sum+r.sales,0);
             const deficit=total('deficit'),classified=total('classified'),unclassified=total('unclassified');
-            return {target,sales,gap,deficit,classified,unclassified,
-                rate:target>0?100*sales/target:null,missingTargets:rows.filter(r=>r.target===null).length,
+            return {target,sales,gap,deficit,classified,unclassified,comparableSales,
+                rate:target>0?100*comparableSales/target:null,
+                missingTargets:rows.filter(r=>r.target===null).length,
                 days:new Set(rows.map(r=>r.date)).size};
         }
         function historyBuildSummary(selected) {
@@ -1737,7 +1739,7 @@
                 historyKpiClassified:fmt(data.agg.classified),historyKpiUnknown:fmt(data.agg.unclassified)
             }))document.getElementById(key).textContent=value;
             const warnings=[];
-            if(data.agg.missingTargets)warnings.push(data.agg.missingTargets+' lignes sans objectif explicite.');
+            if(data.agg.missingTargets)warnings.push(data.agg.missingTargets+' lignes sans objectif explicite : le taux compare uniquement les ventes dotées d’un objectif.');
             if(v.mode==='YTD'||v.mode==='HIST')warnings.push('Cumul partiel : RECAP_VT ne couvre pas toute l’année.');
             if(data.excludedWeeks.length)warnings.push('Répartition des causes non ventilable au calendrier : '+data.excludedWeeks.join(', ')+' exclue(s) du Pareto.');
             const recapClassedIncluded=s.rows.filter(r=>{
@@ -1762,7 +1764,7 @@
                 '<td class="p-3 text-right">'+(c.missingTargets?'† ':'')+fmt(c.target)+'</td>'+
                 '<td class="p-3 text-right">'+fmt(c.sales)+'</td>'+
                 '<td class="p-3 text-right">'+fmt(c.gap)+'</td>'+
-                '<td class="p-3 text-right">'+percent(c.target>0?100*c.sales/c.target:null)+'</td>'+
+                '<td class="p-3 text-right">'+percent(c.missingTargets===0&&c.target>0?100*c.sales/c.target:null)+'</td>'+
                 '<td class="p-3 text-right">'+fmt(c.deficit)+'</td></tr>').join('');
             const shown=data.incidents.slice(0,30);
             document.getElementById('historyIncidentsCount').textContent=
@@ -2083,13 +2085,89 @@
             return true;
         }
 
+
+        // L'impression du suivi historique n'utilise pas les SVG Plotly (évite les coupures).
+        function buildAnalysisHistoryPrintReport() {
+            if(!canAccessAnalysis() || currentTab!=='ANALYSE' || !State.historyLastSummary)return false;
+            const d=State.historyLastSummary, a=d.agg, el=document.getElementById('analysisPrintReport');
+            const esc=analysisEscape,fmt=n=>Number.isFinite(n)?formatVal(n)+' t':'N/D';
+            const pct=n=>Number.isFinite(n)?formatVal(n)+' %':'N/D';
+            const headerPeriod=esc(document.getElementById('historyPeriodInfo').textContent);
+            const sourceStatus=esc(document.getElementById('historySourceStatus').textContent);
+            const quality=esc(document.getElementById('historyCoverage').textContent);
+            const reconciliation=esc(document.getElementById('historyReconciliation').textContent);
+            const unit=(name,val,note)=>'<div class="print-kpi"><span>'+esc(name)+'</span><strong>'+esc(val)+'</strong><small>'+esc(note)+'</small></div>';
+            const cards=[
+                unit('Ventes RECAP_VT',fmt(a.sales),'Source quotidienne'),
+                unit('Objectif connu',fmt(a.target),'Objectifs renseignés'),
+                unit('Taux',pct(a.rate),'Ventes sur objectifs connus'),
+                unit('Déficits bruts',fmt(a.deficit),'Canaux/jours'),
+                unit('Déficits classifiés',fmt(a.classified),'RECAP_VT'),
+                unit('Non classifiés',fmt(a.unclassified),'RECAP_VT')
+            ].join('');
+            const maxCause=Math.max(1,...d.causes.map(c=>c.loss));
+            const causeBars=d.causes.filter(c=>c.loss>0).map(c=>
+                '<div class="print-bar-row"><span>'+esc(c.name)+'</span>'+
+                '<div class="print-bar-track"><i class="print-bar red" style="width:'+
+                Math.min(100,100*c.loss/maxCause)+'%"></i></div><b>'+fmt(c.loss)+
+                '</b><small>Classifié</small></div>').join('');
+            const maxGap=Math.max(1,...d.channels.map(c=>Math.abs(c.gap)));
+            const channelBars=d.channels.map(c=>
+                '<div class="print-bar-row"><span>'+esc(c.name)+'</span>'+
+                '<div class="print-bar-track"><i class="print-bar '+(c.gap<0?'red':'green')+
+                '" style="width:'+Math.min(100,100*Math.abs(c.gap)/maxGap)+'%"></i></div>'+
+                '<b>'+fmt(c.gap)+'</b><small>'+pct(c.missingTargets===0&&c.target>0?100*c.sales/c.target:null)+'</small></div>').join('');
+            const causeRows=d.causes.map(c=>'<tr><td>'+esc(c.name)+'</td>'+
+                '<td class="num">'+fmt(c.loss)+'</td></tr>').join('');
+            const channelRows=d.channels.map(c=>'<tr><td>'+esc(c.name)+'</td>'+
+                '<td class="num">'+fmt(c.target)+'</td>'+
+                '<td class="num">'+fmt(c.sales)+'</td>'+
+                '<td class="num">'+fmt(c.gap)+'</td>'+
+                '<td class="num">'+pct(c.missingTargets===0&&c.target>0?100*c.sales/c.target:null)+'</td>'+
+                '<td class="num">'+fmt(c.deficit)+'</td></tr>').join('');
+            const detailRows=d.incidents.slice(0,18).map(r=>{
+                const date=new Date(r.date+'T00:00:00Z').toLocaleDateString('fr-FR',{timeZone:'UTC'});
+                const comment=r.comment?.length>145?r.comment.slice(0,145)+'…':r.comment||'Non renseigné';
+                return '<tr><td>'+esc(date)+'</td><td>'+esc(r.segment)+'</td>'+
+                    '<td class="num">'+fmt(r.deficit)+'</td><td>'+esc(r.category||'—')+'</td>'+
+                    '<td>'+esc(comment)+'</td></tr>';
+            }).join('');
+            const head=(title,page)=>'<div class="print-head"><h1>'+esc(title)+'</h1><p>'+
+                headerPeriod+'</p><span>'+page+' / 3</span></div>';
+            el.innerHTML=
+                '<div class="analysis-print-page">'+head('Analyse opérationnelle · WTD / MTD / YTD',1)+
+                '<div class="print-kpis">'+cards+'</div><p class="print-reconciliation">'+quality+'</p>'+
+                '<div class="print-charts"><section><h2>Déficits par cause (semaines complètes)</h2>'+causeBars+
+                '</section><section><h2>Écart net par canal</h2>'+channelBars+'</section></div></div>'+
+                '<div class="analysis-print-page">'+head('Détail de la période',2)+
+                '<section><h2>Performance commerciale par canal</h2>'+
+                '<table><thead><tr><th>Canal</th><th>Objectif</th><th>Ventes</th><th>Écart</th><th>Taux</th><th>Déficits</th></tr></thead><tbody>'+
+                channelRows+'</tbody></table></section><section><h2>Six causes classifiées</h2>'+
+                '<table><thead><tr><th>Cause</th><th>Déficit attribué (t)</th></tr></thead><tbody>'+
+                causeRows+'</tbody></table><p>'+quality+'</p><p>'+reconciliation+'</p></section></div>'+
+                '<div class="analysis-print-page">'+head('Incidents et commentaires',3)+
+                '<section><h2>'+Math.min(18,d.incidents.length)+' incidents récents sur '+d.incidents.length+'</h2>'+
+                '<table><thead><tr><th>Date</th><th>Canal</th><th>Déficit</th><th>Catégories</th><th>Commentaire</th></tr></thead><tbody>'+
+                detailRows+'</tbody></table></section><p>'+sourceStatus+'</p></div>';
+            return true;
+        }
+        let analysisPrintSelection='HISTORY';
+        function printAnalysisHistory() {
+            if(!buildAnalysisHistoryPrintReport())return;
+            analysisPrintSelection='HISTORY';window.print();
+        }
         function printAnalysisReport() {
             if (!buildAnalysisPrintReport()) return;
+            analysisPrintSelection='WEEKLY';
             window.print();
         }
         window.addEventListener('beforeprint', () => {
-            if (currentTab === 'ANALYSE') buildAnalysisPrintReport();
+            if (currentTab !== 'ANALYSE') return;
+            if(analysisPrintSelection==='WEEKLY')buildAnalysisPrintReport();
+            else if(State.historyLastSummary)buildAnalysisHistoryPrintReport();
+            else buildAnalysisPrintReport();
         });
+        window.addEventListener('afterprint', () => { analysisPrintSelection='HISTORY'; });
 
         function handleFile(file) {
             showLoading(true);
