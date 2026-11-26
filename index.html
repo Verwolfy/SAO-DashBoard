@@ -827,8 +827,6 @@
             </section>
         </div>
         
-        <div class="h-10"></div>
-
         <!-- ONGLET 3 : ANALYSE OPÉRATIONNELLE (CSV GOOGLE SHEETS INDÉPENDANT) -->
         <div id="viewAnalyse" class="hidden space-y-6">
 
@@ -876,6 +874,7 @@
                 </div>
                 <div id="historyCoverage" class="rounded-lg border border-indigo-300/50 bg-indigo-50/50 dark:bg-indigo-900/20 p-3 text-sm"></div>
                 <div id="historyReconciliation" class="rounded-lg border border-gray-300 dark:border-gray-700 p-3 text-sm"></div>
+                <div id="historyCommercialReference" class="rounded-lg border border-blue-300/70 bg-blue-50/60 dark:bg-blue-950/25 p-3 text-sm" role="status">Référence commerciale Ventes MTD : chargement...</div>
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
                     <section class="glass-panel rounded-xl p-4">
                         <h3 class="font-semibold mb-2">Évolution des ventes et objectifs</h3>
@@ -1691,9 +1690,38 @@
                     if(meta.isData)mainSales+=r[col]??0;
                 recapMatchedSales=rows.filter(r=>mainDates.has(r.date)).reduce((v,r)=>v+r.sales,0);
             }
+            // Référence commerciale en calendrier réel : indépendante de la couverture partielle RECAP_VT.
+            // Le rapprochement ci-dessus conserve séparément les seules dates communes.
+            const selectedDates=[...sourceDates].sort(),lastSelected=selectedDates.at(-1);
+            let calendarFrom=null;
+            if(lastSelected){
+                if(selected.mode==='WTD'){
+                    const monday=new Date(lastSelected+'T00:00:00Z');
+                    monday.setUTCDate(monday.getUTCDate()-(monday.getUTCDay()||7)+1);
+                    calendarFrom=monday.toISOString().slice(0,10);
+                }else if(selected.mode==='MTD')calendarFrom=String(selected.year)+'-'+String(selected.month).padStart(2,'0')+'-01';
+                else calendarFrom=String(selected.year)+'-01-01';
+            }
+            const commercialRows=selected.segment==='ALL'&&calendarFrom&&lastSelected?
+                State.raw.filter(r=>{
+                    if(!(r._DATE_SORT>0))return false;
+                    const date=getPlotlyDate(r);
+                    return date>=calendarFrom&&date<=lastSelected;
+                }):[];
+            let commercialSales=0,commercialTarget=0;
+            const salesCols=Object.keys(State.colMeta).filter(c=>State.colMeta[c]?.isData);
+            for(const r of commercialRows){
+                commercialTarget+=r['Objectif fixé']||0;
+                for(const col of salesCols)commercialSales+=r[col]||0;
+            }
+            const commercialReference={
+                from:calendarFrom,to:lastSelected,sales:commercialSales,target:commercialTarget,
+                days:new Set(commercialRows.map(r=>getPlotlyDate(r))).size,
+                comparable:selected.segment==='ALL',available:commercialRows.length>0
+            };
             const incidents=rows.filter(r=>r.comment||r.deficit>0).sort((a,b)=>b.date.localeCompare(a.date)||b.deficit-a.deficit);
             return {selected,agg,channels,buckets,causes,coveredClassified,excludedWeeks:[...excludedWeeks].sort(),
-                matchedGroups,mainSales,recapMatchedSales,mainDates:mainDates.size,incidents};
+                matchedGroups,mainSales,recapMatchedSales,mainDates:mainDates.size,commercialReference,incidents};
         }
         function renderHistoryDashboard() {
             if(!canAccessAnalysis())return;
@@ -1759,6 +1787,15 @@
             else rec.textContent='Rapprochement sur '+data.mainDates+' dates communes : Ventes MTD '+
                 fmt(data.mainSales)+' · Analyse Hebdomadaire (RECAP_VT) '+fmt(data.recapMatchedSales)+
                 ' · différence '+fmt(data.mainSales-data.recapMatchedSales)+'.';
+            const reference=document.getElementById('historyCommercialReference');
+            const ref=data.commercialReference;
+            if(!ref.comparable)reference.textContent='Ventes MTD : référence globale non comparable avec un filtre canal.';
+            else if(!ref.available)reference.textContent='Ventes MTD : aucune donnée commerciale pour la période calendaire choisie.';
+            else reference.textContent='Référence commerciale Ventes MTD du '+frDate(ref.from)+' au '+frDate(ref.to)+
+                ' : ventes '+fmt(ref.sales)+' · objectif '+fmt(ref.target)+
+                ' · réalisation '+(ref.target>0?percent(100*ref.sales/ref.target):'N/D')+
+                ' · '+ref.days+' jours enregistrés. RECAP_VT : '+data.agg.days+
+                ' jours disponibles (périmètre opérationnel distinct).';
             document.getElementById('historyChannelsBody').innerHTML=data.channels.map(c=>
                 '<tr><td class="p-3 font-medium">'+esc(c.name)+'</td>'+
                 '<td class="p-3 text-right">'+(c.missingTargets?'† ':'')+fmt(c.target)+'</td>'+
@@ -2096,6 +2133,7 @@
             const sourceStatus=esc(document.getElementById('historySourceStatus').textContent);
             const quality=esc(document.getElementById('historyCoverage').textContent);
             const reconciliation=esc(document.getElementById('historyReconciliation').textContent);
+            const commercialReference=esc(document.getElementById('historyCommercialReference').textContent);
             const unit=(name,val,note)=>'<div class="print-kpi"><span>'+esc(name)+'</span><strong>'+esc(val)+'</strong><small>'+esc(note)+'</small></div>';
             const cards=[
                 unit('Ventes RECAP_VT',fmt(a.sales),'Source quotidienne'),
@@ -2142,7 +2180,7 @@
                 '<div class="analysis-print-page">'+head('Détail de la période',2)+
                 '<section><h2>Performance commerciale par canal</h2>'+
                 '<table><thead><tr><th>Canal</th><th>Objectif</th><th>Ventes</th><th>Écart</th><th>Taux</th><th>Déficits</th></tr></thead><tbody>'+
-                channelRows+'</tbody></table></section><section><h2>Six causes classifiées</h2>'+
+                channelRows+'</tbody></table><p>'+commercialReference+'</p></section><section><h2>Six causes classifiées</h2>'+
                 '<table><thead><tr><th>Cause</th><th>Déficit attribué (t)</th></tr></thead><tbody>'+
                 causeRows+'</tbody></table><p>'+quality+'</p><p>'+reconciliation+'</p></section></div>'+
                 '<div class="analysis-print-page">'+head('Incidents et commentaires',3)+
