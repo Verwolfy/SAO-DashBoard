@@ -62,8 +62,11 @@
         .drop-zone.dragover { background-color: rgba(59, 130, 246, 0.1); border-color: #60a5fa; scale: 1.02; }
         
         .tab-btn { transition: all 0.3s ease; }
-        /* Le Pareto a sa propre légende textuelle. Ne pas afficher la barre d'outils Plotly sur le graphique. */
-        #chartAnalysisCauses .modebar-container { display: none !important; }
+        /* Les graphiques d'analyse restent interactifs sans barre d'outils flottante. */
+        #chartAnalysisCauses .modebar-container,
+        #chartAnalysisChannels .modebar-container,
+        #chartHistoryTrend .modebar-container,
+        #chartHistoryCauses .modebar-container { display: none !important; }
 
         /* Impression du rapport hebdomadaire : pages HTML compactes, sans SVG Plotly coupés. */
         @media print {
@@ -184,7 +187,7 @@
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-chart-line text-brand text-3xl"></i>
                     <div>
-                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.5</h1>
+                        <h1 class="text-xl font-bold tracking-wide text-gray-900 dark:text-white">Business Dev. DB V3.5.1</h1>
                         <p class="text-xs text-gray-500 dark:text-gray-400">Suivi Ventes & Production</p>
                     </div>
                 </div>
@@ -1025,14 +1028,20 @@
             const el = document.getElementById(id);
             if (!el) return;
             layout.autosize = true;
+            // Les outils Plotly masquaient les barres de l'analyse commerciale.
+            // Les graphiques des onglets Ventes et Production conservent leur modebar.
+            const analysisChartIds = ['chartAnalysisCauses', 'chartAnalysisChannels',
+                'chartHistoryTrend', 'chartHistoryCauses'];
+            const config = analysisChartIds.includes(id) ?
+                { ...plotlyConfig, displayModeBar: false } : plotlyConfig;
             if (el.data) {
-                Plotly.react(el, traces, layout, plotlyConfig).then(() => {
+                Plotly.react(el, traces, layout, config).then(() => {
                     if(!document.getElementById('wrap-'+id)?.classList.contains('hidden')) {
                         Plotly.Plots.resize(el);
                     }
                 });
             } else {
-                Plotly.newPlot(el, traces, layout, plotlyConfig);
+                Plotly.newPlot(el, traces, layout, config);
             }
         }
 
