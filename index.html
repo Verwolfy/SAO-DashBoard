@@ -916,7 +916,10 @@
                     <button id="analysisPrintBtn" type="button" onclick="printAnalysisReport()" class="px-3 py-1.5 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-800 dark:text-white font-semibold"><i class="fa-solid fa-print mr-1"></i> Imprimer</button>
                 </div>
             </section>
-            <div id="analysisError" class="hidden p-4 rounded-lg border border-red-300 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200" role="alert"></div>
+            <div id="analysisError" class="hidden p-4 rounded-lg border border-red-300 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200 flex flex-wrap items-center justify-between gap-3" role="alert">
+                <span id="analysisErrorText"></span>
+                <button id="analysisRetryBtn" type="button" onclick="handleAnalysisUrl()" class="px-3 py-1.5 rounded-md border border-current text-sm font-semibold hover:bg-white/40 dark:hover:bg-white/10"><i class="fa-solid fa-rotate mr-1"></i> Réessayer Analyse Hebdomadaire</button>
+            </div>
             <section id="analysisKpiGrid" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                 <div class="glass-panel rounded-xl border-t-2 border-blue-500 p-4"><p class="text-xs text-gray-500 dark:text-gray-400">Objectif du rapport</p><p class="text-xl font-bold mt-1" id="analysisKpiTarget">—</p><p class="text-xs text-gray-500">CSV Analyse</p></div>
                 <div class="glass-panel rounded-xl border-t-2 border-indigo-500 p-4"><p class="text-xs text-gray-500 dark:text-gray-400">Ventes selon rapport</p><p class="text-xl font-bold mt-1" id="analysisKpiActual">—</p><p class="text-xs text-gray-500">CSV Analyse</p></div>
@@ -1125,6 +1128,8 @@
             _aggregatesProd: null,
             analysis: null,
             analysisLoadError: '',
+            analysisRequestId: 0,
+            historyRequestIds: {},
             recapRows: [],
             recapError: '',
             historyRows: [],
@@ -1582,24 +1587,53 @@
             });
             return data;
         }
+        // Les callbacks réseau PapaParse peuvent transmettre un ProgressEvent (sans message).
+        // Ne jamais exposer "[object ProgressEvent]" à l'utilisateur.
+        function publishedCsvErrorMessage(error) {
+            const status=Number(error?.target?.status||error?.status||0);
+            if(Number.isFinite(status)&&status>=400)return 'Publication CSV inaccessible (HTTP '+status+').';
+            const raw=typeof error==='string'?error:
+                (typeof error?.message==='string'?error.message:'');
+            const message=String(raw||'').trim();
+            if(message && !/^\[object\s+[^\]]+\]$/i.test(message) && message!=='ProgressEvent')
+                return message;
+            return 'Connexion au CSV interrompue (réseau ou accès à la publication Google Sheets).';
+        }
+        const PUBLISHED_CSV_RETRY_DELAYS=[800,2000];
         function historyLoadCSV(input, parser, rowsKey, errorKey) {
             const url=input?.value?.trim();
-            if (!url)return;
-            Papa.parse(url,{
-                download:true,header:true,skipEmptyLines:true,transformHeader:h=>String(h).replace(/^\uFEFF/,'').trim(),
-                complete:res=>{
-                    try{
-                        if(res.errors?.length)throw new Error('Erreur CSV : '+res.errors[0].message);
-                        State[rowsKey]=parser(res.data);
-                        State[errorKey]='';
-                    } catch(error){State[errorKey]=error.message||String(error);}
-                    if(currentTab==='ANALYSE'&&canAccessAnalysis())renderHistoryDashboard();
-                },
-                error:err=>{
-                    State[errorKey]=err?.message||'Import CSV impossible.';
-                    if(currentTab==='ANALYSE'&&canAccessAnalysis())renderHistoryDashboard();
-                }
-            });
+            if(!url)return;
+            const requestId=(State.historyRequestIds[rowsKey]||0)+1;
+            State.historyRequestIds[rowsKey]=requestId;
+            const run=(attempt)=>{
+                if(State.historyRequestIds[rowsKey]!==requestId)return;
+                Papa.parse(url,{
+                    download:true,header:true,skipEmptyLines:true,
+                    transformHeader:h=>String(h).replace(/^\uFEFF/,'').trim(),
+                    complete:res=>{
+                        if(State.historyRequestIds[rowsKey]!==requestId)return;
+                        try{
+                            if(res.errors?.length)throw new Error('Erreur CSV : '+res.errors[0].message);
+                            const rows=parser(res.data);
+                            State[rowsKey]=rows;
+                            State[errorKey]='';
+                        }catch(error){
+                            State[errorKey]=publishedCsvErrorMessage(error);
+                        }
+                        if(currentTab==='ANALYSE'&&canAccessAnalysis())renderHistoryDashboard();
+                    },
+                    error:err=>{
+                        if(State.historyRequestIds[rowsKey]!==requestId)return;
+                        if(attempt<PUBLISHED_CSV_RETRY_DELAYS.length){
+                            setTimeout(()=>run(attempt+1),PUBLISHED_CSV_RETRY_DELAYS[attempt]);
+                            return;
+                        }
+                        State[errorKey]=publishedCsvErrorMessage(err)+' Après 3 tentatives. Dernières données valides conservées si disponibles.';
+                        if(currentTab==='ANALYSE'&&canAccessAnalysis())renderHistoryDashboard();
+                    }
+                });
+            };
+            run(0);
         }
         function handleRecapUrl() { historyLoadCSV(UI.gsheetRecapUrl,historyParseRecap,'recapRows','recapError'); }
         function handleHistoryWeeklyUrl() { historyLoadCSV(UI.gsheetHistoryUrl,historyParseWeekly,'historyRows','historyError'); }
@@ -1829,29 +1863,39 @@
         }
 
         function handleAnalysisUrl() {
-            const url = UI.gsheetAnalysisUrl.value.trim();
-            if (!url) return;
-            Papa.parse(url, {
-                download: true, header: false, skipEmptyLines: false,
-                complete: result => {
-                    try {
-                        if (result.errors && result.errors.length) {
-                            throw new Error('Erreur CSV : ' + result.errors[0].message);
+            const url=UI.gsheetAnalysisUrl.value.trim();
+            if(!url)return;
+            const requestId=++State.analysisRequestId;
+            const run=(attempt)=>{
+                if(requestId!==State.analysisRequestId)return;
+                Papa.parse(url,{
+                    download:true,header:false,skipEmptyLines:false,
+                    complete:result=>{
+                        if(requestId!==State.analysisRequestId)return;
+                        try{
+                            if(result.errors?.length)throw new Error('Erreur CSV : '+result.errors[0].message);
+                            const parsed=parseAnalysisReport(result.data);
+                            State.analysis=parsed;
+                            State.analysisLoadError='';
+                            updateAnalysisNavigation();
+                        }catch(err){
+                            // Une publication mal formée ne doit jamais écraser le rapport précédent.
+                            State.analysisLoadError='Format du CSV non exploitable : '+publishedCsvErrorMessage(err);
                         }
-                        State.analysis = parseAnalysisReport(result.data);
-                        State.analysisLoadError = '';
-                        updateAnalysisNavigation();
-                        if (currentTab === 'ANALYSE') renderAnalysisTab();
-                    } catch (err) {
-                        State.analysisLoadError = err.message || String(err);
-                        if (currentTab === 'ANALYSE') renderAnalysisTab();
+                        if(currentTab==='ANALYSE'&&canAccessAnalysis())renderAnalysisTab();
+                    },
+                    error:err=>{
+                        if(requestId!==State.analysisRequestId)return;
+                        if(attempt<PUBLISHED_CSV_RETRY_DELAYS.length){
+                            setTimeout(()=>run(attempt+1),PUBLISHED_CSV_RETRY_DELAYS[attempt]);
+                            return;
+                        }
+                        State.analysisLoadError=publishedCsvErrorMessage(err)+' Échec après 3 tentatives.';
+                        if(currentTab==='ANALYSE'&&canAccessAnalysis())renderAnalysisTab();
                     }
-                },
-                error: err => {
-                    State.analysisLoadError = (err && err.message) || 'Échec du chargement du deuxième CSV.';
-                    if (currentTab === 'ANALYSE') renderAnalysisTab();
-                }
-            });
+                });
+            };
+            run(0);
         }
 
         function getAnalysisSalesPeriod(a = State.analysis) {
@@ -1879,8 +1923,14 @@
             const a = State.analysis;
             const errorEl = document.getElementById('analysisError');
             if (State.analysisLoadError) {
-                errorEl.textContent = 'CSV Analyse : ' + State.analysisLoadError + (a ? ' Dernière version chargée conservée.' : '');
-                errorEl.classList.remove('hidden');
+                const hasReport=Boolean(a);
+                errorEl.className='p-4 rounded-lg border flex flex-wrap items-center justify-between gap-3 text-sm '+
+                    (hasReport?
+                        'border-amber-300 bg-amber-50 dark:bg-amber-900/20 text-amber-900 dark:text-amber-200':
+                        'border-red-300 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-200');
+                document.getElementById('analysisErrorText').textContent=
+                    'Analyse Hebdomadaire : '+State.analysisLoadError+
+                    (hasReport?' Dernier rapport valide conservé.':'');
             } else errorEl.classList.add('hidden');
             if (!a) {
                 document.getElementById('analysisPeriod').textContent = State.analysisLoadError ?
